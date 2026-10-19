@@ -181,6 +181,7 @@ a:hover{color:#ffffff}
 <a href="#film">Film</a>
 <a href="#about">About</a>
 <a href="https://wa.me/212651543275" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+<span id="acct" style="display:inline-flex;gap:10px;align-items:center"></span>
 <a href="https://www.instagram.com/ismailtenni_art/" style="display: inline-block; padding: 11px 22px; border: 1px solid rgba(255,255,255,0.45); border-radius: 999px; background: rgba(10,18,40,0.6); color: #ffffff">Follow on Instagram</a>
 </nav>
 </header>
@@ -286,6 +287,9 @@ document.getElementById('vw-side').onclick=function(e){var t=e.target.closest('.
 document.getElementById('vw-img').onclick=function(){zoom=!zoom;this.style.cssText=zoom?'display:inline-block;width:230%;max-width:none;height:auto;cursor:zoom-out':'display:inline-block;height:78vh;max-width:100%;width:auto;object-fit:contain;cursor:zoom-in'};
 </script>
 
+</div>
+</div>
+</sc-if>
 
 <section id="about" style="position: relative; max-width: 1440px; margin: 0 auto; padding: clamp(80px, 11vw, 160px) clamp(20px, 4vw, 48px) 0; box-sizing: border-box">
 <div style="position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 56px">
@@ -332,4 +336,43 @@ document.getElementById('vw-img').onclick=function(){zoom=!zoom;this.style.cssTe
 </footer>
 </div>
 </div>
+
+<div id="am" role="dialog" aria-modal="true" aria-label="Account" style="display:none;position:fixed;inset:0;z-index:1200;background:rgba(3,4,14,0.9);align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
+<form id="af" style="font-family:Sora,Inter,system-ui,sans-serif;position:relative;width:100%;max-width:400px;max-height:92vh;overflow:auto;box-sizing:border-box;padding:28px 24px;border-radius:18px;border:1px solid rgba(190,170,255,0.45);background:rgba(10,14,40,0.98);color:#e8eefc;box-shadow:0 0 60px rgba(110,90,255,0.35)">
+<button type="button" id="ax" aria-label="Close" style="position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,0.4);background:rgba(8,10,30,0.85);color:#fff;cursor:pointer;font-size:15px">&#10005;</button>
+<h3 id="at" style="margin:0;font-weight:400;font-size:26px;color:#fff">Log in</h3>
+<div id="an" style="display:none"><label style="display:block;margin-top:16px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9fb0c8" for="a-name">Your name</label><input id="a-name" autocomplete="name" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(190,170,255,0.4);background:rgba(8,12,34,0.9);color:#fff;font-size:15px;font-family:inherit;margin-top:6px"></div>
+<label style="display:block;margin-top:16px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9fb0c8" for="a-email">Email</label><input id="a-email" type="email" autocomplete="email" required style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(190,170,255,0.4);background:rgba(8,12,34,0.9);color:#fff;font-size:15px;font-family:inherit;margin-top:6px">
+<label style="display:block;margin-top:16px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9fb0c8" for="a-pw">Password</label><input id="a-pw" type="password" autocomplete="current-password" required style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(190,170,255,0.4);background:rgba(8,12,34,0.9);color:#fff;font-size:15px;font-family:inherit;margin-top:6px">
+<div id="ae" role="alert" style="margin-top:14px;min-height:20px;color:#ffb0b8;font-size:14px"></div>
+<button id="ab" type="submit" style="width:100%;margin-top:10px;padding:14px;border-radius:999px;border:1px solid rgba(255,255,255,0.4);background:linear-gradient(90deg,rgba(42,120,170,0.9),rgba(100,70,200,0.9));color:#fff;font-size:16px;font-family:inherit;cursor:pointer">Log in</button>
+<button type="button" id="as" style="width:100%;margin-top:12px;padding:8px;border:0;background:none;color:#c4a0ff;font-size:14px;font-family:inherit;cursor:pointer">No account yet? Sign up</button>
+</form></div>
+<script>
+(function(){
+var mode='login',box=document.getElementById('acct'),m=document.getElementById('am');
+var pill='padding:9px 18px;border-radius:999px;border:1px solid rgba(255,255,255,0.45);background:rgba(10,18,40,0.6);color:#fff;font-size:14px;font-family:inherit;cursor:pointer';
+function E(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function paint(u){
+ if(u){box.innerHTML='<span style="font-size:14px;color:#c4d0e6">Hi, '+E(u.name)+'</span><button id="lo" style="'+pill+'">Log out</button>';
+  document.getElementById('lo').onclick=function(){fetch('/api/logout',{method:'POST'}).then(function(){paint(null)})};}
+ else{box.innerHTML='<button id="li" style="'+pill+'">Log in</button><button id="su" style="'+pill+';background:linear-gradient(90deg,rgba(42,120,170,0.8),rgba(100,70,200,0.8))">Sign up</button>';
+  document.getElementById('li').onclick=function(){openM('login')};document.getElementById('su').onclick=function(){openM('signup')};}
+}
+function openM(md){mode=md;var s=md==='signup';document.getElementById('at').textContent=s?'Create your account':'Log in';
+ document.getElementById('an').style.display=s?'block':'none';document.getElementById('ab').textContent=s?'Sign up':'Log in';
+ document.getElementById('as').textContent=s?'Already have an account? Log in':'No account yet? Sign up';
+ document.getElementById('a-pw').autocomplete=s?'new-password':'current-password';document.getElementById('ae').textContent='';m.style.display='flex';}
+function closeM(){m.style.display='none';}
+document.getElementById('ax').onclick=closeM;
+m.onclick=function(e){if(e.target===m)closeM()};
+document.getElementById('as').onclick=function(){openM(mode==='login'?'signup':'login')};
+document.getElementById('af').onsubmit=function(e){e.preventDefault();var er=document.getElementById('ae'),b=document.getElementById('ab');er.textContent='';b.disabled=true;
+ fetch('/api/'+mode,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:document.getElementById('a-name').value,email:document.getElementById('a-email').value,password:document.getElementById('a-pw').value})})
+ .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d}})})
+ .then(function(x){b.disabled=false;if(x.ok&&x.d.user){document.getElementById('a-pw').value='';closeM();paint(x.d.user)}else er.textContent=x.d.error||'Accounts are not available yet.'})
+ .catch(function(){b.disabled=false;er.textContent='Accounts are not available yet.'});};
+fetch('/api/me').then(function(r){return r.ok?r.json():null}).then(function(d){paint(d&&d.user)}).catch(function(){paint(null)});
+})();
+</script>
 </body></html>
