@@ -10,3 +10,6 @@ Likes and comments use the same database. If you already ran schema.sql before, 
 Only logged-in members can like or comment. Members can delete their own comments.
 
 Owner moderation: in Pages > Settings > Variables and Secrets, add ADMIN_EMAIL = your login email. That account can then delete any comment.
+
+IF CLOUDFLARE SHOWS "Uploading a Pages _worker.js file as an asset" (Workers deploy): this folder already includes wrangler.jsonc and .assetsignore.
+Open wrangler.jsonc and replace PASTE_YOUR_DATABASE_ID_HERE with your D1 Database ID (Cloudflare > Storage & Databases > D1 > ismailtenni-art > copy the Database ID).
