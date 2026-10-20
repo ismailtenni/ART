@@ -5,3 +5,8 @@
 4. Upload this whole folder (index.html, _worker.js, assets/) to the project (or push it to GitHub).
 Sign up / Log in then works on the site. Passwords are stored hashed (PBKDF2), never as plain text.
 Note: there is no email verification or "forgot password" yet.
+
+Likes and comments use the same database. If you already ran schema.sql before, run it again (safe to repeat) so the likes and comments tables are created.
+Only logged-in members can like or comment. Members can delete their own comments.
+
+Owner moderation: in Pages > Settings > Variables and Secrets, add ADMIN_EMAIL = your login email. That account can then delete any comment.

@@ -1,6 +1,7 @@
 // ISMAILTENNI ART - accounts (sign up / log in) on Cloudflare Pages + D1.
 // Needs a D1 database bound to this project with the variable name: DB
 const enc = new TextEncoder();
+const WORK = /^[a-z0-9_-]{1,40}$/i;
 const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
 const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 const json = (data, status = 200, headers = {}) =>
@@ -39,6 +40,7 @@ async function tooMany(env, key) {
   const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM attempts WHERE key = ? AND at > ?').bind(key, since).first();
   return r && r.n >= 8;
 }
+function isAdmin(env, me) { return !!(me && env.ADMIN_EMAIL && String(env.ADMIN_EMAIL).trim().toLowerCase() === me.email); }
 async function note(env, key) {
   await env.DB.prepare('INSERT INTO attempts (key, at) VALUES (?, ?)').bind(key, Date.now()).run();
 }
@@ -52,6 +54,24 @@ export default {
       if (url.pathname === '/api/me' && req.method === 'GET') {
         const u = await currentUser(env, req);
         return json({ user: u ? { name: u.name, email: u.email } : null });
+      }
+      if (url.pathname === '/api/counts' && req.method === 'GET') {
+        const l = await env.DB.prepare('SELECT work_id AS id, COUNT(*) AS n FROM likes GROUP BY work_id').all();
+        const c = await env.DB.prepare('SELECT work_id AS id, COUNT(*) AS n FROM comments GROUP BY work_id').all();
+        const out = {};
+        (l.results || []).forEach((r) => { out[r.id] = { likes: r.n, comments: 0 }; });
+        (c.results || []).forEach((r) => { (out[r.id] = out[r.id] || { likes: 0, comments: 0 }).comments = r.n; });
+        return json(out);
+      }
+      if (url.pathname === '/api/social' && req.method === 'GET') {
+        const work = url.searchParams.get('work') || '';
+        if (!WORK.test(work)) return json({ error: 'Bad request' }, 400);
+        const me = await currentUser(env, req);
+        const lk = await env.DB.prepare('SELECT COUNT(*) AS n FROM likes WHERE work_id = ?').bind(work).first();
+        const mine = me ? await env.DB.prepare('SELECT 1 AS x FROM likes WHERE work_id = ? AND user_id = ?').bind(work, me.id).first() : null;
+        const cm = await env.DB.prepare('SELECT c.id, c.text, c.created_at, u.name, c.user_id FROM comments c JOIN users u ON u.id = c.user_id WHERE c.work_id = ? ORDER BY c.created_at DESC LIMIT 60').bind(work).all();
+        return json({ likes: lk ? lk.n : 0, liked: !!mine, me: me ? { name: me.name } : null,
+          comments: (cm.results || []).map((r) => ({ id: r.id, name: r.name, text: r.text, at: r.created_at, mine: !!me && (me.id === r.user_id || isAdmin(env, me)) })) });
       }
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
       const origin = req.headers.get('origin');
@@ -90,6 +110,36 @@ export default {
         return json({ user: { name: u.name, email: u.email } }, 200, { 'set-cookie': cookie });
       }
 
+      if (url.pathname === '/api/like') {
+        const me = await currentUser(env, req);
+        if (!me) return json({ error: 'Please log in to like.' }, 401);
+        const work = String(body.work || '');
+        if (!WORK.test(work)) return json({ error: 'Bad request' }, 400);
+        const had = await env.DB.prepare('SELECT 1 AS x FROM likes WHERE work_id = ? AND user_id = ?').bind(work, me.id).first();
+        if (had) await env.DB.prepare('DELETE FROM likes WHERE work_id = ? AND user_id = ?').bind(work, me.id).run();
+        else await env.DB.prepare('INSERT INTO likes (work_id, user_id, created_at) VALUES (?, ?, ?)').bind(work, me.id, Date.now()).run();
+        const lk = await env.DB.prepare('SELECT COUNT(*) AS n FROM likes WHERE work_id = ?').bind(work).first();
+        return json({ liked: !had, likes: lk.n });
+      }
+      if (url.pathname === '/api/comment') {
+        const me = await currentUser(env, req);
+        if (!me) return json({ error: 'Please log in to comment.' }, 401);
+        const work = String(body.work || '');
+        const text = String(body.text || '').trim().slice(0, 500);
+        if (!WORK.test(work) || !text) return json({ error: 'Write something first.' }, 400);
+        if (await tooMany(env, 'comment:' + me.id)) return json({ error: 'Slow down a little, then try again.' }, 429);
+        await note(env, 'comment:' + me.id);
+        const now = Date.now();
+        const r = await env.DB.prepare('INSERT INTO comments (work_id, user_id, text, created_at) VALUES (?, ?, ?, ?)').bind(work, me.id, text, now).run();
+        return json({ comment: { id: r.meta.last_row_id, name: me.name, text, at: now, mine: true } });
+      }
+      if (url.pathname === '/api/comment/delete') {
+        const me = await currentUser(env, req);
+        if (!me) return json({ error: 'Please log in.' }, 401);
+        if (isAdmin(env, me)) await env.DB.prepare('DELETE FROM comments WHERE id = ?').bind(Number(body.id) || 0).run();
+        else await env.DB.prepare('DELETE FROM comments WHERE id = ? AND user_id = ?').bind(Number(body.id) || 0, me.id).run();
+        return json({ ok: true });
+      }
       if (url.pathname === '/api/logout') {
         const t = getCookie(req, 'session');
         if (t) await env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(await sha256(t)).run();
