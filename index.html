@@ -42,7 +42,161 @@ a:hover{color:#ffffff}
 @keyframes nebula{0%{transform:translate(0,0) scale(1)}100%{transform:translate(70px,-50px) scale(1.18)}}
 @keyframes shoot{0%{transform:translate(0,0) rotate(26.6deg);opacity:0}2%{opacity:1}12%{transform:translate(520px,260px) rotate(26.6deg);opacity:0}100%{transform:translate(520px,260px) rotate(26.6deg);opacity:0}}
 </style>
+<script>document.documentElement.className+=" fx"</script>
+<style id="fx-css">
+/* ===== ISMAILTENNI ART - extra moving effects ===== */
+::selection{background:rgba(150,110,255,.55);color:#fff}
+html{scrollbar-color:#7a5cf0 #070b1c}
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-track{background:#070b1c}
+::-webkit-scrollbar-thumb{background:linear-gradient(#5cbcff,#8f6bff);border-radius:8px}
+
+/* loading intro (pure CSS, can never get stuck) */
+#intro{position:fixed;top:0;left:0;right:0;bottom:0;z-index:3000;background:radial-gradient(ellipse at 50% 45%,#150f36,#050914 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;pointer-events:none;animation:introOut .9s ease .75s forwards}
+#intro .ring{width:76px;height:76px;border-radius:50%;border:2px solid rgba(190,170,255,.22);border-top-color:#b79cff;border-right-color:#5cbcff;box-shadow:0 0 44px rgba(130,110,255,.55);animation:fxSpin 1s linear infinite}
+#intro span{font-family:Sora,system-ui,sans-serif;font-size:13px;letter-spacing:.55em;color:#d6ccff;text-indent:.55em}
+@keyframes introOut{to{opacity:0;visibility:hidden}}
+@keyframes fxSpin{to{transform:rotate(360deg)}}
+
+/* scroll progress bar */
+#fxbar{position:fixed;top:0;left:0;width:100%;height:3px;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,#5cbcff,#b79cff,#ff9ad5);box-shadow:0 0 14px rgba(150,120,255,.9);z-index:2000;pointer-events:none}
+
+/* cursor glow + star dust */
+#fxglow{position:fixed;left:0;top:0;width:560px;height:560px;margin:-280px 0 0 -280px;border-radius:50%;background:radial-gradient(circle,rgba(150,110,255,.2),rgba(60,130,255,.07) 45%,transparent 70%);pointer-events:none;z-index:1;mix-blend-mode:screen;opacity:0;transition:opacity .5s}
+#fxdust{position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1500}
+
+/* headline letters */
+#top h1 .sp{display:inline-block;width:.35em}
+#top h1 .ch{display:inline-block;animation:chIn 1.1s cubic-bezier(.2,.8,.2,1) both,chGlow 4.5s ease-in-out infinite}
+@keyframes chIn{from{opacity:0;transform:translateY(54px) scale(.7);filter:blur(14px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes chGlow{0%,100%{text-shadow:0 0 14px rgba(150,120,255,.55)}50%{text-shadow:0 0 34px rgba(110,190,255,.95),0 0 64px rgba(170,110,255,.65)}}
+
+/* gradient section titles */
+.gt{background:linear-gradient(90deg,#fff 0%,#d9ccff 25%,#a8d6ff 50%,#d9ccff 75%,#fff 100%);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:gradShift 9s linear infinite}
+@keyframes gradShift{from{background-position:0 0}to{background-position:-300% 0}}
+
+/* scroll reveal (uses the separate translate/scale properties so it never fights other animations) */
+.fx .rv{opacity:0;translate:0 46px;scale:.985;transition:opacity 1s ease var(--d,0s),translate 1s cubic-bezier(.2,.8,.2,1) var(--d,0s),scale 1s ease var(--d,0s)}
+.fx .rv.in{opacity:1;translate:0 0;scale:1}
+.fx .rv.art-card,.fx .rv.fx-tilt{transition:opacity 1s ease var(--d,0s),translate 1s cubic-bezier(.2,.8,.2,1) var(--d,0s),scale 1s ease var(--d,0s),transform .3s ease,box-shadow .3s ease}
+
+/* scrolling banner */
+.fx-marq{position:relative;overflow:hidden;margin:clamp(34px,5vw,70px) 0 0;padding:20px 0;border-top:1px solid rgba(190,170,255,.2);border-bottom:1px solid rgba(190,170,255,.2);background:linear-gradient(90deg,rgba(5,9,20,.85),rgba(40,26,95,.4),rgba(5,9,20,.85));-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+.fx-track{display:flex;align-items:center;width:max-content;animation:marq 42s linear infinite}
+.fx-marq:hover .fx-track{animation-play-state:paused}
+.fx-track span{font-family:Sora,system-ui,sans-serif;font-size:clamp(24px,3.6vw,50px);letter-spacing:.28em;white-space:nowrap;padding:0 .7em;color:transparent;-webkit-text-stroke:1px rgba(210,195,255,.8)}
+.fx-track span:nth-of-type(even){color:#fff;-webkit-text-stroke:0;text-shadow:0 0 26px rgba(150,120,255,.85)}
+.fx-track i{flex:none;width:12px;height:12px;transform:rotate(45deg);background:linear-gradient(135deg,#5cbcff,#b79cff);box-shadow:0 0 16px rgba(150,130,255,.9)}
+@keyframes marq{to{transform:translateX(-50%)}}
+
+/* cards: tilt + spotlight */
+.art-card{position:relative;overflow:hidden}
+.fx-tilt{position:relative;overflow:hidden;transition:transform .3s ease,box-shadow .3s ease}
+.fx-tilt:hover{box-shadow:0 0 60px rgba(150,110,255,.4)}
+.art-card::after,.fx-tilt::after{content:"";position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;border-radius:inherit;opacity:0;transition:opacity .3s;background:radial-gradient(280px circle at var(--mx,50%) var(--my,50%),rgba(195,165,255,.3),rgba(90,160,255,.1) 45%,transparent 70%)}
+.art-card:hover::after,.fx-tilt:hover::after{opacity:1}
+
+/* shining buttons */
+.fx-shine{position:relative;overflow:hidden}
+.fx-shine::after{content:"";position:absolute;top:0;bottom:0;left:0;width:55%;pointer-events:none;background:linear-gradient(105deg,transparent,rgba(255,255,255,.4),transparent);transform:translateX(-170%) skewX(-18deg);animation:shineSweep 4.4s ease-in-out infinite}
+@keyframes shineSweep{0%,55%{transform:translateX(-170%) skewX(-18deg)}100%{transform:translateX(340%) skewX(-18deg)}}
+
+/* nav underline */
+header nav>a:not([style]){position:relative}
+header nav>a:not([style])::after{content:"";position:absolute;left:0;right:0;bottom:-7px;height:2px;border-radius:2px;background:linear-gradient(90deg,#5cbcff,#b79cff);transform:scaleX(0);transform-origin:left;transition:transform .35s ease}
+header nav>a:not([style]):hover::after{transform:scaleX(1)}
+
+/* popups open with a soft zoom */
+#vw,#am{animation:vwIn .3s ease}
+#vw-in{animation:vwPop .5s cubic-bezier(.2,.8,.2,1)}
+@keyframes vwIn{from{opacity:0}to{opacity:1}}
+@keyframes vwPop{from{opacity:0;transform:translateY(26px) scale(.97)}to{opacity:1;transform:none}}
+
+/* floating contact button */
+#fxwa{position:fixed;right:18px;bottom:18px;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:900;background:linear-gradient(135deg,#1fb877,#0e7f60);border:1px solid rgba(255,255,255,.45);box-shadow:0 8px 28px rgba(8,120,90,.55);animation:waFloat 3.2s ease-in-out infinite alternate}
+#fxwa::before{content:"";position:absolute;top:-1px;left:-1px;right:-1px;bottom:-1px;border-radius:50%;border:2px solid rgba(60,220,150,.75);animation:waPulse 2.2s ease-out infinite}
+#fxwa:hover{transform:scale(1.08)}
+@keyframes waPulse{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.9);opacity:0}}
+@keyframes waFloat{from{translate:0 0}to{translate:0 -8px}}
+@media (max-width:600px){#fxwa{width:52px;height:52px;right:14px;bottom:14px}}
+
+</style>
+<style id="more-css">
+/* ===== ISMAILTENNI ART - 10 new features ===== */
+.mx-sec{max-width:1440px;margin:0 auto;box-sizing:border-box;padding:clamp(72px,10vw,140px) clamp(20px,4vw,48px) 0}
+.mx-lab{font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:#c4a0ff}
+.mx-sec h2{margin:16px 0 0;font-weight:400;font-size:clamp(32px,4vw,52px);line-height:1.15;color:#fff}
+.mx-p{margin:16px 0 0;max-width:600px;font-size:17px;line-height:1.6;font-weight:300;color:#b7c4dc}
+.mx-ph{border:1px dashed rgba(159,176,200,.5);border-radius:16px;background:linear-gradient(160deg,rgba(20,34,70,.6),rgba(8,12,28,.6));display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;box-sizing:border-box;color:#9fb0c8;font-size:14px}
+.mx-card{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:18px;border:1px solid rgba(190,170,255,.35);background:linear-gradient(160deg,rgba(40,30,90,.45),rgba(8,12,34,.6));backdrop-filter:blur(6px);color:#fff;text-decoration:none}
+.mx-card .t{font-size:20px}.mx-card .d{font-size:14px;line-height:1.6;color:#b7c4dc}.mx-card .go{font-size:14px;color:#d6ccff;margin-top:auto}
+.mx-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:12px 22px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:linear-gradient(90deg,rgba(30,140,90,.75),rgba(20,90,70,.75));color:#fff;font:600 15px/1 inherit;font-family:inherit;cursor:pointer;text-decoration:none}
+.mx-btn.v{background:linear-gradient(90deg,rgba(42,120,170,.75),rgba(30,70,110,.75))}
+.mx-btn[aria-disabled=true]{opacity:.55;pointer-events:none}
+.mx-play{width:64px;height:64px;border-radius:50%;border:1px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;background:rgba(20,16,60,.6);box-shadow:0 0 30px rgba(140,110,255,.5)}
+.mx-play i{display:block;margin-left:5px;border-style:solid;border-width:11px 0 11px 18px;border-color:transparent transparent transparent #fff}
+
+/* tracker */
+#mx-tf{display:flex;flex-wrap:wrap;gap:12px;margin-top:30px;max-width:560px}
+#mx-tc{flex:1 1 220px;min-width:0;padding:13px 18px;border-radius:999px;border:1px solid rgba(190,170,255,.5);background:rgba(10,14,40,.7);color:#fff;font:16px inherit;font-family:inherit;letter-spacing:.12em;text-transform:uppercase;outline:none}
+#mx-tc:focus{border-color:#b79cff;box-shadow:0 0 0 3px rgba(150,110,255,.3)}
+#mx-tr{margin-top:26px;max-width:760px}
+#mx-tr .who{font-size:18px;color:#fff;margin-bottom:6px}#mx-tr .note{color:#b7c4dc;font-size:15px;margin-top:14px}#mx-tr .nf{color:#ffb4c4}
+.mx-steps{display:flex;gap:0;position:relative;margin-top:22px}
+.mx-steps div{flex:1;text-align:center;font-size:12px;letter-spacing:.06em;color:#8795b2;position:relative;padding-top:30px}
+.mx-steps div::before{content:"";position:absolute;top:6px;left:50%;width:16px;height:16px;margin-left:-8px;border-radius:50%;background:#10163a;border:2px solid #4b5a8a;z-index:2}
+.mx-steps div::after{content:"";position:absolute;top:13px;left:-50%;width:100%;height:2px;background:#33406b;z-index:1}
+.mx-steps div:first-child::after{display:none}
+.mx-steps .on{color:#fff}
+.mx-steps .on::before{background:#b79cff;border-color:#fff;box-shadow:0 0 14px #9a7bff}
+.mx-steps .on::after{background:linear-gradient(90deg,#5cbcff,#b79cff)}
+.mx-steps .now::before{animation:mxPulse 1.6s ease-in-out infinite}
+@keyframes mxPulse{50%{box-shadow:0 0 26px 6px #9a7bff}}
+[dir=rtl] .mx-steps div::after{left:auto;right:-50%}
+
+/* before/after slider */
+#ba{position:relative;max-width:640px;aspect-ratio:4/5;border-radius:16px;overflow:hidden;border:1px solid rgba(190,170,255,.4);margin-top:30px;--p:50%;background:#070b1c;user-select:none}
+#ba .L{position:absolute;top:0;left:0;right:0;bottom:0;background-size:cover;background-position:center;display:flex;align-items:flex-end;padding:18px;box-sizing:border-box;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:#fff}
+#ba .L1{background-image:linear-gradient(160deg,#18204a,#070b1c);}
+#ba .L2{background-image:linear-gradient(160deg,#3b1f78,#0f2f6a);clip-path:inset(0 calc(100% - var(--p)) 0 0);}
+#ba .L2{justify-content:flex-start}#ba .L1{justify-content:flex-end}
+#ba .h{position:absolute;top:0;bottom:0;left:var(--p);width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 18px #9a7bff;pointer-events:none}
+#ba .h::after{content:"\2194";position:absolute;top:50%;left:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(20,16,60,.85);border:1px solid #fff;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px}
+#ba input{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;margin:0;cursor:ew-resize}
+
+/* wall preview */
+#mx-wallbtn{margin-top:14px}
+#mx-wall{display:none;position:relative;width:100%;aspect-ratio:4/3;max-height:78vh;border-radius:14px;overflow:hidden;border:1px solid rgba(190,170,255,.35);background:linear-gradient(#cfc7bd 0,#bdb4a8 70%,#a89d90 100%)}
+#mx-wall .fl{position:absolute;left:0;right:0;bottom:0;height:16%;background:linear-gradient(#6b4a33,#4a3121)}
+#mx-wall .lamp{position:absolute;right:6%;top:0;bottom:16%;width:30%;background:radial-gradient(ellipse at 70% 30%,rgba(255,235,190,.55),transparent 65%)}
+#mx-wall .sofa{position:absolute;left:14%;width:72%;bottom:9%;height:24%;border-radius:22px 22px 10px 10px;background:linear-gradient(#3d4a6b,#2a3452);box-shadow:0 18px 30px rgba(0,0,0,.35)}
+#mx-wall .sofa::before{content:"";position:absolute;left:-5%;right:-5%;bottom:0;height:60%;border-radius:14px;background:#2f3a5c}
+#mx-wall .sofa::after{content:"";position:absolute;left:8%;right:8%;top:14%;height:36%;border-radius:12px;background:rgba(255,255,255,.07)}
+#mx-wall .fr{position:absolute;left:50%;top:7%;translate:-50% 0;width:34%;padding:2.2%;box-sizing:border-box;background:#17120f;box-shadow:0 14px 34px rgba(0,0,0,.45),inset 0 0 0 2px #3a2f26;transition:width .45s cubic-bezier(.2,.8,.2,1)}
+#mx-wall .fr div{background:#f6f2ea;padding:7%}
+#mx-wall .fr img{display:block;width:100%;height:auto;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+#mx-wall.s1 .fr{width:24%}#mx-wall.s3 .fr{width:46%}
+#mx-wsz{display:none;gap:8px;margin-top:12px;align-items:center;font-size:13px;color:#b7c4dc}
+#mx-wsz button{width:40px;height:34px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(10,14,40,.7);color:#fff;cursor:pointer;font-family:inherit}
+#mx-wsz button.on{border-color:#b79cff;background:rgba(120,90,230,.5)}
+
+/* sound button */
+#mx-snd{position:fixed;left:18px;bottom:18px;width:52px;height:52px;border-radius:50%;z-index:900;border:1px solid rgba(255,255,255,.45);background:rgba(20,16,60,.75);backdrop-filter:blur(6px);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(60,40,160,.5)}
+#mx-snd.on{background:linear-gradient(135deg,#6a4fe0,#2a78b8);box-shadow:0 0 28px rgba(150,120,255,.8)}
+#mx-snd .eq{display:none;gap:3px;align-items:flex-end;height:18px}
+#mx-snd.on .eq{display:flex}#mx-snd.on .ic{display:none}
+#mx-snd .eq i{width:3px;background:#fff;border-radius:2px;animation:mxEq 1s ease-in-out infinite alternate}
+#mx-snd .eq i:nth-child(1){height:6px}#mx-snd .eq i:nth-child(2){height:14px;animation-delay:.2s}#mx-snd .eq i:nth-child(3){height:9px;animation-delay:.45s}#mx-snd .eq i:nth-child(4){height:16px;animation-delay:.1s}
+@keyframes mxEq{to{height:4px}}
+@media (max-width:600px){#mx-snd{left:12px;bottom:14px;width:46px;height:46px}.mx-steps div{font-size:10px}}
+.ig-wrap{margin-top:34px;display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:20px}
+.ig-wrap iframe,.ig-wrap .instagram-media{max-width:100%!important;min-width:0!important;margin:0!important}
+
+</style>
 </head><body>
+<div id="intro" aria-hidden="true"><div class="ring"></div><span>ISMAILTENNI ART</span></div>
+<a id="fxwa" href="https://wa.me/212651543275?text=Hi%21%20I%20saw%20your%20website." target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp"><svg aria-hidden="true" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13.5C4 8.8 8.4 5 14 5s10 3.8 10 8.5S19.6 22 14 22c-1.4 0-2.7-.2-3.9-.6L5 23.5l1.4-4.2C4.9 17.9 4 15.8 4 13.5z"/><circle cx="9.8" cy="13.6" r="1" fill="#ffffff"/><circle cx="14" cy="13.6" r="1" fill="#ffffff"/><circle cx="18.2" cy="13.6" r="1" fill="#ffffff"/></svg></a>
+
 <div style="position: relative; overflow: hidden; width: 100%; box-sizing: border-box; font-family: 'Sora', system-ui, sans-serif; color: #f4f7ff; background-color: #050914; background-image: radial-gradient(ellipse 60% 14% at 12% 6%, rgba(150,70,255,0.26), transparent 70%), radial-gradient(ellipse 60% 14% at 88% 6%, rgba(150,70,255,0.24), transparent 70%), radial-gradient(ellipse 70% 10% at 50% 14%, rgba(40,120,255,0.20), transparent 70%), radial-gradient(ellipse 50% 8% at 85% 46%, rgba(160,70,255,0.24), transparent 70%), radial-gradient(ellipse 50% 8% at 10% 68%, rgba(30,160,255,0.16), transparent 70%), radial-gradient(ellipse 60% 8% at 60% 90%, rgba(110,90,255,0.2), transparent 70%), radial-gradient(1px 1px at 20px 30px, #ffffff 0, transparent 100%), radial-gradient(1.5px 1.5px at 90px 120px, #cfe3ff 0, transparent 100%), radial-gradient(1px 1px at 150px 40px, #ffd9b0 0, transparent 100%), radial-gradient(2px 2px at 60px 200px, #ffffff 0, transparent 100%), radial-gradient(1px 1px at 300px 90px, #ffffff 0, transparent 100%); background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 211px 197px, 347px 289px, 263px 331px, 523px 467px, 401px 359px; background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat, repeat, repeat, repeat, repeat">
 
 <div aria-hidden="true" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; overflow: hidden; pointer-events: none">
@@ -53,6 +207,15 @@ a:hover{color:#ffffff}
 <div style="position: absolute; top: 3600px; left: 0; right: 0; height: 1400px; overflow: hidden; transform: scaleY(-1); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent)"><img class="mv" src="assets/a3b7a34859f52eedffb5fd094f86393f.jpg" alt="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 1; filter: hue-rotate(-38deg) saturate(1.2) brightness(0.55) contrast(1.1); animation: kenburns 48s ease-in-out infinite alternate-reverse"></div>
 <div style="position: absolute; top: 4800px; left: 0; right: 0; height: 1400px; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent)"><img class="mv" src="assets/a3b7a34859f52eedffb5fd094f86393f.jpg" alt="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 1; filter: hue-rotate(-38deg) saturate(1.2) brightness(0.55) contrast(1.1); animation: kenburns 44s ease-in-out infinite alternate"></div>
 <div style="position: absolute; top: 6000px; left: 0; right: 0; height: 1400px; overflow: hidden; transform: scaleY(-1); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent)"><img class="mv" src="assets/a3b7a34859f52eedffb5fd094f86393f.jpg" alt="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 1; filter: hue-rotate(-38deg) saturate(1.2) brightness(0.55) contrast(1.1); animation: kenburns 50s ease-in-out infinite alternate-reverse"></div>
+<div data-bgx="1" style="position: absolute; top: 7200px; left: 0; right: 0; height: 1400px; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent)"><img class="mv" src="assets/a3b7a34859f52eedffb5fd094f86393f.jpg" alt="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 1; filter: hue-rotate(-38deg) saturate(1.2) brightness(0.55) contrast(1.1); animation: kenburns 44s ease-in-out infinite alternate"></div>
+<div data-bgx="1" style="position: absolute; top: 8400px; left: 0; right: 0; height: 1400px; overflow: hidden; transform: scaleY(-1); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent)"><img class="mv" src="assets/a3b7a34859f52eedffb5fd094f86393f.jpg" alt="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 1; filter: hue-rotate(-38deg) saturate(1.2) brightness(0.55) contrast(1.1); animation: kenburns 50s ease-in-out infinite alternate-reverse"></div>
+<div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(5,9,20,0.3)"></div>
+<div data-bgx="1" style="position: absolute; top: 9600px; left: 0; right: 0; height: 1400px; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent)"><img class="mv" src="assets/a3b7a34859f52eedffb5fd094f86393f.jpg" alt="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 1; filter: hue-rotate(-38deg) saturate(1.2) brightness(0.55) contrast(1.1); animation: kenburns 44s ease-in-out infinite alternate"></div>
+<div data-bgx="1" style="position: absolute; top: 10800px; left: 0; right: 0; height: 1400px; overflow: hidden; transform: scaleY(-1); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent)"><img class="mv" src="assets/a3b7a34859f52eedffb5fd094f86393f.jpg" alt="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 1; filter: hue-rotate(-38deg) saturate(1.2) brightness(0.55) contrast(1.1); animation: kenburns 50s ease-in-out infinite alternate-reverse"></div>
+<div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(5,9,20,0.3)"></div>
+<div data-bgx="1" style="position: absolute; top: 12000px; left: 0; right: 0; height: 1400px; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent)"><img class="mv" src="assets/a3b7a34859f52eedffb5fd094f86393f.jpg" alt="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 1; filter: hue-rotate(-38deg) saturate(1.2) brightness(0.55) contrast(1.1); animation: kenburns 44s ease-in-out infinite alternate"></div>
+<div data-bgx="1" style="position: absolute; top: 13200px; left: 0; right: 0; height: 1400px; overflow: hidden; transform: scaleY(-1); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent)"><img class="mv" src="assets/a3b7a34859f52eedffb5fd094f86393f.jpg" alt="" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 1; filter: hue-rotate(-38deg) saturate(1.2) brightness(0.55) contrast(1.1); animation: kenburns 50s ease-in-out infinite alternate-reverse"></div>
+<div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(5,9,20,0.3)"></div>
 <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(5,9,20,0.3)"></div>
 <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 2400px; opacity: 0.2" preserveAspectRatio="none"><filter id="nebA" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.0035 0.005" numOctaves="5" seed="7"/><feColorMatrix type="matrix" values="0 0 0 0 0.55  0 0 0 0 0.25  0 0 0 0 1  0 0 0 1.7 -0.62"/></filter><rect width="100%" height="100%" filter="url(#nebA)"/></svg>
 <svg style="position: absolute; top: 2200px; left: 0; width: 100%; height: 2400px; opacity: 0.18" preserveAspectRatio="none"><filter id="nebB" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.004 0.0055" numOctaves="5" seed="21"/><feColorMatrix type="matrix" values="0 0 0 0 0.12  0 0 0 0 0.45  0 0 0 0 1  0 0 0 1.7 -0.62"/></filter><rect width="100%" height="100%" filter="url(#nebB)"/></svg>
@@ -176,12 +339,15 @@ a:hover{color:#ffffff}
 <span>ISMAILTENNI ART</span>
 </a>
 <nav style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 32px; font-size: 14px; font-weight: 400; color: #e8eefc">
-<a href="#gallery">Gallery</a>
-<a href="#photography">Photography</a>
-<a href="#film">Film</a>
-<a href="#about">About</a>
+<a href="#gallery"><span data-t="nav_gallery">Gallery</span></a>
+<a href="#photography"><span data-t="nav_photo">Photography</span></a>
+<a href="#film"><span data-t="nav_film">Film</span></a>
+<a href="#shop"><span data-x="nav_shop">Shop</span></a>
+<a href="#about"><span data-t="nav_about">About</span></a>
 <a href="https://wa.me/212651543275" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-<a href="https://www.instagram.com/ismailtenni_art/" style="display: inline-block; padding: 11px 22px; border: 1px solid rgba(255,255,255,0.45); border-radius: 999px; background: rgba(10,18,40,0.6); color: #ffffff">Follow on Instagram</a>
+<span id="lang" style="display:inline-flex;gap:4px;align-items:center"></span>
+<span id="acct" style="display:inline-flex;gap:10px;align-items:center"></span>
+<a href="https://www.instagram.com/ismailtenni_art/" style="display: inline-block; padding: 11px 22px; border: 1px solid rgba(255,255,255,0.45); border-radius: 999px; background: rgba(10,18,40,0.6); color: #ffffff"><span data-t="follow">Follow on Instagram</span></a>
 </nav>
 </header>
 
@@ -212,33 +378,36 @@ a:hover{color:#ffffff}
 </div>
 </div>
 <a href="#gallery" style="animation: fadeUp 1.4s ease 0.6s both, ctaGlow 3s ease-in-out 2s infinite; display: inline-flex; align-items: center; gap: 12px; margin-top: clamp(50px, 8vw, 90px); padding: 16px 32px; border: 1px solid rgba(255,255,255,0.35); border-radius: 999px; background: linear-gradient(90deg, rgba(42,120,170,0.75), rgba(30,70,110,0.75)); font-size: 20px; font-weight: 600; color: #ffffff">
-<span>Explore the gallery</span>
+<span><span data-t="explore">Explore the gallery</span></span>
 <svg aria-hidden="true" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12M11 5l5 5-5 5"/></svg>
 </a>
 <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 16px clamp(24px, 4.5vw, 64px); margin-top: clamp(50px, 6vw, 90px); font-size: 15px; font-weight: 600; color: #ffffff">
 <a href="#gallery">Artwork</a>
-<a href="#photography">Photography</a>
-<a href="#film">Film</a>
+<a href="#photography"><span data-t="nav_photo">Photography</span></a>
+<a href="#film"><span data-t="nav_film">Film</span></a>
 <a href="https://www.instagram.com/ismailtenni_art/">Instagram</a>
 </div>
 </section>
 
+<div class="fx-marq" aria-hidden="true"><div class="fx-track"><span>ART</span><i></i><span>FANTASY</span><i></i><span>WORLD</span><i></i><span>ETERNAL SPACE</span><i></i><span>ISMAILTENNI ART</span><i></i><span>DRAWN BY HAND</span><i></i><span>ART</span><i></i><span>FANTASY</span><i></i><span>WORLD</span><i></i><span>ETERNAL SPACE</span><i></i><span>ISMAILTENNI ART</span><i></i><span>DRAWN BY HAND</span><i></i></div></div>
 <section id="gallery" style="max-width: 1440px; margin: 0 auto; box-sizing: border-box; padding: clamp(64px, 9vw, 120px) clamp(20px, 4vw, 48px) 0">
-<div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #c4a0ff">01 — Gallery</div>
-<h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff">Selected artwork</h2>
-<p style="margin: 16px 0 0; max-width: 520px; font-size: 17px; line-height: 1.6; font-weight: 300; color: #b7c4dc">Tap any artwork to see it large, zoom into the details and follow the process.</p>
+<div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #c4a0ff"><span data-t="g_label">01 — Gallery</span></div>
+<h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff"><span data-t="g_title">Selected artwork</span></h2>
+<p style="margin: 16px 0 0; max-width: 520px; font-size: 17px; line-height: 1.6; font-weight: 300; color: #b7c4dc"><span data-t="g_intro">Tap any artwork to see it large, zoom into the details and follow the process.</span></p>
 <div id="g-works" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 22vw, 230px), 1fr)); gap: 28px 20px; align-items: start; margin-top: 56px"></div>
 </section>
+<section id="collections" class="mx-sec"><div class="mx-lab"><span data-x="col_label">Collections</span></div><h2><span data-x="col_title">Explore by world</span></h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-top:40px;max-width:1100px"><a href="#gallery" data-ser="Portraits" class="mx-card art-card"><div class="mx-ph" style="aspect-ratio:4/3;font-size:13px">Portraits</div><div class="t"><span data-x="n_p">Portraits</span></div><div class="d"><span data-x="col_p">Faces and emotions, drawn by hand.</span></div><div class="go"><span data-x="col_open">Open collection</span> &#8594;</div></a><a href="#gallery" data-ser="Fantasy" class="mx-card art-card"><div class="mx-ph" style="aspect-ratio:4/3;font-size:13px">Fantasy</div><div class="t"><span data-x="n_f">Fantasy</span></div><div class="d"><span data-x="col_f">Imagined worlds and creatures.</span></div><div class="go"><span data-x="col_open">Open collection</span> &#8594;</div></a><a href="#gallery" data-ser="Space" class="mx-card art-card"><div class="mx-ph" style="aspect-ratio:4/3;font-size:13px">Space</div><div class="t"><span data-x="n_s">Space</span></div><div class="d"><span data-x="col_s">Planets, nebulas and the unknown.</span></div><div class="go"><span data-x="col_open">Open collection</span> &#8594;</div></a></div></section>
 <section id="photography" style="max-width: 1440px; margin: 0 auto; box-sizing: border-box; padding: clamp(72px, 10vw, 140px) clamp(20px, 4vw, 48px) 0">
-<div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #5cbcff">02 — Photography</div>
-<h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff">Through the lens</h2>
+<div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #5cbcff"><span data-t="p_label">02 — Photography</span></div>
+<h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff"><span data-t="p_title">Through the lens</span></h2>
 <div id="g-photos" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(clamp(140px, 20vw, 210px), 1fr)); gap: 20px; margin-top: 40px"></div>
 </section>
 <section id="film" style="max-width: 1440px; margin: 0 auto; box-sizing: border-box; padding: clamp(72px, 10vw, 140px) clamp(20px, 4vw, 48px) 0">
-<div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #c4a0ff">03 — Film</div>
-<h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff">Process and motion</h2>
+<div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #c4a0ff"><span data-t="f_label">03 — Film</span></div>
+<h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff"><span data-t="f_title">Process and motion</span></h2>
 <div id="g-films" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; margin-top: 40px; max-width: 1200px"></div>
 </section>
+<script>function CHIP(w){return w.status?'<span style="position:absolute;top:12px;left:12px;padding:5px 12px;border-radius:999px;background:rgba(10,14,40,0.82);border:1px solid rgba(190,170,255,0.6);color:#fff;font-size:11px;letter-spacing:0.14em;text-transform:uppercase">'+String(w.status).replace(/[&<>"]/g,'')+'</span>':''}</script>
 <div id="vw" role="dialog" aria-modal="true" aria-label="Details" style="display: none; position: fixed; inset: 0; z-index: 1000; overflow-y: auto; background: rgba(3,4,14,0.93); padding: 24px clamp(14px, 3vw, 40px); box-sizing: border-box">
 <div id="vw-in" style="position: relative; width: 100%; max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 32px">
 <button id="vw-x" aria-label="Close" style="position: absolute; top: -4px; right: 0; z-index: 3; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.4); background: rgba(10,14,40,0.8); color: #fff; font-size: 22px; cursor: pointer">&#10005;</button>
@@ -251,7 +420,7 @@ a:hover{color:#ffffff}
 <div id="vw-side" style="flex: 1 1 300px; max-width: 420px; margin-top: 52px"></div>
 </div></div>
 <script>
-var C={"works": [{"id": "w1", "title": "[ARTWORK TITLE]", "meta": "[Medium - Year]", "desc": "", "ratio": "3 / 4", "cover": "assets/28bb085f672612d25e2efa68b580323d.jpg", "shots": [{"src": "assets/9433cca2dca8d4b8ac7c215c03e9d4af.jpg", "label": "Full artwork"}, {"src": "assets/8ffb20c30c8c7c8ced541eb44478fcc1.jpg", "label": "Detail: the eye"}, {"src": "assets/64786b0b0cb96198dca6753f173c806d.jpg", "label": "Detail: the honey"}, {"src": "assets/fb76e486c21159974abf4bdbc75848e6.jpg", "label": "Detail: the bee"}, {"src": "assets/e886a5f031eea00db7fdae1e5d4bc54e.jpg", "label": "Detail: the hand"}], "process": []}], "photos": [], "films": []};
+var C={"works": [{"id": "w1", "series": "Portraits", "title": "[ARTWORK TITLE]", "meta": "[Medium - Year]", "desc": "", "ratio": "3 / 4", "cover": "assets/28bb085f672612d25e2efa68b580323d.jpg", "shots": [{"src": "assets/9433cca2dca8d4b8ac7c215c03e9d4af.jpg", "label": "Full artwork"}, {"src": "assets/8ffb20c30c8c7c8ced541eb44478fcc1.jpg", "label": "Detail: the eye"}, {"src": "assets/64786b0b0cb96198dca6753f173c806d.jpg", "label": "Detail: the honey"}, {"src": "assets/fb76e486c21159974abf4bdbc75848e6.jpg", "label": "Detail: the bee"}, {"src": "assets/e886a5f031eea00db7fdae1e5d4bc54e.jpg", "label": "Detail: the hand"}], "process": []}], "photos": [], "films": []};
 function E(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 var PH='border: 1px dashed rgba(159,176,200,0.5); border-radius: 16px; background: linear-gradient(160deg, rgba(20,34,70,0.6), rgba(8,12,28,0.6)); display: flex; align-items: center; justify-content: center; color: #9fb0c8; font-size: 14px';
 var cur=[],idx=0,zoom=false,det=0;
@@ -263,20 +432,20 @@ function thumbs(list,off,title){if(!list.length)return '';return '<div style="ma
 var curW=null;function open_(list,i,side,wid){cur=list;idx=i;curW=wid;var w0=Array.isArray(wid)?wid[i]:wid;document.getElementById('vw-side').innerHTML=(side||'')+(wid?'<div id="soc" data-id="'+E(w0)+'"></div>':'');if(w0&&window.__social)window.__social(w0);document.getElementById('vw').style.display='block';document.body.style.overflow='hidden';show();}
 function close_(){document.getElementById('vw').style.display='none';document.body.style.overflow='';}
 var gw=document.getElementById('g-works');
-if(!C.works.length)gw.innerHTML='<div style="'+PH+';padding:40px">Artwork is coming soon.</div>';
+if(!C.works.length)gw.innerHTML='<div style="'+PH+';padding:40px"><span data-t="soon_art">Artwork is coming soon.</span></div>';
 C.works.forEach(function(w,k){var f=document.createElement('figure');f.className='bob';f.style.margin='0';
-f.innerHTML='<button class="art-card" aria-label="Open artwork details" style="display:block;position:relative;width:100%;padding:0;border:1px solid rgba(190,170,255,0.35);border-radius:16px;overflow:hidden;cursor:pointer;background:#07091a;font-family:inherit;box-shadow:0 0 40px rgba(110,90,255,0.25)"><img src="'+E(w.cover)+'" alt="'+E(w.title)+'" style="display:block;width:100%;aspect-ratio:'+E(w.ratio||'3 / 4')+';object-fit:cover"><span style="position:absolute;left:0;right:0;bottom:0;padding:40px 12px 12px;background:linear-gradient(to top,rgba(4,5,18,0.85),rgba(4,5,18,0));color:#fff;font-size:12px;letter-spacing:0.18em;text-align:left">VIEW DETAILS &#8594;</span></button><figcaption style="margin-top:12px;font-size:15px;color:#e8eefc">'+E(w.title)+'<br><span style="color:#9fb0c8;font-size:13px">'+E(w.meta)+'</span><div class="cnt" data-id="'+E(w.id)+'" style="margin-top:6px;font-size:12px;letter-spacing:0.08em;color:#c4a0ff;min-height:16px"></div></figcaption>';
+f.innerHTML='<button class="art-card" aria-label="Open artwork details" style="display:block;position:relative;width:100%;padding:0;border:1px solid rgba(190,170,255,0.35);border-radius:16px;overflow:hidden;cursor:pointer;background:#07091a;font-family:inherit;box-shadow:0 0 40px rgba(110,90,255,0.25)"><img src="'+E(w.cover)+'" alt="'+E(w.title)+'" style="display:block;width:100%;aspect-ratio:'+E(w.ratio||'3 / 4')+';object-fit:cover"><span style="position:absolute;left:0;right:0;bottom:0;padding:40px 12px 12px;background:linear-gradient(to top,rgba(4,5,18,0.85),rgba(4,5,18,0));color:#fff;font-size:12px;letter-spacing:0.18em;text-align:left">VIEW DETAILS &#8594;</span>'+CHIP(w)+'</button><figcaption style="margin-top:12px;font-size:15px;color:#e8eefc">'+E(w.title)+'<br><span style="color:#9fb0c8;font-size:13px">'+E(w.meta)+'</span><div class="cnt" data-id="'+E(w.id)+'" style="margin-top:6px;font-size:12px;letter-spacing:0.08em;color:#c4a0ff;min-height:16px"></div></figcaption>';
 f.querySelector('button').onclick=function(){var d=(w.shots&&w.shots.length?w.shots:[{src:w.cover,label:'Full artwork'}]),p=(w.process||[]).map(function(s,j){return typeof s==='string'?{src:s,label:'Process '+(j+1)}:s});
 var side='<div style="font-size:12px;letter-spacing:0.3em;text-transform:uppercase;color:#c4a0ff">Artwork</div><h3 style="margin:12px 0 0;font-weight:400;font-size:clamp(26px,3vw,38px);line-height:1.15;color:#fff">'+E(w.title)+'</h3><div style="margin-top:8px;font-size:14px;color:#9fb0c8">'+E(w.meta)+'</div>'+(w.desc?'<p style="margin:18px 0 0;font-size:15px;line-height:1.7;font-weight:300;color:#c4d0e6;white-space:pre-line">'+E(w.desc)+'</p>':'')+(d.length>1?thumbs(d,0,'Details'):'')+thumbs(p,d.length,'The process');
 open_(d.concat(p),0,side,w.id);};gw.appendChild(f);});
 var rt=['3 / 4','1 / 1','4 / 5','3 / 4','1 / 1'];
 for(var q=C.works.length;q<6;q++){var h=document.createElement('div');h.className='bob';h.style.cssText='aspect-ratio:'+rt[q%5]+';border:1px dashed rgba(159,176,200,0.5);border-radius:16px;background:linear-gradient(160deg,rgba(20,34,70,0.6),rgba(8,12,28,0.6));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#9fb0c8;font-size:13px';h.innerHTML='<svg aria-hidden="true" width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="#9fb0c8" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="24" height="20" rx="3"/><circle cx="12" cy="13" r="2.5"/><path d="M4 23l7-6 5 4 4-3 8 6"/></svg><span>Coming soon</span>';gw.appendChild(h);}
 var gp=document.getElementById('g-photos');
-if(!C.photos.length)gp.innerHTML='<div class="bob" style="aspect-ratio:3/2;'+PH+'">Photos coming soon</div>';
+if(!C.photos.length)gp.innerHTML='<div class="bob" style="aspect-ratio:3/2;'+PH+'"><span data-t="soon_ph">Photos coming soon</span></div>';
 var pl=C.photos.map(function(s,i){return {src:s,label:'Photo '+(i+1)}});
 C.photos.forEach(function(s,i){var b=document.createElement('button');b.className='art-card bob';b.setAttribute('aria-label','Open photo');b.style.cssText='display:block;width:100%;padding:0;border:1px solid rgba(190,170,255,0.35);border-radius:16px;overflow:hidden;cursor:pointer;background:#07091a;box-shadow:0 0 40px rgba(110,90,255,0.2)';b.innerHTML='<img src="'+E(s)+'" alt="Photograph" style="display:block;width:100%;aspect-ratio:3/2;object-fit:cover">';b.onclick=function(){open_(pl,i,'',C.photos.map(function(u){return u.split('/').pop().split('.')[0].replace(/[^a-z0-9_-]/gi,'').slice(0,40)}))};gp.appendChild(b);});
 var gf=document.getElementById('g-films');
-if(!C.films.length)gf.innerHTML='<div class="bob" style="aspect-ratio:16/9;border-radius:20px;'+PH+'">Film coming soon</div>';
+if(!C.films.length)gf.innerHTML='<div class="bob" style="aspect-ratio:16/9;border-radius:20px;'+PH+'"><span data-t="soon_film">Film coming soon</span></div>';
 C.films.forEach(function(f){var d=document.createElement('div');d.className='bob';
 d.innerHTML=f.file?'<video controls playsinline preload="metadata" src="'+E(f.file)+'" style="display:block;width:100%;max-height:80vh;border-radius:20px;background:#000;border:1px solid rgba(190,170,255,0.35)"></video>':'<a href="'+E(f.url)+'" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;justify-content:center;aspect-ratio:16/9;border-radius:20px;border:1px solid rgba(190,170,255,0.45);background:rgba(10,18,40,0.8);color:#fff;font-size:15px">'+E(f.title||'Watch the video')+' &#8599;</a>';gf.appendChild(d);});
 document.getElementById('vw-x').onclick=close_;
@@ -287,23 +456,69 @@ document.getElementById('vw-side').onclick=function(e){var t=e.target.closest('.
 document.getElementById('vw-img').onclick=function(){zoom=!zoom;this.style.cssText=zoom?'display:inline-block;width:230%;max-width:none;height:auto;cursor:zoom-out':'display:inline-block;height:78vh;max-width:100%;width:auto;object-fit:contain;cursor:zoom-in'};
 </script>
 
-</div>
-</div>
-</sc-if>
-
+<section id="timelapse" class="mx-sec"><div class="mx-lab"><span data-x="tl_label">Time-lapse</span></div><h2><span data-x="tl_title">Watch it being drawn</span></h2><p class="mx-p"><span data-x="tl_intro">Every artwork sped up, from the first line to the last touch.</span></p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-top:40px;max-width:1100px"><div class="mx-ph bob" style="aspect-ratio:16/9;flex-direction:column;gap:14px"><div class="mx-play"><i></i></div><span data-x="tl_soon">Video coming soon</span></div><div class="mx-ph bob" style="aspect-ratio:16/9;flex-direction:column;gap:14px"><div class="mx-play"><i></i></div><span data-x="tl_soon">Video coming soon</span></div></div></section>
+<section id="commission" style="max-width: 1440px; margin: 0 auto; box-sizing: border-box; padding: clamp(72px, 10vw, 140px) clamp(20px, 4vw, 48px) 0">
+<div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #c4a0ff"><span data-t="c_label">Commissions</span></div>
+<h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff"><span data-t="c_title">Commission me</span></h2>
+<p style="margin: 16px 0 0; max-width: 560px; font-size: 17px; line-height: 1.6; font-weight: 300; color: #b7c4dc"><span data-t="c_intro">Want your own artwork? Tell me your idea and I'll reply on WhatsApp.</span></p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-top:40px;max-width:1000px">
+<a href="https://wa.me/212651543275?text=Hi%21%20I%20would%20like%20a%20portrait%20commission." target="_blank" rel="noopener noreferrer" class="art-card" style="display:flex;flex-direction:column;gap:10px;padding:24px;border-radius:18px;border:1px solid rgba(190,170,255,0.35);background:linear-gradient(160deg,rgba(40,30,90,0.45),rgba(8,12,34,0.6));backdrop-filter:blur(6px);color:#fff">
+<div style="font-size:20px"><span data-t="c1">Portrait</span></div>
+<div style="font-size:14px;line-height:1.6;color:#b7c4dc;flex:1"><span data-t="c1d">A hand-drawn portrait from your photo.</span></div>
+<div style="margin-top:8px;font-size:14px;color:#d6ccff"><span data-t="ask">Ask for a price</span> &#8594;</div></a>
+<a href="https://wa.me/212651543275?text=Hi%21%20I%20would%20like%20a%20fantasy%20artwork%20commission." target="_blank" rel="noopener noreferrer" class="art-card" style="display:flex;flex-direction:column;gap:10px;padding:24px;border-radius:18px;border:1px solid rgba(190,170,255,0.35);background:linear-gradient(160deg,rgba(40,30,90,0.45),rgba(8,12,34,0.6));backdrop-filter:blur(6px);color:#fff">
+<div style="font-size:20px"><span data-t="c2">Fantasy scene</span></div>
+<div style="font-size:14px;line-height:1.6;color:#b7c4dc;flex:1"><span data-t="c2d">An imagined world built around your story.</span></div>
+<div style="margin-top:8px;font-size:14px;color:#d6ccff"><span data-t="ask">Ask for a price</span> &#8594;</div></a>
+<a href="https://wa.me/212651543275?text=Hi%21%20I%20have%20an%20idea%20for%20an%20artwork." target="_blank" rel="noopener noreferrer" class="art-card" style="display:flex;flex-direction:column;gap:10px;padding:24px;border-radius:18px;border:1px solid rgba(190,170,255,0.35);background:linear-gradient(160deg,rgba(40,30,90,0.45),rgba(8,12,34,0.6));backdrop-filter:blur(6px);color:#fff">
+<div style="font-size:20px"><span data-t="c3">Your own idea</span></div>
+<div style="font-size:14px;line-height:1.6;color:#b7c4dc;flex:1"><span data-t="c3d">Have something else in mind? Let us talk.</span></div>
+<div style="margin-top:8px;font-size:14px;color:#d6ccff"><span data-t="ask">Ask for a price</span> &#8594;</div></a>
+</div></section>
+<section id="prices" style="max-width: 1440px; margin: 0 auto; box-sizing: border-box; padding: clamp(72px, 10vw, 140px) clamp(20px, 4vw, 48px) 0">
+<div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #c4a0ff"><span data-t="pr_label">Prices</span></div>
+<h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff"><span data-t="pr_title">Prices and how to order</span></h2>
+<p style="margin: 16px 0 0; max-width: 560px; font-size: 17px; line-height: 1.6; font-weight: 300; color: #b7c4dc"><span data-t="pr_intro">Every artwork is one of a kind. Message me on WhatsApp and I reply with the price.</span></p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-top:36px;max-width:900px"><div style="padding:24px;border-radius:18px;border:1px solid rgba(190,170,255,0.4);background:linear-gradient(160deg,rgba(40,30,90,0.45),rgba(8,12,34,0.6))"><div style="font-size:20px"><span data-t="pr1">Small size</span></div><div style="margin-top:10px;font-size:14px;color:#b7c4dc"><span data-t="pr_ask">Price on request</span></div></div><div style="padding:24px;border-radius:18px;border:1px solid rgba(190,170,255,0.4);background:linear-gradient(160deg,rgba(40,30,90,0.45),rgba(8,12,34,0.6))"><div style="font-size:20px"><span data-t="pr2">Medium size</span></div><div style="margin-top:10px;font-size:14px;color:#b7c4dc"><span data-t="pr_ask">Price on request</span></div></div><div style="padding:24px;border-radius:18px;border:1px solid rgba(190,170,255,0.4);background:linear-gradient(160deg,rgba(40,30,90,0.45),rgba(8,12,34,0.6))"><div style="font-size:20px"><span data-t="pr3">Large size</span></div><div style="margin-top:10px;font-size:14px;color:#b7c4dc"><span data-t="pr_ask">Price on request</span></div></div></div>
+<h3 style="margin:48px 0 8px;font-weight:400;font-size:24px"><span data-t="h_title">How to order</span></h3>
+<ol style="list-style:none;margin:0;padding:0;max-width:640px"><li style="display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-top:1px solid rgba(255,255,255,0.12)"><span style="flex:none;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(42,120,170,0.9),rgba(100,70,200,0.9));font-size:14px">1</span><span style="font-size:16px;line-height:1.5;color:#e1e8f7"><span data-t="h1">Tell me your idea on WhatsApp.</span></span></li><li style="display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-top:1px solid rgba(255,255,255,0.12)"><span style="flex:none;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(42,120,170,0.9),rgba(100,70,200,0.9));font-size:14px">2</span><span style="font-size:16px;line-height:1.5;color:#e1e8f7"><span data-t="h2">I reply with sizes and the price.</span></span></li><li style="display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-top:1px solid rgba(255,255,255,0.12)"><span style="flex:none;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(42,120,170,0.9),rgba(100,70,200,0.9));font-size:14px">3</span><span style="font-size:16px;line-height:1.5;color:#e1e8f7"><span data-t="h3">We agree the details together.</span></span></li><li style="display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-top:1px solid rgba(255,255,255,0.12)"><span style="flex:none;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(42,120,170,0.9),rgba(100,70,200,0.9));font-size:14px">4</span><span style="font-size:16px;line-height:1.5;color:#e1e8f7"><span data-t="h4">You receive your artwork.</span></span></li></ol>
+</section>
+<section id="shop" class="mx-sec"><div class="mx-lab"><span data-x="sh_label">Shop</span></div><h2><span data-x="sh_title">Prints &amp; more</span></h2><p class="mx-p"><span data-x="sh_intro">Pick something and tap Buy: we finish the order on WhatsApp.</span></p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin-top:40px;max-width:1100px"><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:1/1;font-size:13px"><span data-x="sh_img">Product photo</span></div><div class="t"><span data-x="pr1">Art print</span></div><div class="d"><span data-x="sh_price">Price coming soon</span></div><a class="mx-btn" href="https://wa.me/212651543275?text=Hi%21%20I%20want%20to%20buy%20an%20art%20print." target="_blank" rel="noopener noreferrer"><span data-x="sh_buy">Buy on WhatsApp</span></a></div><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:1/1;font-size:13px"><span data-x="sh_img">Product photo</span></div><div class="t"><span data-x="pr2">Poster</span></div><div class="d"><span data-x="sh_price">Price coming soon</span></div><a class="mx-btn" href="https://wa.me/212651543275?text=Hi%21%20I%20want%20to%20buy%20a%20poster." target="_blank" rel="noopener noreferrer"><span data-x="sh_buy">Buy on WhatsApp</span></a></div><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:1/1;font-size:13px"><span data-x="sh_img">Product photo</span></div><div class="t"><span data-x="pr3">Sticker pack</span></div><div class="d"><span data-x="sh_price">Price coming soon</span></div><a class="mx-btn" href="https://wa.me/212651543275?text=Hi%21%20I%20want%20to%20buy%20a%20sticker%20pack." target="_blank" rel="noopener noreferrer"><span data-x="sh_buy">Buy on WhatsApp</span></a></div><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:1/1;font-size:13px"><span data-x="sh_img">Product photo</span></div><div class="t"><span data-x="pr4">Phone case</span></div><div class="d"><span data-x="sh_price">Price coming soon</span></div><a class="mx-btn" href="https://wa.me/212651543275?text=Hi%21%20I%20want%20to%20buy%20a%20phone%20case." target="_blank" rel="noopener noreferrer"><span data-x="sh_buy">Buy on WhatsApp</span></a></div></div></section>
+<section id="tracker" class="mx-sec"><div class="mx-lab"><span data-y="tr_label">Order tracker</span></div><h2><span data-y="tr_title">Where is my drawing?</span></h2><p class="mx-p"><span data-y="tr_intro">Enter the code I sent you on WhatsApp.</span></p><form id="mx-tf" autocomplete="off"><input id="mx-tc" type="text" maxlength="24" placeholder="Your code" aria-label="Order code"><button class="mx-btn v" type="submit"><span data-y="tr_btn">Check</span></button></form><div id="mx-tr" aria-live="polite"></div><a class="mx-btn" style="margin-top:26px" href="https://wa.me/212651543275?text=Hi%21%20I%20want%20to%20ask%20about%20my%20order." target="_blank" rel="noopener noreferrer"><span data-y="tr_ask">No code? Message me on WhatsApp</span></a></section>
+<section id="beforeafter" style="max-width: 1440px; margin: 0 auto; box-sizing: border-box; padding: clamp(72px, 10vw, 140px) clamp(20px, 4vw, 48px) 0">
+<div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #c4a0ff"><span data-t="b_label">Before / After</span></div>
+<h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff"><span data-t="b_title">From sketch to finished artwork</span></h2>
+<p class="mx-p" style="margin-top:16px"><span data-x="ba_hint">Drag the line to compare the sketch and the finished artwork.</span></p><div id="ba" data-before="" data-after=""><div class="L L1"><span data-x="ba_s">Sketch</span></div><div class="L L2"><span data-x="ba_f">Finished</span></div><div class="h"></div><input type="range" min="0" max="100" value="50" aria-label="Before and after"></div></section>
+<section id="behind" style="max-width: 1440px; margin: 0 auto; box-sizing: border-box; padding: clamp(72px, 10vw, 140px) clamp(20px, 4vw, 48px) 0">
+<div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #c4a0ff"><span data-t="k_label">Behind the scenes</span></div>
+<h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff"><span data-t="k_title">Behind the art</span></h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(150px,22vw,230px),1fr));gap:20px;margin-top:36px"><div class="bob" style="aspect-ratio:1/1;border:1px dashed rgba(159,176,200,0.5);border-radius:16px;background:linear-gradient(160deg,rgba(20,34,70,0.6),rgba(8,12,28,0.6));display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;box-sizing:border-box;color:#9fb0c8;font-size:14px"><span data-t="k_soon">Your photo</span></div><div class="bob" style="aspect-ratio:1/1;border:1px dashed rgba(159,176,200,0.5);border-radius:16px;background:linear-gradient(160deg,rgba(20,34,70,0.6),rgba(8,12,28,0.6));display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;box-sizing:border-box;color:#9fb0c8;font-size:14px"><span data-t="k_soon">Your photo</span></div><div class="bob" style="aspect-ratio:1/1;border:1px dashed rgba(159,176,200,0.5);border-radius:16px;background:linear-gradient(160deg,rgba(20,34,70,0.6),rgba(8,12,28,0.6));display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;box-sizing:border-box;color:#9fb0c8;font-size:14px"><span data-t="k_soon">Your photo</span></div></div></section>
+<section id="wallpapers" class="mx-sec"><div class="mx-lab"><span data-y="wp_label">Free wallpapers</span></div><h2><span data-y="wp_title">Take my art with you</span></h2><p class="mx-p"><span data-y="wp_intro">A free phone wallpaper from each artwork.</span></p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:20px;margin-top:40px;max-width:900px"><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:9/16;font-size:13px"><span data-y="wp_soon">Coming soon</span></div><span class="mx-btn v" aria-disabled="true"><span data-y="wp_dl">Download</span></span></div><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:9/16;font-size:13px"><span data-y="wp_soon">Coming soon</span></div><span class="mx-btn v" aria-disabled="true"><span data-y="wp_dl">Download</span></span></div><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:9/16;font-size:13px"><span data-y="wp_soon">Coming soon</span></div><span class="mx-btn v" aria-disabled="true"><span data-y="wp_dl">Download</span></span></div></div></section>
+<section id="instagram" class="mx-sec"><div class="mx-lab"><span data-y="ig_label">Instagram</span></div><h2><span data-y="ig_title">Latest from @ismailtenni_art</span></h2><div id="ig-wrap" class="ig-wrap"><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a></div><a class="mx-btn v" style="margin-top:28px" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer"><span data-y="ig_btn">See more on Instagram</span></a></section>
+<section id="reviews" style="max-width: 1440px; margin: 0 auto; box-sizing: border-box; padding: clamp(72px, 10vw, 140px) clamp(20px, 4vw, 48px) 0">
+<div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #c4a0ff"><span data-t="r_label">Reviews</span></div>
+<h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff"><span data-t="r_title">What my clients say</span></h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:36px;max-width:1000px"><div class="bob" style="grid-column:1/-1;min-height:140px;border:1px dashed rgba(159,176,200,0.5);border-radius:16px;background:linear-gradient(160deg,rgba(20,34,70,0.6),rgba(8,12,28,0.6));display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;box-sizing:border-box;color:#9fb0c8;font-size:14px"><span data-t="r_soon">Reviews are coming soon.</span></div></div></section>
+<section id="news" style="max-width: 1440px; margin: 0 auto; box-sizing: border-box; padding: clamp(72px, 10vw, 140px) clamp(20px, 4vw, 48px) 0">
+<div style="max-width:620px;padding:32px;border-radius:20px;border:1px solid rgba(190,170,255,0.4);background:linear-gradient(160deg,rgba(40,30,90,0.5),rgba(8,12,34,0.65));box-shadow:0 0 60px rgba(110,90,255,0.25)">
+<h2 style="margin:0;font-weight:400;font-size:clamp(26px,3vw,36px);color:#fff"><span data-t="n_title">Be the first to know</span></h2>
+<p style="margin:12px 0 0;font-size:16px;line-height:1.6;font-weight:300;color:#b7c4dc"><span data-t="n_intro">Get my new artwork by email.</span></p>
+<form id="nf" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:20px"><input id="ne" type="email" required placeholder="Your email" aria-label="Email" style="flex:1 1 220px;min-width:0;box-sizing:border-box;padding:13px 16px;border-radius:999px;border:1px solid rgba(190,170,255,0.45);background:rgba(8,12,34,0.9);color:#fff;font-size:15px;font-family:inherit">
+<button style="padding:13px 26px;border-radius:999px;border:1px solid rgba(255,255,255,0.4);background:linear-gradient(90deg,rgba(42,120,170,0.9),rgba(100,70,200,0.9));color:#fff;font-size:15px;font-family:inherit;cursor:pointer"><span data-t="n_btn">Subscribe</span></button></form>
+<div id="nm" role="status" style="margin-top:12px;min-height:20px;font-size:14px;color:#c4d0e6"></div></div></section>
 <section id="about" style="position: relative; max-width: 1440px; margin: 0 auto; padding: clamp(80px, 11vw, 160px) clamp(20px, 4vw, 48px) 0; box-sizing: border-box">
 <div style="position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 56px">
 <div class="bob" style="flex: 1 1 320px; max-width: 460px; aspect-ratio: 4 / 5; border: 1px dashed rgba(159,176,200,0.5); border-radius: 16px; background: linear-gradient(160deg, rgba(20,34,70,0.6), rgba(8,12,28,0.6)); display: flex; align-items: center; justify-content: center; color: #9fb0c8; font-size: 14px">Your portrait</div>
 <div style="flex: 999 1 360px; min-width: 0; max-width: 560px">
-<div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #5cbcff">04 — About</div>
-<h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff">The artist</h2>
-<p style="margin: 24px 0 0; font-size: 18px; line-height: 1.7; font-weight: 300; color: #c4d0e6">[YOUR ARTIST STATEMENT — two or three lines about who you are, what you make and what drives your work.]</p>
+<div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #5cbcff"><span data-t="a_label">04 — About</span></div>
+<h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff"><span data-t="a_title">The artist</span></h2>
+<p style="margin: 24px 0 0; font-size: 18px; line-height: 1.7; font-weight: 300; color: #c4d0e6">I'm Ismail Tenni. I draw worlds of space, fantasy and faces. Follow my work on Instagram, and message me on WhatsApp if you want your own artwork.</p>
 <a href="https://www.instagram.com/ismailtenni_art/" style="display: inline-flex; align-items: center; gap: 12px; margin-top: 36px; padding: 14px 28px; border: 1px solid rgba(255,255,255,0.4); border-radius: 999px; background: linear-gradient(90deg, rgba(42,120,170,0.75), rgba(30,70,110,0.75)); font-size: 17px; font-weight: 600; color: #ffffff">
 <span>@ismailtenni_art on Instagram</span>
 <svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12M11 5l5 5-5 5"/></svg>
 </a>
 <a href="https://wa.me/212651543275" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 12px; margin-top: 36px; margin-left: 12px; padding: 14px 28px; border: 1px solid rgba(255,255,255,0.4); border-radius: 999px; background: linear-gradient(90deg, rgba(30,140,90,0.75), rgba(20,90,70,0.75)); font-size: 17px; font-weight: 600; color: #ffffff">
-<span>Chat on WhatsApp</span>
+<span><span data-t="wa_btn">Chat on WhatsApp</span></span>
 <svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12M11 5l5 5-5 5"/></svg>
 </a>
 <div style="display: flex; flex-wrap: wrap; gap: 20px clamp(16px, 3vw, 30px); margin-top: 44px">
@@ -326,7 +541,7 @@ document.getElementById('vw-img').onclick=function(){zoom=!zoom;this.style.cssTe
 </div>
 </div>
 </div>
-</section>
+<div id="story" style="margin-top:clamp(56px,8vw,100px)"><div class="mx-lab"><span data-y="ab_label">Meet the artist</span></div><h2 style="margin:16px 0 0;font-weight:400;font-size:clamp(28px,3.4vw,44px);color:#fff"><span data-y="ab_title">My story</span></h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-top:32px;max-width:1100px"><div class="mx-card art-card"><div class="t"><span data-y="ab1">Why I draw</span></div><div class="d"><span data-y="ab_soon">My story is coming soon.</span></div></div><div class="mx-card art-card"><div class="t"><span data-y="ab2">How I started</span></div><div class="d"><span data-y="ab_soon">My story is coming soon.</span></div></div><div class="mx-card art-card"><div class="t"><span data-y="ab3">What inspires me</span></div><div class="d"><span data-y="ab_soon">My story is coming soon.</span></div></div><div class="mx-ph bob" style="grid-column:1/-1;aspect-ratio:16/6;min-height:140px;flex-direction:column;gap:12px"><div class="mx-play"><i></i></div><span data-y="ab_vid">Voice or video hello coming soon</span></div></div></div></section>
 
 <footer style="max-width: 1440px; margin: 0 auto; padding: clamp(80px, 11vw, 160px) clamp(20px, 4vw, 48px) 40px; box-sizing: border-box">
 <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.14); font-size: 14px; color: #9fb0c8">
@@ -336,4 +551,408 @@ document.getElementById('vw-img').onclick=function(){zoom=!zoom;this.style.cssTe
 </footer>
 </div>
 </div>
+
+<div id="am" role="dialog" aria-modal="true" aria-label="Account" style="display:none;position:fixed;inset:0;z-index:1200;background:rgba(3,4,14,0.9);align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
+<form id="af" style="font-family:Sora,Inter,system-ui,sans-serif;position:relative;width:100%;max-width:400px;max-height:92vh;overflow:auto;box-sizing:border-box;padding:28px 24px;border-radius:18px;border:1px solid rgba(190,170,255,0.45);background:rgba(10,14,40,0.98);color:#e8eefc;box-shadow:0 0 60px rgba(110,90,255,0.35)">
+<button type="button" id="ax" aria-label="Close" style="position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,0.4);background:rgba(8,10,30,0.85);color:#fff;cursor:pointer;font-size:15px">&#10005;</button>
+<h3 id="at" style="margin:0;font-weight:400;font-size:26px;color:#fff">Log in</h3>
+<div id="an" style="display:none"><label style="display:block;margin-top:16px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9fb0c8" for="a-name">Your name</label><input id="a-name" autocomplete="name" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(190,170,255,0.4);background:rgba(8,12,34,0.9);color:#fff;font-size:15px;font-family:inherit;margin-top:6px"></div>
+<label style="display:block;margin-top:16px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9fb0c8" for="a-email">Email</label><input id="a-email" type="email" autocomplete="email" required style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(190,170,255,0.4);background:rgba(8,12,34,0.9);color:#fff;font-size:15px;font-family:inherit;margin-top:6px">
+<label style="display:block;margin-top:16px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9fb0c8" for="a-pw">Password</label><input id="a-pw" type="password" autocomplete="current-password" required style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(190,170,255,0.4);background:rgba(8,12,34,0.9);color:#fff;font-size:15px;font-family:inherit;margin-top:6px">
+<div id="ae" role="alert" style="margin-top:14px;min-height:20px;color:#ffb0b8;font-size:14px"></div>
+<button id="ab" type="submit" style="width:100%;margin-top:10px;padding:14px;border-radius:999px;border:1px solid rgba(255,255,255,0.4);background:linear-gradient(90deg,rgba(42,120,170,0.9),rgba(100,70,200,0.9));color:#fff;font-size:16px;font-family:inherit;cursor:pointer">Log in</button>
+<button type="button" id="as" style="width:100%;margin-top:12px;padding:8px;border:0;background:none;color:#c4a0ff;font-size:14px;font-family:inherit;cursor:pointer">No account yet? Sign up</button>
+</form></div>
+<script>
+(function(){
+var mode='login',box=document.getElementById('acct'),m=document.getElementById('am');
+var pill='padding:9px 18px;border-radius:999px;border:1px solid rgba(255,255,255,0.45);background:rgba(10,18,40,0.6);color:#fff;font-size:14px;font-family:inherit;cursor:pointer';
+function E(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function paint(u){
+ if(u){box.innerHTML='<span style="font-size:14px;color:#c4d0e6">Hi, '+E(u.name)+'</span><button id="lo" style="'+pill+'">Log out</button>';
+  document.getElementById('lo').onclick=function(){fetch('/api/logout',{method:'POST'}).then(function(){paint(null);var sc=document.getElementById('soc');if(sc&&window.__social)window.__social(sc.getAttribute('data-id'))})};}
+ else{box.innerHTML='<button id="li" style="'+pill+'">Log in</button><button id="su" style="'+pill+';background:linear-gradient(90deg,rgba(42,120,170,0.8),rgba(100,70,200,0.8))">Sign up</button>';
+  document.getElementById('li').onclick=function(){openM('login')};document.getElementById('su').onclick=function(){openM('signup')};}
+}
+function openM(md){mode=md;var s=md==='signup';document.getElementById('at').textContent=s?'Create your account':'Log in';
+ document.getElementById('an').style.display=s?'block':'none';document.getElementById('ab').textContent=s?'Sign up':'Log in';
+ document.getElementById('as').textContent=s?'Already have an account? Log in':'No account yet? Sign up';
+ document.getElementById('a-pw').autocomplete=s?'new-password':'current-password';document.getElementById('ae').textContent='';m.style.display='flex';}
+function closeM(){m.style.display='none';}
+document.getElementById('ax').onclick=closeM;
+m.onclick=function(e){if(e.target===m)closeM()};
+document.getElementById('as').onclick=function(){openM(mode==='login'?'signup':'login')};
+document.getElementById('af').onsubmit=function(e){e.preventDefault();var er=document.getElementById('ae'),b=document.getElementById('ab');er.textContent='';b.disabled=true;
+ fetch('/api/'+mode,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:document.getElementById('a-name').value,email:document.getElementById('a-email').value,password:document.getElementById('a-pw').value})})
+ .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d}})})
+ .then(function(x){b.disabled=false;if(x.ok&&x.d.user){document.getElementById('a-pw').value='';closeM();paint(x.d.user);var sc=document.getElementById('soc');if(sc&&window.__social)window.__social(sc.getAttribute('data-id'))}else er.textContent=x.d.error||'Accounts are not available yet.'})
+ .catch(function(){b.disabled=false;er.textContent='Accounts are not available yet.'});};
+
+var css=document.createElement('style');css.textContent='@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.45)}100%{transform:scale(1)}}@keyframes floatUp{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(-46px) scale(1.4)}}.heart-on{animation:pop .45s ease}.cmt{animation:fadeUp .4s ease both}';document.head.appendChild(css);
+function ago(t){var s=Math.max(1,Math.floor((Date.now()-t)/1000));if(s<60)return 'just now';if(s<3600)return Math.floor(s/60)+' min ago';if(s<86400)return Math.floor(s/3600)+' h ago';return Math.floor(s/86400)+' d ago'}
+function hue(n){var h=0;for(var i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))%360;return h}
+function counts(){fetch('/api/counts').then(function(r){return r.ok?r.json():{}}).then(function(c){document.querySelectorAll('.cnt').forEach(function(el){var d=c[el.getAttribute('data-id')];if(d&&(d.likes||d.comments))el.textContent='♥ '+d.likes+'   ·   💬 '+d.comments})}).catch(function(){})}
+window.__social=function(id){
+ var box=document.getElementById('soc');if(!box)return;
+ box.style.cssText='margin-top:30px;padding:18px;border-radius:16px;border:1px solid rgba(190,170,255,0.3);background:linear-gradient(160deg,rgba(40,30,90,0.45),rgba(8,12,34,0.6));backdrop-filter:blur(6px)';
+ box.innerHTML='<div style="color:#9fb0c8;font-size:13px">Loading...</div>';
+ fetch('/api/social?work='+encodeURIComponent(id)).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(d){draw(d)}).catch(function(){box.innerHTML='<div style="color:#9fb0c8;font-size:13px">Likes and comments will appear here once the site is connected.</div>'});
+ function draw(d){
+  var me=d.me;
+  var h='<div style="display:flex;align-items:center;gap:14px"><button id="hb" aria-label="Like" style="display:inline-flex;align-items:center;gap:10px;padding:10px 20px;border-radius:999px;border:1px solid '+(d.liked?'rgba(255,120,190,0.9)':'rgba(255,255,255,0.4)')+';background:'+(d.liked?'linear-gradient(90deg,rgba(220,60,140,0.85),rgba(140,60,220,0.85))':'rgba(10,14,40,0.7)')+';color:#fff;font-size:15px;font-family:inherit;cursor:pointer;box-shadow:'+(d.liked?'0 0 28px rgba(255,90,170,0.55)':'none')+'"><span id="hh" style="font-size:20px;line-height:1">'+(d.liked?'♥':'♡')+'</span><span id="hn">'+d.likes+'</span></button><span style="font-size:13px;color:#9fb0c8">'+d.comments.length+' comment'+(d.comments.length===1?'':'s')+'</span></div>';
+  if(me){h+='<form id="cf" style="margin-top:16px;display:flex;gap:10px"><input id="ci" maxlength="500" placeholder="Write a comment..." aria-label="Comment" style="flex:1;min-width:0;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1px solid rgba(190,170,255,0.4);background:rgba(8,12,34,0.9);color:#fff;font-size:14px;font-family:inherit"><button style="padding:0 18px;border-radius:12px;border:1px solid rgba(255,255,255,0.4);background:linear-gradient(90deg,rgba(42,120,170,0.9),rgba(100,70,200,0.9));color:#fff;font-family:inherit;cursor:pointer">Post</button></form>'}
+  else h+='<button id="lg" style="margin-top:16px;width:100%;padding:12px;border-radius:12px;border:1px dashed rgba(190,170,255,0.6);background:rgba(10,14,40,0.5);color:#d6ccff;font-family:inherit;font-size:14px;cursor:pointer">Log in to like and comment</button>';
+  h+='<div id="cl" style="margin-top:16px;display:flex;flex-direction:column;gap:12px;max-height:300px;overflow:auto">';
+  d.comments.forEach(function(c){h+=bub(c)});
+  h+='</div>';box.innerHTML=h;wire(d);
+ }
+ function bub(c){var hu=hue(c.name);return '<div class="cmt" data-cid="'+c.id+'" style="display:flex;gap:10px"><div style="flex:none;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,hsl('+hu+',70%,55%),hsl('+((hu+60)%360)+',70%,40%));display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff">'+E(c.name.charAt(0).toUpperCase())+'</div><div style="min-width:0;flex:1;padding:10px 14px;border-radius:4px 14px 14px 14px;background:rgba(255,255,255,0.07)"><div style="font-size:12px;color:#c4a0ff">'+E(c.name)+' <span style="color:#7e8bab">· '+ago(c.at)+'</span>'+(c.mine?' <button data-del="'+c.id+'" aria-label="Delete comment" style="float:right;border:0;background:none;color:#ff9aa8;cursor:pointer;font-size:12px;font-family:inherit">delete</button>':'')+'</div><div style="margin-top:4px;font-size:14px;line-height:1.5;color:#e8eefc;overflow-wrap:anywhere;white-space:pre-line">'+E(c.text)+'</div></div></div>'}
+ function wire(d){
+  var hb=document.getElementById('hb');
+  hb.onclick=function(){if(!d.me){openM('login');return}fetch('/api/like',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({work:id})}).then(function(r){return r.json()}).then(function(x){if(x.error)return;d.liked=x.liked;d.likes=x.likes;draw(d);var hh=document.getElementById('hh');if(x.liked)hh.className='heart-on';counts()})};
+  var lg=document.getElementById('lg');if(lg)lg.onclick=function(){openM('login')};
+  var cf=document.getElementById('cf');
+  if(cf)cf.onsubmit=function(e){e.preventDefault();var i=document.getElementById('ci'),t=i.value.trim();if(!t)return;fetch('/api/comment',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({work:id,text:t})}).then(function(r){return r.json()}).then(function(x){if(x.comment){d.comments.unshift(x.comment);draw(d);counts()}else{i.placeholder=x.error||'Could not post';i.value=''}})};
+  document.querySelectorAll('[data-del]').forEach(function(b){b.onclick=function(){var cid=+b.getAttribute('data-del');fetch('/api/comment/delete',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id:cid})}).then(function(){d.comments=d.comments.filter(function(c){return c.id!==cid});draw(d);counts()})}});
+ }
+};
+counts();
+fetch('/api/me').then(function(r){return r.ok?r.json():null}).then(function(d){paint(d&&d.user)}).catch(function(){paint(null)});
+})();
+</script>
+<script>
+(function(){
+var DICT={en:{},fr:{"nav_gallery": "Galerie", "nav_photo": "Photographie", "nav_film": "Film", "nav_about": "À propos", "follow": "Suivre sur Instagram", "explore": "Explorer la galerie", "g_label": "01 — Galerie", "g_title": "Œuvres choisies", "g_intro": "Touchez une œuvre pour la voir en grand, zoomer sur les détails et suivre le processus.", "p_label": "02 — Photographie", "p_title": "À travers l’objectif", "f_label": "03 — Film", "f_title": "Processus et mouvement", "a_label": "04 — À propos", "a_title": "L’artiste", "wa_btn": "Écrire sur WhatsApp", "c_label": "Commandes", "c_title": "Commandez votre œuvre", "c_intro": "Vous voulez votre propre œuvre ? Racontez-moi votre idée, je réponds sur WhatsApp.", "c1": "Portrait", "c1d": "Un portrait dessiné à la main, d’après votre photo.", "c2": "Scène fantastique", "c2d": "Un monde imaginaire, créé autour de votre histoire.", "c3": "Idée personnelle", "c3d": "Vous avez une autre idée ? Parlons-en.", "ask": "Demander le prix", "n_title": "Soyez le premier informé", "n_intro": "Recevez mes nouvelles œuvres par e-mail.", "n_btn": "Je m’abonne", "n_ph": "Votre e-mail", "soon_art": "Œuvres bientôt disponibles.", "soon_ph": "Photos bientôt disponibles", "soon_film": "Film bientôt disponible", "pr_label": "Tarifs", "pr_title": "Prix et comment commander", "pr_intro": "Chaque œuvre est unique. Écrivez-moi sur WhatsApp et je vous réponds avec le prix.", "pr1": "Petit format", "pr2": "Moyen format", "pr3": "Grand format", "pr_ask": "Prix sur demande", "h_title": "Comment commander", "h1": "Racontez-moi votre idée sur WhatsApp.", "h2": "Je vous réponds avec les formats et le prix.", "h3": "Nous choisissons ensemble les détails.", "h4": "Vous recevez votre œuvre.", "b_label": "Avant / Après", "b_title": "Du croquis à l’œuvre finie", "b_soon": "Ajoutez votre croquis et la photo finale pour montrer l’avant et l’après.", "k_label": "Coulisses", "k_title": "Derrière l’art", "k_soon": "Votre photo", "r_label": "Avis", "r_title": "Ce que disent mes clients", "r_soon": "Les avis arrivent bientôt."},ar:{"nav_gallery": "المعرض", "nav_photo": "التصوير", "nav_film": "فيلم", "nav_about": "نبذة", "follow": "تابعني على إنستغرام", "explore": "استكشف المعرض", "g_label": "01 — المعرض", "g_title": "أعمال مختارة", "g_intro": "المس أي عمل لرؤيته كبيراً وتكبير التفاصيل ومتابعة مراحل الرسم.", "p_label": "02 — التصوير", "p_title": "من خلف العدسة", "f_label": "03 — فيلم", "f_title": "المراحل والحركة", "a_label": "04 — نبذة", "a_title": "الفنان", "wa_btn": "راسلني على واتساب", "c_label": "الطلبات", "c_title": "اطلب لوحتك", "c_intro": "هل تريد لوحة خاصة بك؟ أخبرني بفكرتك وسأرد عليك في واتساب.", "c1": "بورتريه", "c1d": "بورتريه مرسوم باليد انطلاقاً من صورتك.", "c2": "مشهد خيالي", "c2d": "عالم خيالي مصمم حول قصتك.", "c3": "فكرة خاصة", "c3d": "لديك فكرة أخرى؟ دعنا نتحدث.", "ask": "اسأل عن السعر", "n_title": "كن أول من يعلم", "n_intro": "احصل على أعمالي الجديدة في بريدك.", "n_btn": "اشترك", "n_ph": "بريدك الإلكتروني", "soon_art": "الأعمال قريباً.", "soon_ph": "الصور قريباً", "soon_film": "الفيلم قريباً", "pr_label": "الأسعار", "pr_title": "الأسعار وطريقة الطلب", "pr_intro": "كل عمل فريد. راسلني على واتساب وسأرد عليك بالسعر.", "pr1": "حجم صغير", "pr2": "حجم متوسط", "pr3": "حجم كبير", "pr_ask": "السعر عند الطلب", "h_title": "كيف تطلب", "h1": "أخبرني بفكرتك على واتساب.", "h2": "أرد عليك بالأحجام والسعر.", "h3": "نتفق معاً على التفاصيل.", "h4": "تستلم لوحتك.", "b_label": "قبل / بعد", "b_title": "من الرسم الأولي إلى العمل النهائي", "b_soon": "أضف رسمك الأولي وصورة العمل النهائي لعرض قبل وبعد.", "k_label": "كواليس", "k_title": "خلف الفن", "k_soon": "صورتك", "r_label": "آراء", "r_title": "ماذا يقول عملائي", "r_soon": "الآراء قريباً."}};
+var cur='en';
+function apply(l){cur=l;var d=DICT[l]||{};document.querySelectorAll('[data-t]').forEach(function(el){if(!el.hasAttribute('data-en'))el.setAttribute('data-en',el.textContent);var k=el.getAttribute('data-t');el.textContent=(l!=='en'&&d[k])?d[k]:el.getAttribute('data-en');});
+ var ne=document.getElementById('ne');if(ne)ne.placeholder=(l!=='en'&&d.n_ph)?d.n_ph:'Your email';
+ document.documentElement.setAttribute('dir',l==='ar'?'rtl':'ltr');document.documentElement.setAttribute('lang',l);
+ document.querySelectorAll('#lang button').forEach(function(b){b.style.opacity=b.getAttribute('data-l')===l?'1':'0.55';b.style.borderColor=b.getAttribute('data-l')===l?'rgba(255,255,255,0.8)':'rgba(255,255,255,0.25)'});
+ try{localStorage.setItem('lang',l)}catch(e){}}
+var lb=document.getElementById('lang');
+if(lb){[['en','EN'],['fr','FR'],['ar','AR']].forEach(function(p){var b=document.createElement('button');b.setAttribute('data-l',p[0]);b.textContent=p[1];b.setAttribute('aria-label','Language '+p[1]);b.style.cssText='padding:6px 9px;border-radius:999px;border:1px solid rgba(255,255,255,0.25);background:rgba(10,18,40,0.6);color:#fff;font-size:12px;font-family:inherit;cursor:pointer';b.onclick=function(){apply(p[0])};lb.appendChild(b)});}
+// series filter
+var gw=document.getElementById('g-works');
+var ser=[];C.works.forEach(function(w,i){if(w.series&&ser.indexOf(w.series)<0)ser.push(w.series);if(gw.children[i])gw.children[i].setAttribute('data-series',w.series||'')});
+if(ser.length>0){var bar=document.createElement('div');bar.style.cssText='display:flex;flex-wrap:wrap;gap:10px;margin-top:32px';
+ ['All'].concat(ser).forEach(function(s){var b=document.createElement('button');b.textContent=s;b.style.cssText='padding:9px 18px;border-radius:999px;border:1px solid rgba(255,255,255,0.35);background:rgba(10,18,40,0.6);color:#fff;font-size:14px;font-family:inherit;cursor:pointer';
+  b.onclick=function(){Array.prototype.forEach.call(gw.children,function(f){var fs=f.getAttribute('data-series');f.style.display=(s==='All'||fs===s)?'':'none'})};bar.appendChild(b)});
+ gw.parentNode.insertBefore(bar,gw)}
+// newsletter
+var nf=document.getElementById('nf');
+if(nf)nf.onsubmit=function(e){e.preventDefault();var m=document.getElementById('nm');m.textContent='';
+ fetch('/api/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:document.getElementById('ne').value})})
+ .then(function(r){return r.json().then(function(d){return{ok:r.ok,d:d}})}).then(function(x){if(x.ok){m.textContent='Thank you! You are on the list.';nf.reset()}else m.textContent=x.d.error||'Not available yet.'})
+ .catch(function(){m.textContent='Not available yet.'})};
+var saved=null;try{saved=localStorage.getItem('lang')}catch(e){}
+if(saved&&DICT[saved])apply(saved);else apply('en');
+})();
+</script>
+<button id="mx-snd" type="button" aria-label="Space sound" aria-pressed="false" title="Space sound"><svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg><span class="eq"><i></i><i></i><i></i><i></i></span></button>
+<script id="more2-js">
+(function(){
+try{
+var d=document,w=window,root=d.documentElement;
+/* ====== EDIT HERE (or send me the info and I will update it) ====== */
+var ORDERS={
+  "DEMO":{name:"Example",stage:2,note:"This is an example code. Real codes will look like this."}
+  /* "AB123":{name:"Sara",stage:3,note:"Almost done, final touches today."}   stage: 1 Idea, 2 Sketch, 3 Coloring, 4 Final touches, 5 Done */
+};
+var IG_POSTS=[
+  /* "https://www.instagram.com/p/XXXXXXXXXXX/" */
+];
+/* ================================================================== */
+var Y={
+fr:{ab_label:"Rencontrez l’artiste",ab_title:"Mon histoire",ab1:"Pourquoi je dessine",ab2:"Comment j’ai commencé",ab3:"Ce qui m’inspire",ab_soon:"Mon histoire arrive bientôt.",ab_vid:"Un mot en voix ou en vidéo bientôt",
+wp_label:"Fonds d’écran gratuits",wp_title:"Emportez mon art avec vous",wp_intro:"Un fond d’écran gratuit pour votre téléphone, tiré de chaque œuvre.",wp_soon:"Bientôt",wp_dl:"Télécharger",
+ig_label:"Instagram",ig_title:"Dernières publications de @ismailtenni_art",ig_btn:"Voir plus sur Instagram",ig_post:"Publication",
+tr_label:"Suivi de commande",tr_title:"Où en est mon dessin ?",tr_intro:"Entrez le code que je vous ai envoyé sur WhatsApp.",tr_btn:"Vérifier",s1:"Idée",s2:"Esquisse",s3:"Couleurs",s4:"Finitions",s5:"Terminé",tr_nf:"Code introuvable. Écrivez-moi sur WhatsApp, je vérifie.",tr_ask:"Pas de code ? Écrire sur WhatsApp",
+sd_t:"Son de l’espace"},
+ar:{ab_label:"تعرّف على الفنان",ab_title:"قصتي",ab1:"لماذا أرسم",ab2:"كيف بدأت",ab3:"ما يلهمني",ab_soon:"قصتي قريباً.",ab_vid:"تحية صوتية أو مرئية قريباً",
+wp_label:"خلفيات مجانية",wp_title:"خذ فني معك",wp_intro:"خلفية مجانية لهاتفك من كل عمل فني.",wp_soon:"قريباً",wp_dl:"تحميل",
+ig_label:"إنستغرام",ig_title:"آخر منشورات @ismailtenni_art",ig_btn:"المزيد على إنستغرام",ig_post:"منشور",
+tr_label:"تتبع الطلب",tr_title:"أين وصل رسمي؟",tr_intro:"أدخل الرمز الذي أرسلته لك عبر واتساب.",tr_btn:"تحقق",s1:"الفكرة",s2:"الرسم الأولي",s3:"التلوين",s4:"اللمسات الأخيرة",s5:"جاهز",tr_nf:"الرمز غير موجود. راسلني على واتساب وسأتحقق.",tr_ask:"ليس لديك رمز؟ راسلني على واتساب",
+sd_t:"صوت الفضاء"}};
+var EN={s1:"Idea",s2:"Sketch",s3:"Coloring",s4:"Final touches",s5:"Done",tr_nf:"Code not found. Message me on WhatsApp and I will check.",sd_t:"Space sound"};
+function L(){return root.getAttribute('lang')||'en'}
+function T(k,en){var dd=Y[L()];return (dd&&dd[k])||EN[k]||en}
+function tr(){
+  var dd=Y[L()]||{};
+  d.querySelectorAll('[data-y]').forEach(function(el){
+    if(!el.hasAttribute('data-yen'))el.setAttribute('data-yen',el.textContent);
+    el.textContent=dd[el.getAttribute('data-y')]||el.getAttribute('data-yen');
+  });
+  var c=d.getElementById('mx-tc');if(c)c.placeholder=({fr:'Votre code',ar:'رمزك'})[L()]||'Your code';
+  var s=d.getElementById('mx-snd');if(s){var t=T('sd_t','Space sound');s.setAttribute('aria-label',t);s.title=t}
+  if(last)show(last);
+}
+
+/* ===== 10. order tracker ===== */
+var last=null;
+function show(code){
+  var o=ORDERS[code],box=d.getElementById('mx-tr');if(!box)return;last=code;
+  if(!o){box.innerHTML='<div class="nf"></div>';box.firstChild.textContent=T('tr_nf','');return}
+  var h='<div class="who"></div><div class="mx-steps">';
+  for(var i=1;i<=5;i++)h+='<div class="'+(i<=o.stage?'on':'')+(i===o.stage?' now':'')+'">'+T('s'+i,'')+'</div>';
+  h+='</div>'+(o.note?'<div class="note"></div>':'');
+  box.innerHTML=h;box.querySelector('.who').textContent=o.name||'';
+  var n=box.querySelector('.note');if(n)n.textContent=o.note;
+}
+var tf=d.getElementById('mx-tf');
+if(tf)tf.addEventListener('submit',function(e){
+  e.preventDefault();var v=(d.getElementById('mx-tc').value||'').trim().toUpperCase();
+  if(!v)return;show(ORDERS.hasOwnProperty(v)?v:'__none__');
+});
+
+/* ===== 8. instagram feed ===== */
+var ig=d.getElementById('ig-wrap');
+if(ig&&IG_POSTS.length){
+  ig.innerHTML='';
+  IG_POSTS.forEach(function(u){
+    var bq=d.createElement('blockquote');bq.className='instagram-media';bq.setAttribute('data-instgrm-permalink',u);bq.setAttribute('data-instgrm-version','14');
+    bq.style.cssText='background:#fff;border-radius:12px;border:0;margin:0;max-width:540px;width:100%';
+    var a=d.createElement('a');a.href=u;a.target='_blank';a.rel='noopener noreferrer';a.textContent=u;bq.appendChild(a);ig.appendChild(bq);
+  });
+  var s=d.createElement('script');s.async=true;s.src='https://www.instagram.com/embed.js';d.body.appendChild(s);
+}
+
+/* ===== 9. space sound (generated in the browser, no file, off by default) ===== */
+var btn=d.getElementById('mx-snd'),ac=null,master=null,nodes=[],on=false;
+function build(){
+  var AC=w.AudioContext||w.webkitAudioContext;if(!AC)return false;
+  ac=new AC();master=ac.createGain();master.gain.value=0;
+  var lp=ac.createBiquadFilter();lp.type='lowpass';lp.frequency.value=520;lp.Q.value=2;
+  var lfo=ac.createOscillator(),lg=ac.createGain();lfo.frequency.value=0.07;lg.gain.value=260;lfo.connect(lg);lg.connect(lp.frequency);lfo.start();
+  lp.connect(master);master.connect(ac.destination);
+  [[55,'sine',.55],[82.41,'sine',.4],[110.2,'triangle',.22],[164.8,'sine',.16],[220.5,'sine',.08],[329.6,'sine',.04]].forEach(function(f,i){
+    var o=ac.createOscillator(),g=ac.createGain();o.type=f[1];o.frequency.value=f[0];o.detune.value=(i%2?1:-1)*(3+i*2);
+    var tl=ac.createOscillator(),tg=ac.createGain();tl.frequency.value=0.05+i*0.031;tg.gain.value=f[2]*0.45;tl.connect(tg);tg.connect(g.gain);tl.start();
+    g.gain.value=f[2];o.connect(g);g.connect(lp);o.start();nodes.push(o,tl);
+  });
+  nodes.push(lfo);return true;
+}
+function setSound(v){
+  if(v&&!ac&&!build())return;
+  if(!ac)return;on=v;
+  try{if(v&&ac.resume)ac.resume()}catch(e){}
+  var t=ac.currentTime;master.gain.cancelScheduledValues(t);master.gain.setValueAtTime(master.gain.value,t);
+  master.gain.linearRampToValueAtTime(v?0.16:0,t+(v?2.5:0.8));
+  btn.classList.toggle('on',v);btn.setAttribute('aria-pressed',v?'true':'false');
+  if(!v)setTimeout(function(){if(!on&&ac&&ac.suspend)try{ac.suspend()}catch(e){}},1000);
+}
+if(btn)btn.addEventListener('click',function(){setSound(!on)});
+d.addEventListener('visibilitychange',function(){if(d.hidden&&on)setSound(false)});
+
+tr();
+new MutationObserver(tr).observe(root,{attributes:true,attributeFilter:['lang']});
+}catch(err){try{console.warn('more2 off',err)}catch(_){}}
+})();
+
+</script>
+<script id="more-js">
+(function(){
+try{
+var d=document,w=window,root=d.documentElement;
+var X={
+fr:{nav_shop:"Boutique",col_label:"Collections",col_title:"Explorer par univers",col_p:"Des visages et des émotions, dessinés à la main.",col_f:"Des mondes et des créatures imaginaires.",col_s:"Planètes, nébuleuses et inconnu.",col_open:"Ouvrir la collection",n_p:"Portraits",n_f:"Fantastique",n_s:"Espace",
+tl_label:"Time-lapse",tl_title:"Regardez le dessin se faire",tl_intro:"Chaque œuvre en accéléré, du premier trait à la touche finale.",tl_soon:"Vidéo bientôt",
+sh_label:"Boutique",sh_title:"Tirages et plus",sh_intro:"Choisissez un article et touchez Acheter : on termine la commande sur WhatsApp.",pr1:"Tirage d’art",pr2:"Affiche",pr3:"Pack d’autocollants",pr4:"Coque de téléphone",sh_price:"Prix bientôt",sh_buy:"Acheter sur WhatsApp",sh_img:"Photo du produit",
+ba_hint:"Faites glisser la ligne pour comparer l’esquisse et l’œuvre finie.",ba_s:"Esquisse",ba_f:"Œuvre finie",
+wl_btn:"Voir sur un mur",wl_back:"Retour à l’œuvre",wl_size:"Taille"},
+ar:{nav_shop:"المتجر",col_label:"المجموعات",col_title:"تصفح حسب العالم",col_p:"وجوه ومشاعر مرسومة باليد.",col_f:"عوالم ومخلوقات من الخيال.",col_s:"كواكب وسدم ومجهول.",col_open:"افتح المجموعة",n_p:"بورتريه",n_f:"فانتازيا",n_s:"الفضاء",
+tl_label:"تسريع الزمن",tl_title:"شاهد الرسم وهو يولد",tl_intro:"كل عمل بالتسريع، من أول خط إلى اللمسة الأخيرة.",tl_soon:"الفيديو قريباً",
+sh_label:"المتجر",sh_title:"مطبوعات وأكثر",sh_intro:"اختر منتجاً واضغط شراء، ونُكمل الطلب عبر واتساب.",pr1:"مطبوعة فنية",pr2:"ملصق كبير",pr3:"حزمة ستيكرات",pr4:"غطاء هاتف",sh_price:"السعر قريباً",sh_buy:"اشترِ عبر واتساب",sh_img:"صورة المنتج",
+ba_hint:"اسحب الخط للمقارنة بين الرسم الأولي والعمل النهائي.",ba_s:"الرسم الأولي",ba_f:"العمل النهائي",
+wl_btn:"شاهدها على الجدار",wl_back:"العودة للعمل",wl_size:"الحجم"}};
+function tr(){
+  var l=root.getAttribute('lang')||'en',dd=X[l]||{};
+  d.querySelectorAll('[data-x]').forEach(function(el){
+    if(!el.hasAttribute('data-xen'))el.setAttribute('data-xen',el.textContent);
+    var k=el.getAttribute('data-x');el.textContent=dd[k]||el.getAttribute('data-xen');
+  });
+}
+tr();
+new MutationObserver(tr).observe(root,{attributes:true,attributeFilter:['lang']});
+
+/* collections: open the gallery with that series selected */
+d.querySelectorAll('[data-ser]').forEach(function(a){
+  a.addEventListener('click',function(e){
+    e.preventDefault();
+    var g=d.getElementById('gallery');if(g)g.scrollIntoView({behavior:'smooth'});
+    var s=a.getAttribute('data-ser');
+    setTimeout(function(){
+      var bs=d.querySelectorAll('#gallery button');
+      for(var i=0;i<bs.length;i++){if(bs[i].textContent.trim()===s){bs[i].click();return}}
+    },450);
+  });
+});
+
+/* before / after slider */
+var ba=d.getElementById('ba');
+if(ba){
+  var r=ba.querySelector('input');
+  var up=function(){ba.style.setProperty('--p',r.value+'%')};
+  r.addEventListener('input',up);up();
+  var b=ba.getAttribute('data-before'),a=ba.getAttribute('data-after');
+  if(b)ba.querySelector('.L1').style.backgroundImage='url("'+b+'")';
+  if(a)ba.querySelector('.L2').style.backgroundImage='url("'+a+'")';
+}
+
+/* see it on a wall (inside the artwork viewer) */
+var vb=d.getElementById('vw-box'),img=d.getElementById('vw-img');
+if(vb&&img){
+  var wall=d.createElement('div');wall.id='mx-wall';
+  wall.innerHTML='<div class="lamp"></div><div class="fl"></div><div class="sofa"></div><div class="fr"><div><img alt=""></div></div>';
+  var sz=d.createElement('div');sz.id='mx-wsz';
+  sz.innerHTML='<span data-x="wl_size">Size</span><button data-s="1">S</button><button data-s="2" class="on">M</button><button data-s="3">L</button>';
+  var btn=d.createElement('button');btn.id='mx-wallbtn';btn.className='mx-btn v';btn.type='button';
+  btn.innerHTML='<span data-x="wl_btn">See it on a wall</span>';
+  vb.parentNode.insertBefore(wall,vb.nextSibling);
+  var anchor=vb.parentNode.lastElementChild;
+  vb.parentNode.appendChild(btn);vb.parentNode.appendChild(sz);
+  var on=false;
+  function sync(){wall.querySelector('img').src=img.src}
+  function set(v){
+    on=v;wall.style.display=v?'block':'none';vb.style.display=v?'none':'';sz.style.display=v?'flex':'none';
+    btn.firstChild.setAttribute('data-x',v?'wl_back':'wl_btn');
+    btn.firstChild.setAttribute('data-xen',v?'Back to artwork':'See it on a wall');tr();
+    if(v)sync();
+  }
+  btn.addEventListener('click',function(){set(!on)});
+  sz.addEventListener('click',function(e){
+    var s=e.target.getAttribute&&e.target.getAttribute('data-s');if(!s)return;
+    wall.className=s==='2'?'':'s'+s;
+    Array.prototype.forEach.call(sz.querySelectorAll('button'),function(x){x.classList.toggle('on',x===e.target)});
+  });
+  /* keep the framed picture in step with Prev/Next, and reset when the viewer closes or reopens */
+  new MutationObserver(function(){if(on)sync()}).observe(img,{attributes:true,attributeFilter:['src']});
+  var vw=d.getElementById('vw');
+  if(vw)new MutationObserver(function(){if(on&&vw.style.display==='none')set(false)}).observe(vw,{attributes:true,attributeFilter:['style']});
+}
+}catch(err){try{console.warn('more off',err)}catch(_){}}
+})();
+
+</script>
+<script id="fx-js">
+(function(){
+'use strict';
+var d=document,w=window,root=d.documentElement;
+var fine=!!(w.matchMedia&&w.matchMedia('(pointer:fine)').matches);
+function $(s){return d.querySelector(s)}
+function $$(s){return Array.prototype.slice.call(d.querySelectorAll(s))}
+function mk(tag,id){var e=d.createElement(tag);e.id=id;e.setAttribute('aria-hidden','true');d.body.appendChild(e);return e}
+
+try{
+/* 1. headline letters */
+var h1=$('#top h1');
+if(h1){
+  var t=h1.textContent.trim(),n=0;
+  h1.setAttribute('aria-label',t);h1.textContent='';
+  t.split('').forEach(function(ch){
+    var s=d.createElement('span');s.setAttribute('aria-hidden','true');
+    if(ch===' '){s.className='sp';s.innerHTML='&nbsp;'}
+    else{s.className='ch';s.textContent=ch;s.style.animationDelay=(0.8+n*0.07)+'s,'+(2.6+n*0.12)+'s';n++}
+    h1.appendChild(s);
+  });
+}
+
+/* 2. gradient titles, shining buttons, tilt cards */
+$$('section h2').forEach(function(h){if(h.closest('#top')===null)h.classList.add('gt')});
+$$('#about a,#top > a[href="#gallery"],header nav a[href*="instagram"]').forEach(function(a){a.classList.add('fx-shine')});
+$$('#prices div[style*="padding:24px"],#reviews figure').forEach(function(e){e.classList.add('fx-tilt')});
+
+/* 3. scroll reveal */
+var rv=[];
+function add(el,delay){if(!el||el.classList.contains('rv'))return;el.classList.add('rv');el.style.setProperty('--d',delay+'s');rv.push(el)}
+['gallery','collections','photography','film','timelapse','commission','prices','shop','tracker','beforeafter','behind','wallpapers','instagram','reviews','news','about'].forEach(function(id){
+  var s=d.getElementById(id);if(!s)return;var i=0;
+  Array.prototype.forEach.call(s.children,function(c){
+    if(c.tagName==='SCRIPT'||c.tagName==='STYLE')return;
+    if(/display:\s*grid/.test(c.getAttribute('style')||'')){
+      Array.prototype.forEach.call(c.children,function(k,j){add(k,Math.min(j,8)*0.09)});
+    }else add(c,Math.min(i,5)*0.07);
+    i++;
+  });
+});
+if('IntersectionObserver' in w){
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:0.08,rootMargin:'0px 0px -5% 0px'});
+  rv.forEach(function(e){io.observe(e)});
+}else{rv.forEach(function(e){e.classList.add('in')})}
+
+/* 4. progress bar, parallax */
+var bar=mk('div','fxbar');
+var moon=$('img[alt="Moon"]'),pluto=$('img[alt="Pluto"]'),port=$('img[alt^="Portrait of"]');
+var mEl=moon&&moon.parentElement&&moon.parentElement.parentElement;
+var pEl=pluto&&pluto.parentElement&&pluto.parentElement.parentElement&&pluto.parentElement.parentElement.parentElement;
+var hEl=port&&port.parentElement&&port.parentElement.parentElement&&port.parentElement.parentElement.parentElement;
+var tx=0,ty=0,cx=0,cy=0,pend=false;
+function frame(){
+  pend=false;
+  cx+=(tx-cx)*0.08;cy+=(ty-cy)*0.08;
+  var s=w.pageYOffset||root.scrollTop||0;
+  var max=Math.max(1,(root.scrollHeight||1)-w.innerHeight);
+  bar.style.transform='scaleX('+Math.min(1,s/max)+')';
+  if(mEl)mEl.style.translate=(cx*-26)+'px '+(Math.min(s*0.22,420)+cy*-18)+'px';
+  if(pEl)pEl.style.translate=(cx*34)+'px '+(Math.min(s*0.12,300)+cy*22)+'px';
+  if(hEl)hEl.style.translate=(cx*12)+'px '+(cy*8)+'px';
+  if(Math.abs(tx-cx)>0.002||Math.abs(ty-cy)>0.002)need();
+}
+function need(){if(!pend){pend=true;w.requestAnimationFrame(frame)}}
+w.addEventListener('scroll',need,{passive:true});
+w.addEventListener('resize',need);
+need();
+
+/* 5. mouse effects (desktop only) */
+if(fine){
+  var glow=mk('div','fxglow');
+  var cv=mk('canvas','fxdust'),ctx=cv.getContext('2d'),ps=[],run=false,dpr=Math.min(2,w.devicePixelRatio||1);
+  function size(){cv.width=w.innerWidth*dpr;cv.height=w.innerHeight*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+  size();w.addEventListener('resize',size);
+  function loop(){
+    ctx.clearRect(0,0,w.innerWidth,w.innerHeight);
+    ctx.globalCompositeOperation='lighter';
+    for(var i=ps.length-1;i>=0;i--){
+      var p=ps[i];p.x+=p.vx;p.y+=p.vy;p.vy+=0.025;p.l-=0.024;
+      if(p.l<=0){ps.splice(i,1);continue}
+      ctx.shadowBlur=14;ctx.shadowColor='hsla('+p.h+',100%,70%,'+p.l+')';
+      ctx.fillStyle='hsla('+p.h+',100%,82%,'+(p.l*0.95)+')';
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r*p.l+0.4,0,6.2832);ctx.fill();
+    }
+    if(ps.length){w.requestAnimationFrame(loop)}else{run=false;ctx.clearRect(0,0,w.innerWidth,w.innerHeight)}
+  }
+  function dust(x,y){
+    for(var k=0;k<2;k++)ps.push({x:x+(Math.random()-.5)*10,y:y+(Math.random()-.5)*10,vx:(Math.random()-.5)*1.3,vy:(Math.random()-.5)*1.1+0.2,l:1,r:1+Math.random()*2.4,h:[265,215,300,195][(Math.random()*4)|0]});
+    if(ps.length>90)ps.splice(0,ps.length-90);
+    if(!run){run=true;w.requestAnimationFrame(loop)}
+  }
+  var tc=null,lastD=0;
+  d.addEventListener('pointermove',function(e){
+    if(e.pointerType&&e.pointerType!=='mouse')return;
+    tx=e.clientX/w.innerWidth*2-1;ty=e.clientY/w.innerHeight*2-1;need();
+    glow.style.transform='translate3d('+e.clientX+'px,'+e.clientY+'px,0)';glow.style.opacity='1';
+    var now=Date.now();if(now-lastD>28){lastD=now;dust(e.clientX,e.clientY)}
+    var c=e.target&&e.target.closest?e.target.closest('.art-card,.fx-tilt'):null;
+    if(tc&&tc!==c){tc.style.transform='';tc=null}
+    if(c){
+      var r=c.getBoundingClientRect(),px=(e.clientX-r.left)/r.width,py=(e.clientY-r.top)/r.height;
+      c.style.setProperty('--mx',(px*100)+'%');c.style.setProperty('--my',(py*100)+'%');
+      c.style.transform='perspective(900px) rotateX('+((0.5-py)*10)+'deg) rotateY('+((px-0.5)*12)+'deg) translateY(-6px) scale(1.02)';
+      tc=c;
+    }
+  },{passive:true});
+  d.addEventListener('pointerleave',function(){glow.style.opacity='0';if(tc){tc.style.transform='';tc=null}});
+  d.documentElement.addEventListener('mouseleave',function(){glow.style.opacity='0'});
+}
+
+/* 6. remove the intro from the page once it has faded */
+setTimeout(function(){var i=$('#intro');if(i&&i.parentNode)i.parentNode.removeChild(i)},2200);
+}catch(err){
+  /* if anything goes wrong, fall back to a plain, fully visible page */
+  root.classList.remove('fx');
+  $$('.rv').forEach(function(e){e.classList.add('in')});
+  try{if(w.console)console.warn('effects off:',err)}catch(_){}
+}
+})();
+
+</script>
 </body></html>
