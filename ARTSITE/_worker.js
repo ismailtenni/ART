@@ -57,6 +57,7 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS subscribers (email TEXT PRIMARY KEY, created_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS content (k TEXT PRIMARY KEY, v TEXT NOT NULL, updated_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS media (id TEXT PRIMARY KEY, mime TEXT NOT NULL, n INTEGER NOT NULL, created_at INTEGER NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, contact TEXT NOT NULL, kind TEXT, size TEXT, budget TEXT, idea TEXT NOT NULL, ref TEXT, created_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS media_chunks (id TEXT NOT NULL, i INTEGER NOT NULL, d TEXT NOT NULL, PRIMARY KEY (id, i))',
 ];
 
@@ -82,6 +83,34 @@ function cleanFilm(f) {
   if (/^https:\/\/[^\s"'<>]+$/i.test(raw)) return { title, url: raw };
   return null;
 }
+
+const SCH = {
+  shop: { name: 's80', price: 's40', photo: 'img', pay: 'url', edition: 'n', left: 'n' },
+  gifts: { name: 's80', price: 's40', pay: 'url' },
+  reviews: { name: 's60', text: 's500', stars: 'n' },
+  behind: { photo: 'img', caption: 's100' },
+  wallpapers: { photo: 'img', title: 's80' },
+  spotlight: { on: 's3', title: 's100', text: 's800', image: 'img', price: 's40', pay: 'url' },
+  ba: { before: 'img', after: 'img', caption: 's100' },
+  about: { portrait: 'img' },
+  settings: { payDefault: 'url', payLabel: 's30' },
+};
+function cleanRow(o, sch) {
+  const out = {};
+  if (!o || typeof o !== 'object') return out;
+  for (const [k, t] of Object.entries(sch)) {
+    const v = o[k];
+    if (t === 'img') { if (okUrl(v)) out[k] = v; }
+    else if (t === 'url') { const u = str(v, 300).trim(); if (/^https:\/\/[^\s"'<>]+$/i.test(u)) out[k] = u; }
+    else if (t === 'n') { const x = parseInt(v, 10); if (Number.isFinite(x) && x >= 0 && x < 100000) out[k] = x; }
+    else { const x = str(v, +t.slice(1)).trim(); if (x) out[k] = x; }
+  }
+  return out;
+}
+function cleanList(a, sch, max, need) {
+  return (Array.isArray(a) ? a : []).slice(0, max).map((r) => cleanRow(r, sch)).filter((r) => need.some((k) => r[k]));
+}
+
 function cleanContent(b) {
   const works = (Array.isArray(b.works) ? b.works : []).slice(0, 80).map((w, i) => {
     if (!w || !okUrl(w.cover)) return null;
@@ -96,13 +125,25 @@ function cleanContent(b) {
   const texts = {};
   if (b.texts && typeof b.texts === 'object') {
     for (const [k, v] of Object.entries(b.texts).slice(0, 500)) {
-      if (!/^[tyx]:[A-Za-z0-9_]{1,40}$/.test(k) || !v || typeof v !== 'object') continue;
+      if (!/^[tyxz]:[A-Za-z0-9_]{1,40}$/.test(k) || !v || typeof v !== 'object') continue;
       const o = {};
       for (const l of ['en', 'fr', 'ar']) if (typeof v[l] === 'string' && v[l].trim()) o[l] = str(v[l].trim(), 600);
       if (Object.keys(o).length) texts[k] = o;
     }
   }
-  return { works, photos, films, texts };
+  const extra = {
+    shop: cleanList(b.shop, SCH.shop, 40, ['name', 'photo']),
+    gifts: cleanList(b.gifts, SCH.gifts, 12, ['name', 'price']),
+    reviews: cleanList(b.reviews, SCH.reviews, 40, ['text']),
+    behind: cleanList(b.behind, SCH.behind, 60, ['photo']),
+    wallpapers: cleanList(b.wallpapers, SCH.wallpapers, 30, ['photo']),
+    timelapse: (Array.isArray(b.timelapse) ? b.timelapse : []).slice(0, 20).map(cleanFilm).filter(Boolean),
+    spotlight: cleanRow(b.spotlight, SCH.spotlight),
+    ba: cleanRow(b.ba, SCH.ba),
+    about: cleanRow(b.about, SCH.about),
+    settings: cleanRow(b.settings, SCH.settings),
+  };
+  return { works, photos, films, texts, ...extra };
 }
 function mediaIds(obj) {
   const ids = new Set();
@@ -185,6 +226,30 @@ export default {
         return json({ likes: lk ? lk.n : 0, liked: !!mine, me: me ? { name: me.name } : null,
           comments: (cm.results || []).map((r) => ({ id: r.id, name: r.name, text: r.text, at: r.created_at, mine: !!me && (me.id === r.user_id || isAdmin(env, me)) })) });
       }
+      if (url.pathname === '/api/order' && req.method === 'GET') {
+        const code = String(url.searchParams.get('code') || '').trim().toUpperCase().slice(0, 30);
+        const ip = req.headers.get('cf-connecting-ip') || 'x';
+        if (await tooMany(env, 'order:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
+        await note(env, 'order:' + ip);
+        const row = await env.DB.prepare("SELECT v FROM content WHERE k = 'orders'").first();
+        let list = []; try { list = JSON.parse((row && row.v) || '[]'); } catch (e) {}
+        const o = code && list.find((x) => String(x.code || '').toUpperCase() === code);
+        if (!o) return json({ error: 'Not found' }, 404);
+        return json({ name: o.name || '', stage: Math.min(5, Math.max(1, +o.stage || 1)), note: o.note || '' });
+      }
+      if (url.pathname === '/api/admin/orders' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const row = await env.DB.prepare("SELECT v FROM content WHERE k = 'orders'").first();
+        let list = []; try { list = JSON.parse((row && row.v) || '[]'); } catch (e) {}
+        return json({ orders: list });
+      }
+      if (url.pathname === '/api/admin/requests' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const r = await env.DB.prepare('SELECT id, name, contact, kind, size, budget, idea, ref, created_at FROM requests ORDER BY created_at DESC LIMIT 100').all();
+        return json({ requests: r.results || [] });
+      }
       const mm = url.pathname.match(/^\/api\/media\/([a-f0-9]{8,32})$/);
       if (mm && req.method === 'GET') return serveMedia(env, req, mm[1]);
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
@@ -261,6 +326,33 @@ export default {
         if (await tooMany(env, 'sub:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
         await note(env, 'sub:' + ip);
         await env.DB.prepare('INSERT OR IGNORE INTO subscribers (email, created_at) VALUES (?, ?)').bind(email, Date.now()).run();
+        return json({ ok: true });
+      }
+      if (url.pathname === '/api/commission') {
+        const name = str(body.name, 80).trim(), contact = str(body.contact, 120).trim(), idea = str(body.idea, 1500).trim();
+        if (!name || !contact || !idea) return json({ error: 'Please fill in your name, how to reach you, and your idea.' }, 400);
+        const ip = req.headers.get('cf-connecting-ip') || 'x';
+        if (await tooMany(env, 'req:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
+        await note(env, 'req:' + ip);
+        await env.DB.prepare('INSERT INTO requests (name, contact, kind, size, budget, idea, ref, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+          .bind(name, contact, str(body.kind, 40), str(body.size, 60), str(body.budget, 60), idea, str(body.ref, 300), Date.now()).run();
+        return json({ ok: true });
+      }
+      if (url.pathname === '/api/admin/orders') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const list = (Array.isArray(body.orders) ? body.orders : []).slice(0, 300).map((o) => ({
+          code: str(o && o.code, 30).trim().toUpperCase(), name: str(o && o.name, 60).trim(),
+          stage: Math.min(5, Math.max(1, parseInt(o && o.stage, 10) || 1)), note: str(o && o.note, 300).trim(),
+        })).filter((o) => o.code);
+        await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('orders', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at")
+          .bind(JSON.stringify(list), Date.now()).run();
+        return json({ ok: true, n: list.length });
+      }
+      if (url.pathname === '/api/admin/request/delete') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        await env.DB.prepare('DELETE FROM requests WHERE id = ?').bind(Number(body.id) || 0).run();
         return json({ ok: true });
       }
       if (url.pathname === '/api/admin/upload') {
