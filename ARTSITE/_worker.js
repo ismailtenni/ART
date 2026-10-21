@@ -45,12 +45,30 @@ async function note(env, key) {
   await env.DB.prepare('INSERT INTO attempts (key, at) VALUES (?, ?)').bind(key, Date.now()).run();
 }
 
+
+const SCHEMA = [
+  'CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, salt TEXT NOT NULL, hash TEXT NOT NULL, created_at INTEGER NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS sessions (token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires_at INTEGER NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS attempts (key TEXT NOT NULL, at INTEGER NOT NULL)',
+  'CREATE INDEX IF NOT EXISTS attempts_key ON attempts (key, at)',
+  'CREATE TABLE IF NOT EXISTS likes (work_id TEXT NOT NULL, user_id INTEGER NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (work_id, user_id))',
+  'CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, work_id TEXT NOT NULL, user_id INTEGER NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL)',
+  'CREATE INDEX IF NOT EXISTS comments_work ON comments (work_id, created_at)',
+  'CREATE TABLE IF NOT EXISTS subscribers (email TEXT PRIMARY KEY, created_at INTEGER NOT NULL)',
+];
+let schemaReady = null;
+function ensureSchema(env) {
+  if (!schemaReady) schemaReady = env.DB.batch(SCHEMA.map((q) => env.DB.prepare(q))).catch((e) => { schemaReady = null; throw e; });
+  return schemaReady;
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(req);
     if (!env.DB) return json({ error: 'The database is not connected yet.' }, 503);
     try {
+      await ensureSchema(env);
       if (url.pathname === '/api/me' && req.method === 'GET') {
         const u = await currentUser(env, req);
         return json({ user: u ? { name: u.name, email: u.email } : null });
@@ -138,6 +156,15 @@ export default {
         if (!me) return json({ error: 'Please log in.' }, 401);
         if (isAdmin(env, me)) await env.DB.prepare('DELETE FROM comments WHERE id = ?').bind(Number(body.id) || 0).run();
         else await env.DB.prepare('DELETE FROM comments WHERE id = ? AND user_id = ?').bind(Number(body.id) || 0, me.id).run();
+        return json({ ok: true });
+      }
+      if (url.pathname === '/api/subscribe') {
+        const email = String(body.email || '').trim().toLowerCase().slice(0, 120);
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: 'Please enter a valid email.' }, 400);
+        const ip = req.headers.get('cf-connecting-ip') || 'x';
+        if (await tooMany(env, 'sub:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
+        await note(env, 'sub:' + ip);
+        await env.DB.prepare('INSERT OR IGNORE INTO subscribers (email, created_at) VALUES (?, ?)').bind(email, Date.now()).run();
         return json({ ok: true });
       }
       if (url.pathname === '/api/logout') {

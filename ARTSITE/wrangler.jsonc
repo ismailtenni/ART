@@ -6,13 +6,11 @@
     "directory": "./",
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
-{
-  // ...
+  },
   "d1_databases": [
     {
       "binding": "DB",
-      "database_id": "8adafce1-f3e5-4afe-85a2-f2d1dbfd118c"
+      "database_name": "ismailtenni-art"
     }
-  ],
-  // ...
+  ]
 }
