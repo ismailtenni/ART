@@ -353,7 +353,7 @@ header nav>a:not([style]):hover::after{transform:scaleX(1)}
 
 <section id="top" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: clamp(80px, 12vw, 150px) 20px 40px; box-sizing: border-box; min-height: 0">
 <h1 style="animation: fadeUp 1.4s ease both; margin: 0; font-weight: 400; font-size: clamp(38px, 5.4vw, 76px); line-height: 1.1; letter-spacing: 0.14em; color: #ffffff; text-shadow: 0 0 28px rgba(150,120,255,0.75), 0 2px 22px rgba(5,9,20,0.9)">ETERNAL SPACE</h1>
-<p style="animation: fadeUp 1.4s ease 0.3s both; margin: 24px 0 0; max-width: 560px; font-size: clamp(16px, 2.2vw, 24px); line-height: 1.5; font-weight: 400; letter-spacing: 0.3em; color: #d6ccff; text-shadow: 0 0 18px rgba(150,120,255,0.7)">ART/FANTASY\WORLD</p>
+<p style="animation: fadeUp 1.4s ease 0.3s both; margin: 24px 0 0; max-width: 560px; font-size: clamp(16px, 2.2vw, 24px); line-height: 1.5; font-weight: 400; letter-spacing: 0.3em; color: #d6ccff; text-shadow: 0 0 18px rgba(150,120,255,0.7)"><span data-t="hero_sub">ART/FANTASY\WORLD</span></p>
 <div style="animation: fadeUp 1.6s ease 0.4s both; position: relative; width: clamp(170px, 21vw, 270px); aspect-ratio: 1 / 1; margin-top: clamp(40px, 5vw, 70px)">
 <div class="mv" style="position: absolute; top: -22%; left: -22%; width: 144%; height: 144%; border-radius: 50%; background: conic-gradient(from 0deg, rgba(40,120,255,0.0), rgba(60,140,255,0.45), rgba(140,70,255,0.0), rgba(150,80,255,0.4), rgba(40,120,255,0.0)); filter: blur(26px); -webkit-mask-image: radial-gradient(circle, transparent 36%, #000 52%, transparent 70%); mask-image: radial-gradient(circle, transparent 36%, #000 52%, transparent 70%); animation: spin 22s linear infinite"></div>
 <div class="mv" style="position: absolute; top: -12%; left: -12%; width: 124%; height: 124%; border-radius: 50%; background: conic-gradient(from 180deg, rgba(120,200,255,0), rgba(120,200,255,0.5), rgba(120,200,255,0) 30%, rgba(200,150,255,0.45) 55%, rgba(200,150,255,0) 80%); filter: blur(10px); -webkit-mask-image: radial-gradient(circle, transparent 54%, #000 62%, transparent 72%); mask-image: radial-gradient(circle, transparent 54%, #000 62%, transparent 72%); animation: spin 14s linear infinite reverse"></div>
@@ -512,7 +512,7 @@ document.getElementById('vw-img').onclick=function(){zoom=!zoom;this.style.cssTe
 <div style="flex: 999 1 360px; min-width: 0; max-width: 560px">
 <div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #5cbcff"><span data-t="a_label">04 — About</span></div>
 <h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff"><span data-t="a_title">The artist</span></h2>
-<p style="margin: 24px 0 0; font-size: 18px; line-height: 1.7; font-weight: 300; color: #c4d0e6">I'm Ismail Tenni. I draw worlds of space, fantasy and faces. Follow my work on Instagram, and message me on WhatsApp if you want your own artwork.</p>
+<p style="margin: 24px 0 0; font-size: 18px; line-height: 1.7; font-weight: 300; color: #c4d0e6"><span data-t="a_text">I'm Ismail Tenni. I draw worlds of space, fantasy and faces. Follow my work on Instagram, and message me on WhatsApp if you want your own artwork.</span></p>
 <a href="https://www.instagram.com/ismailtenni_art/" style="display: inline-flex; align-items: center; gap: 12px; margin-top: 36px; padding: 14px 28px; border: 1px solid rgba(255,255,255,0.4); border-radius: 999px; background: linear-gradient(90deg, rgba(42,120,170,0.75), rgba(30,70,110,0.75)); font-size: 17px; font-weight: 600; color: #ffffff">
 <span>@ismailtenni_art on Instagram</span>
 <svg aria-hidden="true" width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h12M11 5l5 5-5 5"/></svg>
@@ -775,7 +775,8 @@ var LAB='display:block;margin:16px 0 6px;font-size:12px;letter-spacing:.2em;text
 fetch('/api/me',{credentials:'same-origin'}).then(function(r){return r.json()}).then(function(j){if(j&&j.admin)init()}).catch(function(){});
 
 function init(){
-  var data={works:clone(w.C&&w.C.works),photos:clone(w.C&&w.C.photos),films:clone(w.C&&w.C.films)};
+  var data={works:clone(w.C&&w.C.works),photos:clone(w.C&&w.C.photos),films:clone(w.C&&w.C.films),texts:JSON.parse(JSON.stringify((w.C&&w.C.texts)||{}))};
+  var textsInfo=null;
   var tab='works',editing=null,cur=null,busy=0,msg='';
   var btn=h('button',{id:'ed-btn',type:'button',style:'position:fixed;left:18px;bottom:82px;z-index:950;'+BTN2+';box-shadow:0 8px 26px rgba(70,50,200,.55)',text:'✎ Edit my site'});
   var box=h('div',{id:'ed',role:'dialog','aria-modal':'true',style:'display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:2500;overflow-y:auto;background:#04050f;color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:18px clamp(14px,3vw,40px) 90px;box-sizing:border-box'});
@@ -888,11 +889,11 @@ function init(){
     box.appendChild(h('div',{id:'ed-msg',style:'margin-top:12px;min-height:20px;color:#a8d6ff;font-size:14px',text:msg}));
     if(cur){box.appendChild(workForm(cur.o,cur.n));return}
     var tabs=h('div',{style:'display:flex;gap:10px;margin:18px 0;flex-wrap:wrap'});
-    [['works','Artwork'],['photos','Photos'],['films','Videos']].forEach(function(t){
+    [['works','Artwork'],['photos','Photos'],['films','Videos'],['texts','Words']].forEach(function(t){
       tabs.appendChild(h('button',{type:'button',style:(tab===t[0]?BTN2:BTN),text:t[1],on:{click:function(){tab=t[0];render()}}}));
     });
     box.appendChild(tabs);
-    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else renderFilms();
+    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else renderFilms();
   }
   function renderWorks(){
     box.appendChild(h('button',{type:'button',style:BTN2,text:'+ Add new artwork',on:{click:function(){editing='new';cur={n:true,o:{id:'',title:'',meta:'',series:'',status:'',ratio:'3 / 4',desc:'',cover:'',shots:[],process:[]}};render()}}}));
@@ -932,6 +933,60 @@ function init(){
       box.appendChild(row);
     });
     box.appendChild(h('button',{type:'button',style:BTN2,text:'+ Add video',on:{click:function(){data.films.push({title:'',url:''});render()}}}));
+  }
+
+  function collectTexts(){
+    var els=[].slice.call(d.querySelectorAll('[data-t],[data-x],[data-y]'));
+    var btns={};[].forEach.call(d.querySelectorAll('#lang button'),function(b){btns[b.getAttribute('data-l')]=b});
+    var orig=d.documentElement.getAttribute('lang')||'en',info={},order=[];
+    function keyOf(el){return el.hasAttribute('data-t')?'t:'+el.getAttribute('data-t'):el.hasAttribute('data-x')?'x:'+el.getAttribute('data-x'):'y:'+el.getAttribute('data-y')}
+    function sweep(l){
+      return new Promise(function(res){
+        if(btns[l])btns[l].click();
+        setTimeout(function(){
+          els.forEach(function(el){
+            var k=keyOf(el);
+            if(!info[k]){var sc=el.closest('section,header,footer');info[k]={sec:(sc&&sc.id)||(sc&&sc.tagName.toLowerCase())||'page'};order.push(k)}
+            if(info[k][l]==null)info[k][l]=el.textContent.trim();
+          });res();
+        },140);
+      });
+    }
+    return sweep('en').then(function(){return sweep('fr')}).then(function(){return sweep('ar')}).then(function(){
+      if(btns[orig])btns[orig].click();
+      return {info:info,order:order};
+    });
+  }
+  function renderTexts(){
+    if(!textsInfo){
+      box.appendChild(h('p',{style:'color:#9fb0c8',text:'Loading the words of your site ...'}));
+      collectTexts().then(function(r){textsInfo=r;render()});return;
+    }
+    box.appendChild(h('p',{style:'color:#b7c4dc;max-width:680px;line-height:1.6',text:'Change any word on your site. Each box is one language (English, French, Arabic). A box you do not touch keeps its text. If you empty a box, the original text comes back.'}));
+    var q=h('input',{type:'text',placeholder:'Search (for example: gallery, price, about)',style:INP+';max-width:520px;margin:10px 0 6px'});
+    box.appendChild(q);
+    var rows=[];
+    textsInfo.order.forEach(function(k){
+      var it=textsInfo.info[k];if(!(it.en||it.fr||it.ar))return;
+      var row=h('div',{style:'margin:16px 0;padding:14px;border:1px solid rgba(190,170,255,.28);border-radius:14px;background:rgba(20,26,66,.4)'});
+      row.appendChild(h('div',{style:'font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:#c4a0ff;margin-bottom:8px',text:it.sec}));
+      [['en','English'],['fr','French'],['ar','Arabic']].forEach(function(L){
+        var cur=(data.texts[k]&&data.texts[k][L[0]])||it[L[0]]||'';
+        var big=cur.length>70;
+        var f=h(big?'textarea':'input',big?{style:INP+';min-height:84px;margin-bottom:8px'}:{type:'text',style:INP+';margin-bottom:8px'});
+        f.value=cur;f.setAttribute('aria-label',L[1]);f.placeholder=L[1];
+        if(L[0]==='ar')f.setAttribute('dir','rtl');
+        f.addEventListener('input',function(){
+          var v=f.value;data.texts[k]=data.texts[k]||{};data.texts[k][L[0]]=v;
+          if(!v.trim()){delete data.texts[k][L[0]];if(!Object.keys(data.texts[k]).length)delete data.texts[k]}
+        });
+        var wrap=h('div',{style:'display:flex;gap:10px;align-items:flex-start'},[h('span',{style:'flex:none;width:58px;padding-top:12px;font-size:12px;color:#9fb0c8',text:L[1]}),h('div',{style:'flex:1;min-width:0'},[f])]);
+        row.appendChild(wrap);
+      });
+      row._s=(k+' '+it.sec+' '+(it.en||'')+' '+(it.fr||'')).toLowerCase();
+      rows.push(row);box.appendChild(row);
+    });
+    q.addEventListener('input',function(){var v=q.value.trim().toLowerCase();rows.forEach(function(r){r.style.display=(!v||r._s.indexOf(v)>-1)?'':'none'})});
   }
   function save(){
     if(busy){say('Please wait, a photo is still uploading.');return}
@@ -1028,6 +1083,23 @@ if(vb&&img){
 }catch(err){try{console.warn('more off',err)}catch(_){}}
 })();
 
+</script>
+<script id="texts-js">
+(function(){
+try{
+var d=document,root=d.documentElement,T=(window.C&&window.C.texts)||null;
+if(!T)return;
+function key(el){return el.hasAttribute('data-t')?'t:'+el.getAttribute('data-t'):el.hasAttribute('data-x')?'x:'+el.getAttribute('data-x'):'y:'+el.getAttribute('data-y')}
+function ap(){
+  var l=root.getAttribute('lang')||'en';
+  [].forEach.call(d.querySelectorAll('[data-t],[data-x],[data-y]'),function(el){
+    var o=T[key(el)];if(o&&typeof o[l]==='string'&&o[l])el.textContent=o[l];
+  });
+}
+ap();
+new MutationObserver(ap).observe(root,{attributes:true,attributeFilter:['lang']});
+}catch(e){try{console.warn('texts off',e)}catch(_){}}
+})();
 </script>
 <script id="fx-js">
 (function(){

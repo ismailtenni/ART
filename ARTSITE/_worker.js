@@ -93,7 +93,16 @@ function cleanContent(b) {
   }).filter(Boolean);
   const photos = (Array.isArray(b.photos) ? b.photos : []).slice(0, 200).filter(okUrl);
   const films = (Array.isArray(b.films) ? b.films : []).slice(0, 40).map(cleanFilm).filter(Boolean);
-  return { works, photos, films };
+  const texts = {};
+  if (b.texts && typeof b.texts === 'object') {
+    for (const [k, v] of Object.entries(b.texts).slice(0, 500)) {
+      if (!/^[tyx]:[A-Za-z0-9_]{1,40}$/.test(k) || !v || typeof v !== 'object') continue;
+      const o = {};
+      for (const l of ['en', 'fr', 'ar']) if (typeof v[l] === 'string' && v[l].trim()) o[l] = str(v[l].trim(), 600);
+      if (Object.keys(o).length) texts[k] = o;
+    }
+  }
+  return { works, photos, films, texts };
 }
 function mediaIds(obj) {
   const ids = new Set();
@@ -282,7 +291,7 @@ export default {
         for (const g of gone.slice(0, 40)) {
           await env.DB.batch([env.DB.prepare('DELETE FROM media_chunks WHERE id = ?').bind(g), env.DB.prepare('DELETE FROM media WHERE id = ?').bind(g)]);
         }
-        return json({ ok: true, works: clean.works.length, photos: clean.photos.length, films: clean.films.length });
+        return json({ ok: true, works: clean.works.length, photos: clean.photos.length, films: clean.films.length, texts: Object.keys(clean.texts).length });
       }
       if (url.pathname === '/api/logout') {
         const t = getCookie(req, 'session');
