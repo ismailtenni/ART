@@ -46,6 +46,11 @@ a:hover{color:#ffffff}
 /* more4 */
 @media (pointer:coarse){header nav a,footer a,#lang button{padding-block:12px}#lang button{min-width:40px}header nav a,footer a{display:inline-block}}
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #a8d6ff;outline-offset:3px}
+
+
+/* more5 */
+.wl input,.wl select,.cd-box input,.cd-box select,#vw-side .wl input{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1px solid rgba(190,170,255,.45);background:rgba(8,12,34,.75);color:#fff;font:inherit;font-size:16px}
+.mx-card input[type=text],.mx-card textarea{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:12px;border:1px solid rgba(190,170,255,.45);background:rgba(8,12,34,.75);color:#fff;font:inherit;font-size:16px}
 </style>
 <script>document.documentElement.className+=" fx"</script>
 <style id="fx-css">
@@ -444,7 +449,7 @@ C.works.forEach(function(w,k){var f=document.createElement('figure');f.className
 f.innerHTML='<button class="art-card" aria-label="Open artwork details" style="display:block;position:relative;width:100%;padding:0;border:1px solid rgba(190,170,255,0.35);border-radius:16px;overflow:hidden;cursor:pointer;background:#07091a;font-family:inherit;box-shadow:0 0 40px rgba(110,90,255,0.25)"><img loading="lazy" decoding="async" src="'+E(w.cover)+'" alt="'+E(w.title)+'" style="display:block;width:100%;aspect-ratio:'+E(w.ratio||'3 / 4')+';object-fit:cover"><span style="position:absolute;left:0;right:0;bottom:0;padding:40px 12px 12px;background:linear-gradient(to top,rgba(4,5,18,0.85),rgba(4,5,18,0));color:#fff;font-size:12px;letter-spacing:0.18em;text-align:left">VIEW DETAILS &#8594;</span>'+CHIP(w)+'</button><figcaption style="margin-top:12px;font-size:15px;color:#e8eefc">'+E(w.title)+'<br><span style="color:#9fb0c8;font-size:13px">'+E(w.meta)+'</span><div class="cnt" data-id="'+E(w.id)+'" style="margin-top:6px;font-size:12px;letter-spacing:0.08em;color:#c4a0ff;min-height:16px"></div></figcaption>';
 f.querySelector('button').onclick=function(){var d=(w.shots&&w.shots.length?w.shots:[{src:w.cover,label:'Full artwork'}]),p=(w.process||[]).map(function(s,j){return typeof s==='string'?{src:s,label:'Process '+(j+1)}:s});
 var side='<div style="font-size:12px;letter-spacing:0.3em;text-transform:uppercase;color:#c4a0ff">Artwork</div><h3 style="margin:12px 0 0;font-weight:400;font-size:clamp(26px,3vw,38px);line-height:1.15;color:#fff">'+E(w.title)+'</h3><div style="margin-top:8px;font-size:14px;color:#9fb0c8">'+E(w.meta)+'</div>'+(w.desc?'<p style="margin:18px 0 0;font-size:15px;line-height:1.7;font-weight:300;color:#c4d0e6;white-space:pre-line">'+E(w.desc)+'</p>':'')+(d.length>1?thumbs(d,0,'Details'):'')+thumbs(p,d.length,'The process');
-open_(d.concat(p),0,side,w.id);};gw.appendChild(f);});
+side+='<div id="mk"></div><div id="wl-slot"></div>';open_(d.concat(p),0,side,w.id);if(window.__vwHook)window.__vwHook(w,p.length?p.concat([{src:w.cover,label:'Finished'}]):[]);};gw.appendChild(f);});
 var rt=['3 / 4','1 / 1','4 / 5','3 / 4','1 / 1'];
 for(var q=C.works.length;q<6;q++){var h=document.createElement('div');h.className='bob';h.style.cssText='aspect-ratio:'+rt[q%5]+';border:1px dashed rgba(159,176,200,0.5);border-radius:16px;background:linear-gradient(160deg,rgba(20,34,70,0.6),rgba(8,12,28,0.6));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#9fb0c8;font-size:13px';h.innerHTML='<svg aria-hidden="true" width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="#9fb0c8" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="24" height="20" rx="3"/><circle cx="12" cy="13" r="2.5"/><path d="M4 23l7-6 5 4 4-3 8 6"/></svg><span>Coming soon</span>';gw.appendChild(h);}
 var gp=document.getElementById('g-photos');
@@ -511,6 +516,7 @@ document.getElementById('vw-img').onclick=function(){zoom=!zoom;this.style.cssTe
 <div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #c4a0ff"><span data-t="r_label">Reviews</span></div>
 <h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff"><span data-t="r_title">What my clients say</span></h2>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;margin-top:36px;max-width:1000px"><div class="bob" style="grid-column:1/-1;min-height:140px;border:1px dashed rgba(159,176,200,0.5);border-radius:16px;background:linear-gradient(160deg,rgba(20,34,70,0.6),rgba(8,12,28,0.6));display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;box-sizing:border-box;color:#9fb0c8;font-size:14px"><span data-t="r_soon">Reviews are coming soon.</span></div></div></section>
+<section id="card" class="mx-sec"><div class="mx-lab"><span data-z="cd_label">Space card</span></div><h2><span data-z="cd_title">Make your space card</span></h2><p class="mx-p"><span data-z="cd_intro">Type your name and get a card to share on Instagram Stories.</span></p><div class="cd-box"></div></section>
 <section id="news" style="max-width: 1440px; margin: 0 auto; box-sizing: border-box; padding: clamp(72px, 10vw, 140px) clamp(20px, 4vw, 48px) 0">
 <div style="max-width:620px;padding:32px;border-radius:20px;border:1px solid rgba(190,170,255,0.4);background:linear-gradient(160deg,rgba(40,30,90,0.5),rgba(8,12,34,0.65));box-shadow:0 0 60px rgba(110,90,255,0.25)">
 <h2 style="margin:0;font-weight:400;font-size:clamp(26px,3vw,36px);color:#fff"><span data-t="n_title">Be the first to know</span></h2>
@@ -825,8 +831,28 @@ function init(){
   css.textContent='body.ed-on [data-t]:hover,body.ed-on [data-x]:hover,body.ed-on [data-y]:hover,body.ed-on [data-z]:hover{outline:2px dashed #b79cff;outline-offset:3px;cursor:text}body.ed-on img:hover{outline:3px dashed #7be0a6;outline-offset:-3px;cursor:pointer}body.ed-on #intro,body.ed-on #fxglow{display:none}';
   d.head.appendChild(css);
   var pop=null;
-  function liveOn(){d.body.classList.add('ed-on');bar2.style.display='flex';live.style.display='none';btn.style.display='none'}
-  function liveOff(){d.body.classList.remove('ed-on');bar2.style.display='none';live.style.display='';btn.style.display='';closePop()}
+  function pickBA(key){
+    var inp=h('input',{type:'file',accept:'image/*',style:'display:none'});d.body.appendChild(inp);
+    inp.addEventListener('change',function(){
+      var f=inp.files&&inp.files[0];inp.remove();if(!f)return;
+      tmsg('Uploading ... please wait');busy++;
+      shrink(f,1400).then(function(b64){return post('/api/admin/upload',{mime:'image/jpeg',data:b64})}).then(function(r){
+        busy--;data.ba[key]=r.url;var ba=d.getElementById('ba');
+        if(ba){var L=ba.querySelector(key==='before'?'.L1':'.L2');if(L)L.style.backgroundImage='url("'+r.url+'")'}
+        tmsg((key==='before'?'Sketch':'Finished')+' photo added. Press "Save and publish" when you are done.');
+      }).catch(function(e){busy--;tmsg('Problem: '+e.message)});
+    });
+    inp.click();
+  }
+  function baBar(on){
+    var old=d.getElementById('ed-ba-bar');if(old)old.remove();
+    var ba=d.getElementById('ba');if(!on||!ba)return;
+    ba.parentNode.insertBefore(h('div',{id:'ed-ba-bar',style:'display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;position:relative;z-index:5'},[
+      h('button',{type:'button',style:BTN2,text:'+ Sketch photo',on:{click:function(e){e.stopPropagation();pickBA('before')}}}),
+      h('button',{type:'button',style:BTN2,text:'+ Finished photo',on:{click:function(e){e.stopPropagation();pickBA('after')}}})]),ba);
+  }
+  function liveOn(){d.body.classList.add('ed-on');baBar(true);bar2.style.display='flex';live.style.display='none';btn.style.display='none'}
+  function liveOff(){d.body.classList.remove('ed-on');baBar(false);bar2.style.display='none';live.style.display='';btn.style.display='';closePop()}
   function tmsg(t){toast.textContent=t}
   function closePop(){if(pop){pop.remove();pop=null}}
   live.addEventListener('click',liveOn);
@@ -867,10 +893,12 @@ function init(){
   }
   d.addEventListener('click',function(e){
     if(!d.body.classList.contains('ed-on'))return;
-    var t=e.target;if(t.tagName==='INPUT'||(t.closest&&(t.closest('#ed-bar')||t.closest('#ed-pop')||t.closest('#ed')||t.closest('#lang'))))return;
+    var t=e.target;if(t.tagName==='INPUT'||(t.closest&&(t.closest('#ed-bar')||t.closest('#ed-ba-bar')||t.closest('#ed-pop')||t.closest('#ed')||t.closest('#lang'))))return;
     e.preventDefault();e.stopPropagation();
     var el=t.closest&&t.closest('[data-t],[data-x],[data-y],[data-z]');
     if(el&&keyOf(el)){editText(el);return}
+    var baEl=t.closest&&t.closest('#ba');
+    if(baEl){var hh=baEl.querySelector('.h');var hr=hh?hh.getBoundingClientRect():null;pickBA(hr&&e.clientX>hr.left+hr.width/2?'before':'after');return}
     var stack=d.elementsFromPoint?d.elementsFromPoint(e.clientX,e.clientY):[t];
     for(var i=0;i<stack.length;i++){if(stack[i].tagName==='IMG'){editImg(stack[i]);return}}
     var best=null,ba=1e12;
@@ -988,11 +1016,11 @@ function init(){
     box.appendChild(h('div',{id:'ed-msg',style:'margin-top:12px;min-height:20px;color:#a8d6ff;font-size:14px',text:msg}));
     if(cur){box.appendChild(workForm(cur.o,cur.n));return}
     var tabs=h('div',{style:'display:flex;gap:10px;margin:18px 0;flex-wrap:wrap'});
-    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['page','Page parts'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['orders','Orders'],['reqs','Requests'],['texts','Words']].forEach(function(t){
+    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['page','Page parts'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
       tabs.appendChild(h('button',{type:'button',style:(tab===t[0]?BTN2:BTN),text:t[1],on:{click:function(){tab=t[0];render()}}}));
     });
     box.appendChild(tabs);
-    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
+    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
   }
   function renderWorks(){
     box.appendChild(h('button',{type:'button',style:BTN2,text:'+ Add new artwork',on:{click:function(){editing='new';cur={n:true,o:{id:'',title:'',meta:'',series:'',status:'',ratio:'3 / 4',desc:'',cover:'',shots:[],process:[]}};render()}}}));
@@ -1306,6 +1334,104 @@ function init(){
       var a=h('a',{href:URL.createObjectURL(b),download:'subscribers.csv'});d.body.appendChild(a);a.click();a.remove()}}}),h('button',{type:'button',style:BTN+';margin-left:10px',text:'Refresh',on:{click:function(){subs=null;render()}}})]));
   }
   var mailState={subject:'',body:''};
+
+  function copyText(t,done){(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(done).catch(function(){prompt('Copy this:',t)})}
+  function dlFile(name,type,parts){var b=new Blob(parts,{type:type});var a=h('a',{href:URL.createObjectURL(b),download:name});d.body.appendChild(a);a.click();a.remove()}
+  var revData=null,revName={name:''};
+  function renderRevTab(){
+    box.appendChild(note1('Send a private link to a client after you finish their drawing. They write a rating and a few words. The review only appears on your site after you press "Show on site".'));
+    box.appendChild(field1(revName,'name','Client name','Sara'));
+    var out=h('div',{style:'margin:12px 0;color:#7be0a6;line-height:1.7;word-break:break-all'});
+    box.appendChild(h('button',{type:'button',style:BTN2,text:'Make a review link',on:{click:function(){
+      post('/api/admin/reviewlink',{name:revName.name}).then(function(r){
+        var link=location.origin+'/?review='+r.token;revName.name='';revData=null;
+        copyText(link,function(){});
+        out.textContent='Link ready (and copied): '+link;
+        out.appendChild(h('div',{style:'margin-top:8px'},[h('a',{href:'https://wa.me/?text='+encodeURIComponent('Thank you for your order! Could you leave me a small review here? '+link),target:'_blank',rel:'noopener',style:'color:#7be0a6',text:'Send it on WhatsApp'})]));
+      }).catch(function(e){out.style.color='#ff9a9a';out.textContent='Problem: '+e.message})}}}));
+    box.appendChild(out);
+    if(!revData){box.appendChild(h('p',{style:'color:#9fb0c8',text:'Loading ...'}));
+      get('/api/admin/reviews').then(function(r){revData=r;if(!out.textContent)render()}).catch(function(e){say('Problem: '+e.message)});return}
+    box.appendChild(sub('Reviews from clients'));
+    if(!revData.reviews.length)box.appendChild(h('p',{style:'color:#9fb0c8',text:'No reviews yet.'}));
+    revData.reviews.forEach(function(r){
+      var on=!!r.approved;
+      box.appendChild(h('div',{style:'margin:14px 0;padding:14px;border:1px solid '+(on?'rgba(123,224,166,.5)':'rgba(190,170,255,.3)')+';border-radius:14px;background:rgba(20,26,66,.4);max-width:780px;line-height:1.6'},[
+        h('div',{style:'color:#ffd98a;font-size:18px',text:new Array((+r.stars||0)+1).join('★')}),
+        h('div',{style:'font-size:17px',text:r.name}),h('div',{style:'white-space:pre-line;color:#c4d0e6',text:r.text}),
+        h('div',{style:'font-size:12px;color:#9fb0c8;margin-top:6px',text:new Date(r.created_at).toLocaleDateString()+(on?'  ·  shown on your site':'  ·  hidden')}),
+        h('div',{style:'display:flex;gap:8px;margin-top:12px;flex-wrap:wrap'},[
+          h('button',{type:'button',style:on?BTN:BTNG,text:on?'Hide':'Show on site',on:{click:function(){post('/api/admin/review/set',{id:r.id,approved:!on}).then(function(){revData=null;render()}).catch(function(e){say('Problem: '+e.message)})}}}),
+          h('button',{type:'button',style:BTNR,text:'Delete',on:{click:function(){if(confirm('Delete this review?'))post('/api/admin/review/delete',{id:r.id}).then(function(){revData=null;render()})}}})])]));
+    });
+    var open=revData.links.filter(function(l){return !l.used});
+    if(open.length){
+      box.appendChild(sub('Links waiting for an answer'));
+      open.forEach(function(l){var link=location.origin+'/?review='+l.token;
+        box.appendChild(h('div',{style:'display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0'},[h('span',{style:'min-width:100px',text:l.name}),
+          h('button',{type:'button',style:BTN,text:'Copy link',on:{click:function(){copyText(link,function(){say('Link copied.')})}}}),
+          h('button',{type:'button',style:BTNR,text:'Delete',on:{click:function(){post('/api/admin/reviewlink/delete',{token:l.token}).then(function(){revData=null;render()})}}})]))});
+    }
+  }
+  var waitData=null;
+  function renderWaitTab(){
+    box.appendChild(note1('People who left their email on a sold-out product or a sold artwork. When you have it again, write to them.'));
+    if(!waitData){box.appendChild(h('p',{style:'color:#9fb0c8',text:'Loading ...'}));
+      get('/api/admin/waitlist').then(function(r){waitData=r.waitlist||[];render()}).catch(function(e){say('Problem: '+e.message)});return}
+    if(!waitData.length)box.appendChild(h('p',{style:'color:#9fb0c8',text:'Nobody is waiting yet.'}));
+    var by={};waitData.forEach(function(x){(by[x.product]=by[x.product]||[]).push(x.email)});
+    Object.keys(by).forEach(function(k){
+      var em=by[k];
+      box.appendChild(h('div',{style:'margin:14px 0;padding:14px;border:1px solid rgba(190,170,255,.3);border-radius:14px;background:rgba(20,26,66,.4);max-width:780px'},[
+        h('div',{style:'font-size:18px',text:k+'  ·  '+em.length}),
+        h('div',{style:'color:#9fb0c8;margin:6px 0;word-break:break-all',text:em.join(', ')}),
+        h('div',{style:'display:flex;gap:8px;flex-wrap:wrap;margin-top:10px'},[
+          h('button',{type:'button',style:BTN,text:'Copy emails',on:{click:function(){copyText(em.join(', '),function(){say('Copied.')})}}}),
+          h('a',{style:BTN+';text-decoration:none',href:'mailto:?bcc='+encodeURIComponent(em.slice(0,40).join(','))+'&subject='+encodeURIComponent(k+' is back'),target:'_blank',rel:'noopener',text:'Write to them'}),
+          h('button',{type:'button',style:BTNR,text:'Done (clear list)',on:{click:function(){if(confirm('Clear this list?'))post('/api/admin/waitlist/clear',{product:k}).then(function(){waitData=null;render()})}}})])]));
+    });
+  }
+  function b64blob(b){return new Promise(function(res,rej){var f=new FileReader();f.onload=function(){res(String(f.result).split(',')[1])};f.onerror=rej;f.readAsDataURL(b)})}
+  function renderBackTab(){
+    box.appendChild(note1('A backup is one file with everything: your texts, artworks, shop, orders, requests, subscribers, reviews and pictures. Keep it somewhere safe (your phone, your email, Google Drive). If something goes wrong you can put it all back.'));
+    var out=h('div',{style:'margin:14px 0;min-height:22px;color:#a8d6ff;line-height:1.6'});
+    function stamp(){return new Date().toISOString().slice(0,10)}
+    box.appendChild(h('div',{style:'display:flex;gap:10px;flex-wrap:wrap;margin-top:12px'},[
+      h('button',{type:'button',style:BTNG,text:'Download backup with pictures',on:{click:function(){
+        out.style.color='#a8d6ff';out.textContent='Collecting ... please wait';
+        get('/api/admin/backup').then(function(bk){
+          bk.pictures=[];var ids=bk.media.slice(),n=0;
+          return (function next(){
+            if(!ids.length)return bk;var id=ids.shift();out.textContent='Saving pictures ... '+(++n)+' of '+bk.media.length;
+            return fetch('/api/media/'+id,{credentials:'same-origin'}).then(function(r){if(!r.ok)return null;return r.blob()}).then(function(b){if(!b)return null;return b64blob(b).then(function(x){bk.pictures.push({id:id,mime:b.type||'image/jpeg',data:x})})}).then(next);
+          })();
+        }).then(function(bk){dlFile('ismailtenni-art-backup-'+stamp()+'.json','application/json',[JSON.stringify(bk)]);out.style.color='#7be0a6';out.textContent='Done. Your backup file was downloaded.'}).catch(function(e){out.style.color='#ff9a9a';out.textContent='Problem: '+e.message});
+      }}}),
+      h('button',{type:'button',style:BTN,text:'Download backup (no pictures, small)',on:{click:function(){
+        get('/api/admin/backup').then(function(bk){dlFile('ismailtenni-art-backup-small-'+stamp()+'.json','application/json',[JSON.stringify(bk)]);out.style.color='#7be0a6';out.textContent='Done.'}).catch(function(e){out.style.color='#ff9a9a';out.textContent='Problem: '+e.message})}}})]));
+    box.appendChild(sub('Put a backup back'));
+    box.appendChild(note1('Choose a backup file. It brings back your site content, orders, subscribers, reviews and pictures. It adds to what is already there and does not delete anything.'));
+    var fi=h('input',{type:'file',accept:'.json,application/json',style:'display:none'});
+    fi.addEventListener('change',function(){
+      var f=fi.files&&fi.files[0];fi.value='';if(!f)return;
+      var rd=new FileReader();
+      rd.onload=function(){
+        var bk;try{bk=JSON.parse(rd.result)}catch(e){out.style.color='#ff9a9a';out.textContent='This file is not a valid backup.';return}
+        if(!bk||bk.kind!=='ismailtenni-art-backup'){out.style.color='#ff9a9a';out.textContent='This is not a backup of your site.';return}
+        if(!confirm('Restore this backup (made '+String(bk.created||'').slice(0,10)+')?'))return;
+        var pics=(bk.pictures||[]).slice(),total=pics.length,n=0;delete bk.pictures;delete bk.members;
+        out.style.color='#a8d6ff';
+        (function next(){
+          if(!pics.length){out.textContent='Restoring your content ...';return post('/api/admin/restore',bk).then(function(r){out.style.color='#7be0a6';out.textContent='Restored! Reloading ...';setTimeout(function(){location.reload()},1200)}).catch(function(e){out.style.color='#ff9a9a';out.textContent='Problem: '+e.message})}
+          var p=pics.shift();out.textContent='Restoring pictures ... '+(++n)+' of '+total;
+          return post('/api/admin/restore-media',p).then(next);
+        })().catch(function(e){out.style.color='#ff9a9a';out.textContent='Problem: '+e.message});
+      };
+      rd.readAsText(f);
+    });
+    box.appendChild(h('span',{},[h('button',{type:'button',style:BTN2,text:'Choose a backup file',on:{click:function(){fi.click()}}}),fi]));
+    box.appendChild(out);
+  }
   function save(){
     if(busy){say('Please wait, a photo is still uploading.');return}
     data.films=data.films.filter(function(f){return (f.url||f.file||'').trim()});
@@ -1410,19 +1536,19 @@ try{
 var d=document,w=window,root=d.documentElement,C=w.C||{};
 var WA='https://wa.me/212651543275?text=';
 var Z={
-fr:{pc_label:"Calculateur de prix",pc_title:"Combien coûte mon dessin ?",pc_intro:"Choisissez vos options et voyez le prix tout de suite. Le prix final est confirmé par moi.",pc_size:"Taille",pc_style:"Style",pc_people:"Nombre de personnes",pc_rush:"Commande rapide",pc_total:"Prix estimé",pc_send:"Envoyer sur WhatsApp",pc_hello:"Bonjour ! Je voudrais un dessin.",pc_est:"Prix estimé",ins_link:"Installer l’appli",ins_help:"Sur iPhone : touchez Partager, puis « Sur l’écran d’accueil ». Sur Android : ouvrez le menu du navigateur et touchez « Installer l’application ».",bl_label:"Journal",bl_title:"Depuis mon carnet de croquis",bl_soon:"Mon premier article arrive bientôt.",bl_read:"Lire la suite",bl_less:"Fermer",fv_label:"Vos favoris",fv_title:"Les œuvres que vous aimez",fv_empty:"Touchez le cœur d’une œuvre pour l’enregistrer ici.",ch_label:"Défi",ch_prize:"Prix",ch_days:"jours restants",ch_ended:"Ce défi est terminé.",ch_name:"Votre nom",ch_contact:"Instagram ou WhatsApp",ch_link:"Lien de votre dessin (facultatif)",ch_join:"Participer",ch_ok:"C’est enregistré ! Bonne chance.",g_play:"Jouer à un jeu",sp_label:"Œuvre du mois",sp_btn:"Demander cette œuvre",
+fr:{mk_title:"Le making-of",mk_hint:"Glissez pour voir le dessin prendre vie",mk_play:"Lecture",mk_stop:"Pause",mk_step:"Étape",mk_final:"Terminé",rv_form_title:"Laissez votre avis",rv_name:"Votre nom",rv_stars:"Votre note",rv_text:"Vos mots",rv_send:"Envoyer mon avis",rv_thanks:"Merci ! Votre avis apparaîtra après ma vérification.",rv_bad:"Ce lien d’avis n’est pas valide ou a déjà été utilisé.",rv_close:"Fermer",wl_btn:"Prévenez-moi du retour",wl_email:"Votre email",wl_send:"Me prévenir",wl_ok:"C’est noté ! Je vous écrirai.",wl_bad:"Entrez un email valide.",wl_sold:"Cette œuvre est vendue. Laissez votre email pour être prévenu(e) si j’en fais une similaire.",cd_label:"Carte de l’espace",cd_title:"Créez votre carte spatiale",cd_intro:"Écrivez votre nom et recevez une carte à partager en story Instagram.",cd_name:"Votre nom",cd_moon:"Lune",cd_pluto:"Pluton",cd_make:"Créer ma carte",cd_dl:"Télécharger",cd_share:"Partager",cd_tag:"Une étoile d’Eternal Space",pc_label:"Calculateur de prix",pc_title:"Combien coûte mon dessin ?",pc_intro:"Choisissez vos options et voyez le prix tout de suite. Le prix final est confirmé par moi.",pc_size:"Taille",pc_style:"Style",pc_people:"Nombre de personnes",pc_rush:"Commande rapide",pc_total:"Prix estimé",pc_send:"Envoyer sur WhatsApp",pc_hello:"Bonjour ! Je voudrais un dessin.",pc_est:"Prix estimé",ins_link:"Installer l’appli",ins_help:"Sur iPhone : touchez Partager, puis « Sur l’écran d’accueil ». Sur Android : ouvrez le menu du navigateur et touchez « Installer l’application ».",bl_label:"Journal",bl_title:"Depuis mon carnet de croquis",bl_soon:"Mon premier article arrive bientôt.",bl_read:"Lire la suite",bl_less:"Fermer",fv_label:"Vos favoris",fv_title:"Les œuvres que vous aimez",fv_empty:"Touchez le cœur d’une œuvre pour l’enregistrer ici.",ch_label:"Défi",ch_prize:"Prix",ch_days:"jours restants",ch_ended:"Ce défi est terminé.",ch_name:"Votre nom",ch_contact:"Instagram ou WhatsApp",ch_link:"Lien de votre dessin (facultatif)",ch_join:"Participer",ch_ok:"C’est enregistré ! Bonne chance.",g_play:"Jouer à un jeu",sp_label:"Œuvre du mois",sp_btn:"Demander cette œuvre",
 gf_label:"Cartes cadeaux",gf_title:"Offrez un dessin",gf_intro:"Choisissez un montant. La personne choisit ensuite l’œuvre.",gf_ask:"Demander une carte cadeau",gf_soon:"Montant bientôt",
 rq_label:"Demande de dessin",rq_title:"Racontez-moi votre idée",rq_intro:"Remplissez ce petit formulaire. Je vous réponds avec un prix et un délai.",
 rq_name:"Votre nom",rq_contact:"Email ou numéro WhatsApp",rq_kind:"Type de dessin",k1:"Portrait",k2:"Scène fantastique",k3:"Autre idée",rq_size:"Taille souhaitée",rq_budget:"Budget",rq_idea:"Votre idée",rq_ref:"Lien d’une photo de référence (facultatif)",rq_send:"Envoyer ma demande",rq_wa:"Envoyer sur WhatsApp",rq_ok:"Merci ! J’ai bien reçu votre demande et je vous réponds vite.",rq_err:"Un problème est survenu. Essayez WhatsApp.",
 sh_buy:"Acheter sur WhatsApp",sh_pay:"Payer en ligne",sh_soon:"Prix bientôt",sh_lim:"Édition limitée",sh_left:"restants",sh_out:"Épuisé",
 dl:"Télécharger",tr_nf:"Code introuvable. Écrivez-moi sur WhatsApp, je vérifie."},
-ar:{pc_label:"حاسبة الأسعار",pc_title:"كم سعر رسمتي؟",pc_intro:"اختر خياراتك وشاهد السعر فوراً. السعر النهائي أؤكده أنا.",pc_size:"الحجم",pc_style:"الأسلوب",pc_people:"عدد الأشخاص",pc_rush:"طلب مستعجل",pc_total:"السعر التقديري",pc_send:"أرسل عبر واتساب",pc_hello:"مرحباً! أريد رسمة.",pc_est:"السعر التقديري",ins_link:"ثبّت التطبيق",ins_help:"على الآيفون: اضغط مشاركة ثم «إضافة إلى الشاشة الرئيسية». على الأندرويد: افتح قائمة المتصفح واضغط «تثبيت التطبيق».",bl_label:"المدونة",bl_title:"من دفتر رسوماتي",bl_soon:"أول منشور قريباً.",bl_read:"اقرأ المزيد",bl_less:"إغلاق",fv_label:"مفضلتك",fv_title:"الأعمال التي تحبها",fv_empty:"اضغط على القلب في أي عمل لحفظه هنا.",ch_label:"تحدٍّ",ch_prize:"الجائزة",ch_days:"أيام متبقية",ch_ended:"انتهى هذا التحدي.",ch_name:"اسمك",ch_contact:"إنستغرام أو واتساب",ch_link:"رابط رسمتك (اختياري)",ch_join:"شارك",ch_ok:"تم تسجيلك! حظاً موفقاً.",g_play:"العب لعبة",sp_label:"عمل الشهر",sp_btn:"اسأل عن هذا العمل",
+ar:{mk_title:"كواليس الرسم",mk_hint:"حرّك الشريط لترى الرسمة تولد",mk_play:"تشغيل",mk_stop:"إيقاف",mk_step:"الخطوة",mk_final:"النتيجة النهائية",rv_form_title:"اترك تقييمك",rv_name:"اسمك",rv_stars:"تقييمك",rv_text:"كلماتك",rv_send:"أرسل تقييمي",rv_thanks:"شكراً! سيظهر تقييمك بعد أن أراجعه.",rv_bad:"رابط التقييم غير صالح أو استُخدم من قبل.",rv_close:"إغلاق",wl_btn:"أخبرني عند توفرها",wl_email:"بريدك الإلكتروني",wl_send:"أخبرني",wl_ok:"تم! سأراسلك.",wl_bad:"أدخل بريداً صحيحاً.",wl_sold:"هذه الرسمة بيعت. اترك بريدك لأخبرك إذا رسمت واحدة مشابهة.",cd_label:"بطاقة الفضاء",cd_title:"اصنع بطاقتك الفضائية",cd_intro:"اكتب اسمك واحصل على بطاقة لمشاركتها في ستوري إنستغرام.",cd_name:"اسمك",cd_moon:"القمر",cd_pluto:"بلوتو",cd_make:"أنشئ بطاقتي",cd_dl:"تحميل",cd_share:"مشاركة",cd_tag:"نجمة في Eternal Space",pc_label:"حاسبة الأسعار",pc_title:"كم سعر رسمتي؟",pc_intro:"اختر خياراتك وشاهد السعر فوراً. السعر النهائي أؤكده أنا.",pc_size:"الحجم",pc_style:"الأسلوب",pc_people:"عدد الأشخاص",pc_rush:"طلب مستعجل",pc_total:"السعر التقديري",pc_send:"أرسل عبر واتساب",pc_hello:"مرحباً! أريد رسمة.",pc_est:"السعر التقديري",ins_link:"ثبّت التطبيق",ins_help:"على الآيفون: اضغط مشاركة ثم «إضافة إلى الشاشة الرئيسية». على الأندرويد: افتح قائمة المتصفح واضغط «تثبيت التطبيق».",bl_label:"المدونة",bl_title:"من دفتر رسوماتي",bl_soon:"أول منشور قريباً.",bl_read:"اقرأ المزيد",bl_less:"إغلاق",fv_label:"مفضلتك",fv_title:"الأعمال التي تحبها",fv_empty:"اضغط على القلب في أي عمل لحفظه هنا.",ch_label:"تحدٍّ",ch_prize:"الجائزة",ch_days:"أيام متبقية",ch_ended:"انتهى هذا التحدي.",ch_name:"اسمك",ch_contact:"إنستغرام أو واتساب",ch_link:"رابط رسمتك (اختياري)",ch_join:"شارك",ch_ok:"تم تسجيلك! حظاً موفقاً.",g_play:"العب لعبة",sp_label:"عمل الشهر",sp_btn:"اسأل عن هذا العمل",
 gf_label:"بطاقات الهدايا",gf_title:"أهدِ رسمة",gf_intro:"اختر مبلغاً، ثم يختار المُهدى إليه العمل.",gf_ask:"اسأل عن بطاقة هدية",gf_soon:"المبلغ قريباً",
 rq_label:"طلب رسمة",rq_title:"أخبرني بفكرتك",rq_intro:"املأ هذا النموذج الصغير وسأرد عليك بالسعر والمدة.",
 rq_name:"اسمك",rq_contact:"البريد أو رقم واتساب",rq_kind:"نوع الرسمة",k1:"بورتريه",k2:"مشهد فانتازي",k3:"فكرة أخرى",rq_size:"الحجم المطلوب",rq_budget:"الميزانية",rq_idea:"فكرتك",rq_ref:"رابط صورة مرجعية (اختياري)",rq_send:"أرسل طلبي",rq_wa:"أرسل عبر واتساب",rq_ok:"شكراً! وصلني طلبك وسأرد عليك قريباً.",rq_err:"حدثت مشكلة. جرّب واتساب.",
 sh_buy:"اشترِ عبر واتساب",sh_pay:"ادفع عبر الإنترنت",sh_soon:"السعر قريباً",sh_lim:"إصدار محدود",sh_left:"متبقية",sh_out:"نفدت",
 dl:"تحميل",tr_nf:"الرمز غير موجود. راسلني على واتساب وسأتحقق."}};
-var EN={pc_label:"Price calculator",pc_title:"How much is my drawing?",pc_intro:"Choose your options and see the price straight away. I confirm the final price.",pc_size:"Size",pc_style:"Style",pc_people:"Number of people",pc_rush:"Rush order (faster)",pc_total:"Estimated price",pc_send:"Send to the artist on WhatsApp",pc_hello:"Hello! I would like a drawing.",pc_est:"Estimated price",ins_link:"Install the app",ins_help:"On iPhone: tap Share, then Add to Home Screen. On Android: open the browser menu and tap Install app.",bl_read:"Read more",bl_less:"Close",fv_empty:"Tap the heart on an artwork to save it here.",ch_prize:"Prize",ch_days:"days left",ch_ended:"This challenge has ended.",ch_ok:"You are in! Good luck.",ch_join:"Join",g_play:"Play a game",sp_label:"Art of the month",sp_btn:"Ask about this artwork",gf_ask:"Ask about a gift card",gf_soon:"Amount coming soon",rq_ok:"Thank you! I got your request and I will reply soon.",rq_err:"Something went wrong. Please try WhatsApp.",sh_buy:"Buy on WhatsApp",sh_pay:"Pay online",sh_soon:"Price coming soon",sh_lim:"Limited edition",sh_left:"left",sh_out:"Sold out",dl:"Download"};
+var EN={mk_title:"Making of",mk_hint:"Drag the slider to watch it come to life",mk_play:"Play",mk_stop:"Pause",mk_step:"Step",mk_final:"Finished",rv_form_title:"Leave your review",rv_name:"Your name",rv_stars:"Your rating",rv_text:"Your words",rv_send:"Send my review",rv_thanks:"Thank you! Your review will appear after I check it.",rv_bad:"This review link is not valid or was already used.",rv_close:"Close",wl_btn:"Tell me when it is back",wl_email:"Your email",wl_send:"Notify me",wl_ok:"Done! I will write to you.",wl_bad:"Please enter a valid email.",wl_sold:"This artwork is sold. Leave your email and I will tell you if I make a similar one.",cd_label:"Space card",cd_title:"Make your space card",cd_intro:"Type your name and get a card to share on Instagram Stories.",cd_name:"Your name",cd_moon:"Moon",cd_pluto:"Pluto",cd_make:"Create my card",cd_dl:"Download",cd_share:"Share",cd_tag:"A star in Eternal Space",pc_label:"Price calculator",pc_title:"How much is my drawing?",pc_intro:"Choose your options and see the price straight away. I confirm the final price.",pc_size:"Size",pc_style:"Style",pc_people:"Number of people",pc_rush:"Rush order (faster)",pc_total:"Estimated price",pc_send:"Send to the artist on WhatsApp",pc_hello:"Hello! I would like a drawing.",pc_est:"Estimated price",ins_link:"Install the app",ins_help:"On iPhone: tap Share, then Add to Home Screen. On Android: open the browser menu and tap Install app.",bl_read:"Read more",bl_less:"Close",fv_empty:"Tap the heart on an artwork to save it here.",ch_prize:"Prize",ch_days:"days left",ch_ended:"This challenge has ended.",ch_ok:"You are in! Good luck.",ch_join:"Join",g_play:"Play a game",sp_label:"Art of the month",sp_btn:"Ask about this artwork",gf_ask:"Ask about a gift card",gf_soon:"Amount coming soon",rq_ok:"Thank you! I got your request and I will reply soon.",rq_err:"Something went wrong. Please try WhatsApp.",sh_buy:"Buy on WhatsApp",sh_pay:"Pay online",sh_soon:"Price coming soon",sh_lim:"Limited edition",sh_left:"left",sh_out:"Sold out",dl:"Download"};
 function L(){return root.getAttribute('lang')||'en'}
 function T(k){var x=Z[L()];return (x&&x[k])||EN[k]||''}
 function el(tag,attrs,kids){var e=d.createElement(tag);for(var k in (attrs||{})){if(k==='text')e.textContent=attrs[k];else if(k==='style')e.style.cssText=attrs[k];else e.setAttribute(k,attrs[k])}(kids||[]).forEach(function(c){if(c)e.appendChild(c)});return e}
@@ -1456,6 +1582,7 @@ function renderShop(){
     if(edition){var out=left===0;card.appendChild(el('div',{},[el('span',{'class':'mx-badge'+(out?' out':''),text:out?T('sh_out'):T('sh_lim')+(left!=null?' · '+left+' '+T('sh_left'):' · '+p.edition)})]))}
     card.appendChild(el('div',{'class':'d',text:p.price||T('sh_soon')}));
     var sold=edition&&left===0;
+    if(sold)card.appendChild(waitForm(p.name||'Product'));
     if(!sold){
       card.appendChild(btnA(waLink('Hi! I want to buy: '+(p.name||'')+(p.price?' ('+p.price+')':'')+'.'),T('sh_buy')));
       var pay=safeHttps(p.pay)||def;if(pay&&p.price)card.appendChild(btnA(pay,lab||T('sh_pay'),'v'));
@@ -1488,8 +1615,8 @@ function renderSpot(){
   tx.appendChild(row);card.appendChild(tx);box.appendChild(card);
 }
 function renderReviews(){
-  var g=grid('reviews');if(!g||!C.reviews||!C.reviews.length)return;g.innerHTML='';
-  C.reviews.forEach(function(r){
+  var g=grid('reviews'),RV=(C.reviews||[]).concat(w.__cr||[]);if(!g||!RV.length)return;g.innerHTML='';
+  RV.forEach(function(r){
     var n=Math.min(5,Math.max(0,+r.stars||0)),stars=n?new Array(n+1).join('★'):'';
     g.appendChild(el('figure',{'class':'rv-fig fx-tilt'},[stars?el('div',{'class':'s',text:stars}):null,el('blockquote',{text:r.text||''}),r.name?el('figcaption',{text:'— '+r.name}):null]));
   });
@@ -1679,7 +1806,125 @@ w.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dip=e});
   a.addEventListener('click',function(e){e.preventDefault();if(dip){dip.prompt();dip=null}else alert(T('ins_help'))});
 })();
 if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){w.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){})})}
-function all(){labels();renderPricing();renderBlog();renderFavs();renderChallenge();renderShop();renderGifts();renderSpot();renderReviews();renderBehind();renderWall();renderTL();renderBA();renderAbout()}
+
+/* more5 */
+w.__cr=[];
+function loadCR(){fetch('/api/reviews').then(function(r){return r.ok?r.json():null}).then(function(j){if(j&&j.reviews&&j.reviews.length){w.__cr=j.reviews;renderReviews()}}).catch(function(){})}
+loadCR();
+function waitForm(key){
+  var box=el('div',{'class':'wl'});
+  var b=el('button',{type:'button','class':'mx-btn v',style:'margin-top:10px'},[el('span',{'data-z':'wl_btn',text:T('wl_btn')})]);
+  var f=el('form',{style:'display:none;flex-direction:column;gap:10px;margin-top:12px'});
+  var i=el('input',{type:'email',required:'',autocomplete:'email',placeholder:T('wl_email'),'aria-label':T('wl_email')});
+  var s=el('button',{type:'submit','class':'mx-btn'},[el('span',{'data-z':'wl_send',text:T('wl_send')})]);
+  var m=el('div',{'class':'d',style:'margin-top:8px'});
+  f.appendChild(i);f.appendChild(s);
+  b.addEventListener('click',function(){b.style.display='none';f.style.display='flex';i.focus()});
+  f.addEventListener('submit',function(e){e.preventDefault();var v=i.value.trim();
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){m.textContent=T('wl_bad');return}
+    s.disabled=true;
+    fetch('/api/waitlist',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({product:key,email:v})}).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})}).then(function(x){
+      if(x.ok){f.style.display='none';m.textContent=T('wl_ok')}else{m.textContent=x.j.error||T('wl_bad');s.disabled=false}
+    }).catch(function(){m.textContent=T('wl_bad');s.disabled=false});
+  });
+  box.appendChild(b);box.appendChild(f);box.appendChild(m);return box;
+}
+w.__vwHook=function(wk,steps){
+  var mk=d.getElementById('mk');
+  if(mk&&steps&&steps.length>=2){
+    var frame=el('div',{style:'position:relative;margin-top:12px;border-radius:14px;overflow:hidden;border:1px solid rgba(190,170,255,.35);background:#04050f;aspect-ratio:'+(wk.ratio||'3 / 4')});
+    var ims=steps.map(function(s,i){return el('img',{src:s.src,alt:s.label||'',style:'position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;transition:opacity .6s ease;opacity:'+(i===0?1:0)})});
+    ims.forEach(function(x){frame.appendChild(x)});
+    var rng=el('input',{type:'range',min:'0',max:String(steps.length-1),value:'0',step:'1','aria-label':T('mk_title'),style:'width:100%;margin-top:14px;accent-color:#b79cff'});
+    var cap=el('div',{'class':'d',style:'margin-top:4px;font-size:14px;color:#b7c4dc'});
+    var play=el('button',{type:'button','class':'mx-btn',style:'margin-top:12px'},[el('span',{text:T('mk_play')})]);
+    var tm=null;
+    function set(i){ims.forEach(function(m,k){m.style.opacity=(k===i)?'1':'0'});cap.textContent=(i===steps.length-1?T('mk_final'):T('mk_step')+' '+(i+1))+((steps[i].label&&i<steps.length-1)?' · '+steps[i].label:'');rng.value=String(i)}
+    function stop(){if(tm){clearInterval(tm);tm=null}play.firstChild.textContent=T('mk_play')}
+    rng.addEventListener('input',function(){stop();set(+rng.value)});
+    play.addEventListener('click',function(){if(tm){stop();return}var i=(+rng.value>=steps.length-1)?-1:+rng.value;play.firstChild.textContent=T('mk_stop');
+      tm=setInterval(function(){if(!d.body.contains(frame)){clearInterval(tm);return}i++;if(i>=steps.length){stop();return}set(i)},900)});
+    mk.appendChild(el('div',{style:'margin-top:28px;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:#5cbcff','data-z':'mk_title',text:T('mk_title')}));
+    mk.appendChild(el('div',{'class':'d',style:'margin-top:6px;font-size:13px;color:#9fb0c8','data-z':'mk_hint',text:T('mk_hint')}));
+    mk.appendChild(frame);mk.appendChild(rng);mk.appendChild(cap);mk.appendChild(play);set(0);
+  }
+  var sl=d.getElementById('wl-slot');
+  if(sl&&String(wk.status||'')==='Sold'){sl.appendChild(el('div',{style:'margin-top:26px'},[el('div',{'class':'d',style:'font-size:14px;line-height:1.6;color:#c4d0e6','data-z':'wl_sold',text:T('wl_sold')}),waitForm('Artwork: '+(wk.title||''))]))}
+};
+(function(){
+  var m=/[?&]review=([a-f0-9]{8,40})/.exec(location.search);if(!m)return;var tok=m[1];
+  function shell(inner){
+    var ov=el('div',{style:'position:fixed;top:0;left:0;right:0;bottom:0;z-index:3500;background:rgba(3,4,14,.94);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto'});
+    var card=el('div',{'class':'mx-card',style:'width:min(520px,100%);background:#0b1030'});inner(card,ov);ov.appendChild(card);d.body.appendChild(ov);
+    return ov;
+  }
+  function closeBtn(card,ov){card.appendChild(el('button',{type:'button','class':'mx-btn',style:'align-self:flex-start'},[el('span',{text:T('rv_close')})])).addEventListener('click',function(){ov.remove();try{history.replaceState(null,'',location.pathname)}catch(e){}})}
+  fetch('/api/review/check?token='+tok).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})}).then(function(x){
+    if(!x.ok){shell(function(card,ov){card.appendChild(el('div',{'class':'d',style:'font-size:16px',text:T('rv_bad')}));closeBtn(card,ov)});return}
+    var stars=5;
+    shell(function(card,ov){
+      card.appendChild(el('div',{'class':'t',text:T('rv_form_title')}));
+      var nm=el('input',{type:'text',maxlength:'60',value:x.j.name||'','aria-label':T('rv_name'),placeholder:T('rv_name')});
+      var row=el('div',{style:'display:flex;gap:6px;font-size:34px;cursor:pointer;user-select:none'}),sb=[];
+      for(var k=1;k<=5;k++)(function(k){var s=el('span',{role:'button',tabindex:'0','aria-label':k+' / 5',text:'★'});s.addEventListener('click',function(){stars=k;paint()});s.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){stars=k;paint()}});sb.push(s);row.appendChild(s)})(k);
+      function paint(){sb.forEach(function(s,i){s.style.color=i<stars?'#ffd98a':'#4a5578'})}paint();
+      var tx=el('textarea',{maxlength:'600',rows:'5','aria-label':T('rv_text'),placeholder:T('rv_text')});
+      var msg=el('div',{'class':'d'});
+      var go=el('button',{type:'button','class':'mx-btn v'},[el('span',{text:T('rv_send')})]);
+      go.addEventListener('click',function(){
+        if(tx.value.trim().length<3){tx.focus();return}
+        go.disabled=true;
+        fetch('/api/review',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({token:tok,name:nm.value,stars:stars,text:tx.value})}).then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})}).then(function(y){
+          if(y.ok){card.innerHTML='';card.appendChild(el('div',{'class':'t',text:'★'}));card.appendChild(el('div',{'class':'d',style:'font-size:16px',text:T('rv_thanks')}));closeBtn(card,ov)}
+          else{msg.textContent=y.j.error||'';go.disabled=false}
+        }).catch(function(){go.disabled=false});
+      });
+      [nm,row,tx,go,msg].forEach(function(n){card.appendChild(n)});
+    });
+  }).catch(function(){});
+})();
+function hashStr(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function renderCard(){
+  var s=d.getElementById('card');if(!s)return;var box=s.querySelector('.cd-box');if(box.getAttribute('data-ready'))return;box.setAttribute('data-ready','1');
+  var nm=el('input',{type:'text',maxlength:'30',placeholder:T('cd_name'),'aria-label':T('cd_name'),style:'max-width:360px'});
+  var pl=el('select',{'aria-label':'Planet',style:'max-width:360px'},[el('option',{value:'d97c2e76c1883fa920ea01d73709d95e.jpg','data-z':'cd_moon',text:T('cd_moon')}),el('option',{value:'1ee5693540621d5ce3af77afbe5fe9a6.jpg','data-z':'cd_pluto',text:T('cd_pluto')})]);
+  var mk=el('button',{type:'button','class':'mx-btn v'},[el('span',{'data-z':'cd_make',text:T('cd_make')})]);
+  var cv=el('canvas',{width:'1080',height:'1920',style:'display:none;width:100%;max-width:300px;aspect-ratio:9/16;border-radius:18px;border:1px solid rgba(190,170,255,.45);box-shadow:0 0 50px rgba(110,90,255,.35)',role:'img'});
+  var dl=el('button',{type:'button','class':'mx-btn',style:'display:none'},[el('span',{'data-z':'cd_dl',text:T('cd_dl')})]);
+  var sh=el('button',{type:'button','class':'mx-btn',style:'display:none'},[el('span',{'data-z':'cd_share',text:T('cd_share')})]);
+  var bar=el('div',{style:'display:flex;gap:10px;flex-wrap:wrap;margin-top:16px'},[dl,sh]);
+  var form=el('div',{style:'display:flex;flex-direction:column;gap:12px;max-width:360px'},[nm,pl,mk]);
+  var wrap=el('div',{'class':'wl cd-w',style:'display:flex;gap:30px;flex-wrap:wrap;align-items:flex-start;margin-top:34px'},[form,el('div',{},[cv,bar])]);
+  box.appendChild(wrap);
+  function draw(){
+    var name=(nm.value||'').trim().slice(0,30)||'Explorer',file=pl.value,W=1080,H=1920,c=cv.getContext('2d');
+    var src=(C.imgs&&C.imgs[file])?C.imgs[file]:'assets/'+file;
+    var im=new Image();
+    im.onload=function(){
+      var g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0a0824');g.addColorStop(.5,'#1a0f3d');g.addColorStop(1,'#05081a');c.fillStyle=g;c.fillRect(0,0,W,H);
+      [[220,420,520,'rgba(120,90,255,.35)'],[880,1250,620,'rgba(60,160,255,.22)'],[540,1700,500,'rgba(255,120,200,.16)']].forEach(function(n){var r=c.createRadialGradient(n[0],n[1],0,n[0],n[1],n[2]);r.addColorStop(0,n[3]);r.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=r;c.fillRect(0,0,W,H)});
+      var seed=hashStr(name+file);function rnd(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296}
+      for(var i=0;i<260;i++){var x=rnd()*W,y=rnd()*H,r=rnd()*2.6+.4;c.fillStyle='rgba(255,255,255,'+(.35+rnd()*.65)+')';c.beginPath();c.arc(x,y,r,0,6.3);c.fill()}
+      var cx=540,cy=800,R=340;
+      var gl=c.createRadialGradient(cx,cy,R*.9,cx,cy,R*1.6);gl.addColorStop(0,'rgba(150,120,255,.55)');gl.addColorStop(1,'rgba(150,120,255,0)');c.fillStyle=gl;c.beginPath();c.arc(cx,cy,R*1.6,0,6.3);c.fill();
+      c.save();c.beginPath();c.arc(cx,cy,R,0,6.3);c.clip();c.drawImage(im,cx-R,cy-R,R*2,R*2);c.restore();
+      c.lineWidth=4;c.strokeStyle='rgba(220,205,255,.7)';c.beginPath();c.arc(cx,cy,R,0,6.3);c.stroke();
+      c.textAlign='center';c.fillStyle='#d6ccff';c.font='500 42px Sora, system-ui, sans-serif';c.fillText(T('cd_tag'),540,300);
+      var fs=150;c.font='700 '+fs+'px Sora, system-ui, sans-serif';while(c.measureText(name).width>900&&fs>50){fs-=4;c.font='700 '+fs+'px Sora, system-ui, sans-serif'}
+      c.shadowColor='rgba(150,120,255,.9)';c.shadowBlur=40;c.fillStyle='#fff';c.fillText(name,540,1360);c.shadowBlur=0;
+      c.fillStyle='#a8d6ff';c.font='500 44px Sora, system-ui, sans-serif';c.fillText('ISMAILTENNI ART',540,1690);
+      c.fillStyle='rgba(255,255,255,.6)';c.font='400 34px Sora, system-ui, sans-serif';c.fillText(location.host,540,1750);
+      cv.style.display='block';dl.style.display='';cv.setAttribute('aria-label',name);
+      cv.toBlob(function(b){if(b&&navigator.canShare&&navigator.canShare({files:[new File([b],'space-card.png',{type:'image/png'})]}))sh.style.display=''},'image/png');
+    };
+    im.src=src;
+  }
+  mk.addEventListener('click',function(){if(d.fonts&&d.fonts.load){d.fonts.load('700 60px Sora').then(draw,draw)}else draw()});
+  nm.addEventListener('keydown',function(e){if(e.key==='Enter')mk.click()});
+  dl.addEventListener('click',function(){cv.toBlob(function(b){var a=el('a',{href:URL.createObjectURL(b),download:'space-card.png'});d.body.appendChild(a);a.click();a.remove()},'image/png')});
+  sh.addEventListener('click',function(){cv.toBlob(function(b){var f=new File([b],'space-card.png',{type:'image/png'});navigator.share({files:[f],title:'ISMAILTENNI ART'}).catch(function(){})},'image/png')});
+}
+function all(){labels();renderCard();renderPricing();renderBlog();renderFavs();renderChallenge();renderShop();renderGifts();renderSpot();renderReviews();renderBehind();renderWall();renderTL();renderBA();renderAbout()}
 all();
 new MutationObserver(function(){labels();renderPricing();renderBlog();renderFavs();renderChallenge();renderShop();renderGifts();renderSpot();renderWall()}).observe(root,{attributes:true,attributeFilter:['lang']});
 }catch(err){try{console.warn('dyn off',err)}catch(_){}}

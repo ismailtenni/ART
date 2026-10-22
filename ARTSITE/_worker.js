@@ -60,6 +60,9 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, contact TEXT NOT NULL, kind TEXT, size TEXT, budget TEXT, idea TEXT NOT NULL, ref TEXT, created_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS hits (day TEXT NOT NULL, k TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (day, k))',
   'CREATE TABLE IF NOT EXISTS visitors (day TEXT NOT NULL, h TEXT NOT NULL, PRIMARY KEY (day, h))',
+  'CREATE TABLE IF NOT EXISTS review_links (token TEXT PRIMARY KEY, name TEXT NOT NULL, created_at INTEGER NOT NULL, used INTEGER NOT NULL DEFAULT 0)',
+  'CREATE TABLE IF NOT EXISTS client_reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, stars INTEGER NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL, approved INTEGER NOT NULL DEFAULT 0)',
+  'CREATE TABLE IF NOT EXISTS waitlist (product TEXT NOT NULL, email TEXT NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (product, email))',
   'CREATE TABLE IF NOT EXISTS media_chunks (id TEXT NOT NULL, i INTEGER NOT NULL, d TEXT NOT NULL, PRIMARY KEY (id, i))',
 ];
 
@@ -259,6 +262,45 @@ export default {
         (c.results || []).forEach((r) => { (out[r.id] = out[r.id] || { likes: 0, comments: 0 }).comments = r.n; });
         return json(out);
       }
+      if (url.pathname === '/api/reviews' && req.method === 'GET') {
+        const r = await env.DB.prepare('SELECT name, stars, text FROM client_reviews WHERE approved = 1 ORDER BY created_at DESC LIMIT 60').all();
+        return json({ reviews: r.results || [] });
+      }
+      if (url.pathname === '/api/review/check' && req.method === 'GET') {
+        const t = String(url.searchParams.get('token') || '').slice(0, 40);
+        const r = await env.DB.prepare('SELECT name FROM review_links WHERE token = ? AND used = 0').bind(t).first();
+        if (!r) return json({ error: 'This review link is not valid or was already used.' }, 404);
+        return json({ name: r.name });
+      }
+      if (url.pathname === '/api/admin/reviews' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const rv = await env.DB.prepare('SELECT id, name, stars, text, created_at, approved FROM client_reviews ORDER BY created_at DESC LIMIT 200').all();
+        const lk = await env.DB.prepare('SELECT token, name, used, created_at FROM review_links ORDER BY created_at DESC LIMIT 100').all();
+        return json({ reviews: rv.results || [], links: lk.results || [] });
+      }
+      if (url.pathname === '/api/admin/waitlist' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const r = await env.DB.prepare('SELECT product, email, created_at FROM waitlist ORDER BY created_at DESC LIMIT 2000').all();
+        return json({ waitlist: r.results || [] });
+      }
+      if (url.pathname === '/api/admin/backup' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const all = async (q) => ((await env.DB.prepare(q).all()).results || []);
+        const one = async (k) => { const r = await env.DB.prepare('SELECT v FROM content WHERE k = ?').bind(k).first(); try { return r && r.v ? JSON.parse(r.v) : null; } catch (e) { return null; } };
+        const site = await one('site');
+        return json({
+          kind: 'ismailtenni-art-backup', version: 1, created: new Date().toISOString(), site, orders: await one('orders') || [],
+          subscribers: await all('SELECT email, created_at FROM subscribers'),
+          waitlist: await all('SELECT product, email, created_at FROM waitlist'),
+          reviews: await all('SELECT name, stars, text, created_at, approved FROM client_reviews'),
+          requests: await all('SELECT name, contact, kind, size, budget, idea, ref, created_at FROM requests'),
+          members: await all('SELECT name, email, created_at FROM users'),
+          media: site ? [...mediaIds(site)] : [],
+        });
+      }
       if (url.pathname === '/api/unsubscribe' && req.method === 'GET') {
         const em = String(url.searchParams.get('e') || '').trim().toLowerCase().slice(0, 120);
         const ok = em && (await unsubToken(env, em)) === url.searchParams.get('t');
@@ -380,6 +422,76 @@ export default {
         if (isAdmin(env, me)) await env.DB.prepare('DELETE FROM comments WHERE id = ?').bind(Number(body.id) || 0).run();
         else await env.DB.prepare('DELETE FROM comments WHERE id = ? AND user_id = ?').bind(Number(body.id) || 0, me.id).run();
         return json({ ok: true });
+      }
+      if (url.pathname === '/api/review') {
+        const ip = req.headers.get('cf-connecting-ip') || 'x';
+        if (await tooMany(env, 'rev:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
+        await note(env, 'rev:' + ip);
+        const t = String(body.token || '').slice(0, 40);
+        const link = await env.DB.prepare('SELECT name FROM review_links WHERE token = ? AND used = 0').bind(t).first();
+        if (!link) return json({ error: 'This review link is not valid or was already used.' }, 404);
+        const stars = Math.min(5, Math.max(1, parseInt(body.stars, 10) || 5));
+        const text = str(body.text, 600).trim(), name = str(body.name, 60).trim() || link.name;
+        if (text.length < 3) return json({ error: 'Please write a few words.' }, 400);
+        await env.DB.batch([
+          env.DB.prepare('INSERT INTO client_reviews (name, stars, text, created_at, approved) VALUES (?, ?, ?, ?, 0)').bind(name, stars, text, Date.now()),
+          env.DB.prepare('UPDATE review_links SET used = 1 WHERE token = ?').bind(t),
+        ]);
+        return json({ ok: true });
+      }
+      if (url.pathname === '/api/waitlist') {
+        const email = String(body.email || '').trim().toLowerCase().slice(0, 120), product = str(body.product, 100).trim();
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || !product) return json({ error: 'Please enter a valid email.' }, 400);
+        const ip = req.headers.get('cf-connecting-ip') || 'x';
+        if (await tooMany(env, 'wl:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
+        await note(env, 'wl:' + ip);
+        await env.DB.prepare('INSERT OR IGNORE INTO waitlist (product, email, created_at) VALUES (?, ?, ?)').bind(product, email, Date.now()).run();
+        return json({ ok: true });
+      }
+      if (url.pathname.startsWith('/api/admin/') && /^\/api\/admin\/(reviewlink|review\/set|review\/delete|reviewlink\/delete|waitlist\/clear|restore|restore-media)$/.test(url.pathname)) {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const P = url.pathname;
+        if (P === '/api/admin/reviewlink') {
+          const name = str(body.name, 60).trim();
+          if (!name) return json({ error: 'Write the client name first.' }, 400);
+          const token = Array.from(crypto.getRandomValues(new Uint8Array(9)), (b) => b.toString(16).padStart(2, '0')).join('');
+          await env.DB.prepare('INSERT INTO review_links (token, name, created_at, used) VALUES (?, ?, ?, 0)').bind(token, name, Date.now()).run();
+          return json({ token });
+        }
+        if (P === '/api/admin/review/set') { await env.DB.prepare('UPDATE client_reviews SET approved = ? WHERE id = ?').bind(body.approved ? 1 : 0, Number(body.id) || 0).run(); return json({ ok: true }); }
+        if (P === '/api/admin/review/delete') { await env.DB.prepare('DELETE FROM client_reviews WHERE id = ?').bind(Number(body.id) || 0).run(); return json({ ok: true }); }
+        if (P === '/api/admin/reviewlink/delete') { await env.DB.prepare('DELETE FROM review_links WHERE token = ?').bind(str(body.token, 40)).run(); return json({ ok: true }); }
+        if (P === '/api/admin/waitlist/clear') { await env.DB.prepare('DELETE FROM waitlist WHERE product = ?').bind(str(body.product, 100)).run(); return json({ ok: true }); }
+        if (P === '/api/admin/restore-media') {
+          const id = String(body.id || ''), mime = String(body.mime || ''), data = String(body.data || '');
+          if (!/^[a-f0-9]{8,32}$/.test(id) || !MIMES[mime] || !/^[A-Za-z0-9+/=]+$/.test(data) || data.length < 100 || data.length > 1700000) return json({ error: 'Bad picture.' }, 400);
+          const have = await env.DB.prepare('SELECT id FROM media WHERE id = ?').bind(id).first();
+          if (have) return json({ ok: true, skipped: true });
+          const SZ = 48000, parts = [];
+          for (let i = 0; i < data.length; i += SZ) parts.push(data.slice(i, i + SZ));
+          const st = [env.DB.prepare('INSERT INTO media (id, mime, n, created_at) VALUES (?, ?, ?, ?)').bind(id, mime, parts.length, Date.now())];
+          parts.forEach((q, i) => st.push(env.DB.prepare('INSERT INTO media_chunks (id, i, d) VALUES (?, ?, ?)').bind(id, i, q)));
+          await env.DB.batch(st);
+          return json({ ok: true });
+        }
+        if (P === '/api/admin/restore') {
+          const lst = (a, n) => (Array.isArray(a) ? a.slice(0, n) : []);
+          if (body.site && typeof body.site === 'object') {
+            const clean = cleanContent(body.site);
+            await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('site', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at").bind(JSON.stringify(clean), Date.now()).run();
+          }
+          const orders = lst(body.orders, 300).map((o) => ({ code: str(o && o.code, 30).trim().toUpperCase(), name: str(o && o.name, 60).trim(), stage: Math.min(5, Math.max(1, parseInt(o && o.stage, 10) || 1)), note: str(o && o.note, 300).trim() })).filter((o) => o.code);
+          if (orders.length) await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('orders', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at").bind(JSON.stringify(orders), Date.now()).run();
+          let n = { subscribers: 0, waitlist: 0, reviews: 0, requests: 0 };
+          for (const r of lst(body.subscribers, 5000)) { const e = str(r && r.email, 120).toLowerCase(); if (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) { await env.DB.prepare('INSERT OR IGNORE INTO subscribers (email, created_at) VALUES (?, ?)').bind(e, Number(r.created_at) || Date.now()).run(); n.subscribers++; } }
+          for (const r of lst(body.waitlist, 5000)) { const e = str(r && r.email, 120).toLowerCase(), pr = str(r && r.product, 100); if (pr && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) { await env.DB.prepare('INSERT OR IGNORE INTO waitlist (product, email, created_at) VALUES (?, ?, ?)').bind(pr, e, Number(r.created_at) || Date.now()).run(); n.waitlist++; } }
+          for (const r of lst(body.reviews, 300)) { const t = str(r && r.text, 600); if (!t) continue; const ca = Number(r.created_at) || Date.now();
+            await env.DB.prepare('INSERT INTO client_reviews (name, stars, text, created_at, approved) SELECT ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM client_reviews WHERE created_at = ? AND text = ?)').bind(str(r.name, 60), Math.min(5, Math.max(1, parseInt(r.stars, 10) || 5)), t, ca, r.approved ? 1 : 0, ca, t).run(); n.reviews++; }
+          for (const r of lst(body.requests, 500)) { const t = str(r && r.idea, 2000); if (!t) continue; const ca = Number(r.created_at) || Date.now();
+            await env.DB.prepare('INSERT INTO requests (name, contact, kind, size, budget, idea, ref, created_at) SELECT ?, ?, ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM requests WHERE created_at = ? AND idea = ?)').bind(str(r.name, 80), str(r.contact, 120), str(r.kind, 60), str(r.size, 60), str(r.budget, 60), t, str(r.ref, 300), ca, ca, t).run(); n.requests++; }
+          return json({ ok: true, ...n });
+        }
       }
       if (url.pathname === '/api/subscribe') {
         const email = String(body.email || '').trim().toLowerCase().slice(0, 120);
