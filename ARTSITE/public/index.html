@@ -397,6 +397,7 @@ header nav>a:not([style]):hover::after{transform:scaleX(1)}
 <p style="margin: 16px 0 0; max-width: 520px; font-size: 17px; line-height: 1.6; font-weight: 300; color: #b7c4dc"><span data-t="g_intro">Tap any artwork to see it large, zoom into the details and follow the process.</span></p>
 <div id="g-works" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 22vw, 230px), 1fr)); gap: 28px 20px; align-items: start; margin-top: 56px"></div>
 </section>
+<section id="favorites" class="mx-sec" style="display:none"><div class="mx-lab"><span data-z="fv_label">Your favorites</span></div><h2><span data-z="fv_title">Artworks you love</span></h2><div class="fv-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-top:34px;max-width:1100px"></div></section>
 <section id="collections" class="mx-sec"><div class="mx-lab"><span data-x="col_label">Collections</span></div><h2><span data-x="col_title">Explore by world</span></h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-top:40px;max-width:1100px"><a href="#gallery" data-ser="Portraits" class="mx-card art-card"><div class="mx-ph" style="aspect-ratio:4/3;font-size:13px">Portraits</div><div class="t"><span data-x="n_p">Portraits</span></div><div class="d"><span data-x="col_p">Faces and emotions, drawn by hand.</span></div><div class="go"><span data-x="col_open">Open collection</span> &#8594;</div></a><a href="#gallery" data-ser="Fantasy" class="mx-card art-card"><div class="mx-ph" style="aspect-ratio:4/3;font-size:13px">Fantasy</div><div class="t"><span data-x="n_f">Fantasy</span></div><div class="d"><span data-x="col_f">Imagined worlds and creatures.</span></div><div class="go"><span data-x="col_open">Open collection</span> &#8594;</div></a><a href="#gallery" data-ser="Space" class="mx-card art-card"><div class="mx-ph" style="aspect-ratio:4/3;font-size:13px">Space</div><div class="t"><span data-x="n_s">Space</span></div><div class="d"><span data-x="col_s">Planets, nebulas and the unknown.</span></div><div class="go"><span data-x="col_open">Open collection</span> &#8594;</div></a></div></section>
 <section id="photography" style="max-width: 1440px; margin: 0 auto; box-sizing: border-box; padding: clamp(72px, 10vw, 140px) clamp(20px, 4vw, 48px) 0">
 <div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #5cbcff"><span data-t="p_label">02 — Photography</span></div>
@@ -485,6 +486,7 @@ document.getElementById('vw-img').onclick=function(){zoom=!zoom;this.style.cssTe
 <h3 style="margin:48px 0 8px;font-weight:400;font-size:24px"><span data-t="h_title">How to order</span></h3>
 <ol style="list-style:none;margin:0;padding:0;max-width:640px"><li style="display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-top:1px solid rgba(255,255,255,0.12)"><span style="flex:none;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(42,120,170,0.9),rgba(100,70,200,0.9));font-size:14px">1</span><span style="font-size:16px;line-height:1.5;color:#e1e8f7"><span data-t="h1">Tell me your idea on WhatsApp.</span></span></li><li style="display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-top:1px solid rgba(255,255,255,0.12)"><span style="flex:none;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(42,120,170,0.9),rgba(100,70,200,0.9));font-size:14px">2</span><span style="font-size:16px;line-height:1.5;color:#e1e8f7"><span data-t="h2">I reply with sizes and the price.</span></span></li><li style="display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-top:1px solid rgba(255,255,255,0.12)"><span style="flex:none;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(42,120,170,0.9),rgba(100,70,200,0.9));font-size:14px">3</span><span style="font-size:16px;line-height:1.5;color:#e1e8f7"><span data-t="h3">We agree the details together.</span></span></li><li style="display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-top:1px solid rgba(255,255,255,0.12)"><span style="flex:none;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(42,120,170,0.9),rgba(100,70,200,0.9));font-size:14px">4</span><span style="font-size:16px;line-height:1.5;color:#e1e8f7"><span data-t="h4">You receive your artwork.</span></span></li></ol>
 </section>
+<section id="challenge" class="mx-sec" style="display:none"><div class="mx-lab"><span data-z="ch_label">Challenge</span></div><div class="ch-slot"></div></section>
 <section id="shop" class="mx-sec"><div class="mx-lab"><span data-x="sh_label">Shop</span></div><h2><span data-x="sh_title">Prints &amp; more</span></h2><p class="mx-p"><span data-x="sh_intro">Pick something and tap Buy: we finish the order on WhatsApp.</span></p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin-top:40px;max-width:1100px"><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:1/1;font-size:13px"><span data-x="sh_img">Product photo</span></div><div class="t"><span data-x="pr1">Art print</span></div><div class="d"><span data-x="sh_price">Price coming soon</span></div><a class="mx-btn" href="https://wa.me/212651543275?text=Hi%21%20I%20want%20to%20buy%20an%20art%20print." target="_blank" rel="noopener noreferrer"><span data-x="sh_buy">Buy on WhatsApp</span></a></div><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:1/1;font-size:13px"><span data-x="sh_img">Product photo</span></div><div class="t"><span data-x="pr2">Poster</span></div><div class="d"><span data-x="sh_price">Price coming soon</span></div><a class="mx-btn" href="https://wa.me/212651543275?text=Hi%21%20I%20want%20to%20buy%20a%20poster." target="_blank" rel="noopener noreferrer"><span data-x="sh_buy">Buy on WhatsApp</span></a></div><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:1/1;font-size:13px"><span data-x="sh_img">Product photo</span></div><div class="t"><span data-x="pr3">Sticker pack</span></div><div class="d"><span data-x="sh_price">Price coming soon</span></div><a class="mx-btn" href="https://wa.me/212651543275?text=Hi%21%20I%20want%20to%20buy%20a%20sticker%20pack." target="_blank" rel="noopener noreferrer"><span data-x="sh_buy">Buy on WhatsApp</span></a></div><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:1/1;font-size:13px"><span data-x="sh_img">Product photo</span></div><div class="t"><span data-x="pr4">Phone case</span></div><div class="d"><span data-x="sh_price">Price coming soon</span></div><a class="mx-btn" href="https://wa.me/212651543275?text=Hi%21%20I%20want%20to%20buy%20a%20phone%20case." target="_blank" rel="noopener noreferrer"><span data-x="sh_buy">Buy on WhatsApp</span></a></div></div></section>
 <section id="gifts" class="mx-sec"><div class="mx-lab"><span data-z="gf_label">Gift cards</span></div><h2><span data-z="gf_title">Give a drawing as a gift</span></h2><p class="mx-p"><span data-z="gf_intro">Choose an amount. The person you give it to picks the artwork.</span></p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin-top:40px;max-width:1000px"></div></section>
 <section id="tracker" class="mx-sec"><div class="mx-lab"><span data-y="tr_label">Order tracker</span></div><h2><span data-y="tr_title">Where is my drawing?</span></h2><p class="mx-p"><span data-y="tr_intro">Enter the code I sent you on WhatsApp.</span></p><form id="mx-tf" autocomplete="off"><input id="mx-tc" type="text" maxlength="24" placeholder="Your code" aria-label="Order code"><button class="mx-btn v" type="submit"><span data-y="tr_btn">Check</span></button></form><div id="mx-tr" aria-live="polite"></div><a class="mx-btn" style="margin-top:26px" href="https://wa.me/212651543275?text=Hi%21%20I%20want%20to%20ask%20about%20my%20order." target="_blank" rel="noopener noreferrer"><span data-y="tr_ask">No code? Message me on WhatsApp</span></a></section>
@@ -496,6 +498,7 @@ document.getElementById('vw-img').onclick=function(){zoom=!zoom;this.style.cssTe
 <div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #c4a0ff"><span data-t="k_label">Behind the scenes</span></div>
 <h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff"><span data-t="k_title">Behind the art</span></h2>
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(150px,22vw,230px),1fr));gap:20px;margin-top:36px"><div class="bob" style="aspect-ratio:1/1;border:1px dashed rgba(159,176,200,0.5);border-radius:16px;background:linear-gradient(160deg,rgba(20,34,70,0.6),rgba(8,12,28,0.6));display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;box-sizing:border-box;color:#9fb0c8;font-size:14px"><span data-t="k_soon">Your photo</span></div><div class="bob" style="aspect-ratio:1/1;border:1px dashed rgba(159,176,200,0.5);border-radius:16px;background:linear-gradient(160deg,rgba(20,34,70,0.6),rgba(8,12,28,0.6));display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;box-sizing:border-box;color:#9fb0c8;font-size:14px"><span data-t="k_soon">Your photo</span></div><div class="bob" style="aspect-ratio:1/1;border:1px dashed rgba(159,176,200,0.5);border-radius:16px;background:linear-gradient(160deg,rgba(20,34,70,0.6),rgba(8,12,28,0.6));display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;box-sizing:border-box;color:#9fb0c8;font-size:14px"><span data-t="k_soon">Your photo</span></div></div></section>
+<section id="blog" class="mx-sec"><div class="mx-lab"><span data-z="bl_label">Blog</span></div><h2><span data-z="bl_title">From my sketchbook</span></h2><div class="bl-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:40px;max-width:1100px"></div></section>
 <section id="wallpapers" class="mx-sec"><div class="mx-lab"><span data-y="wp_label">Free wallpapers</span></div><h2><span data-y="wp_title">Take my art with you</span></h2><p class="mx-p"><span data-y="wp_intro">A free phone wallpaper from each artwork.</span></p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:20px;margin-top:40px;max-width:900px"><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:9/16;font-size:13px"><span data-y="wp_soon">Coming soon</span></div><span class="mx-btn v" aria-disabled="true"><span data-y="wp_dl">Download</span></span></div><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:9/16;font-size:13px"><span data-y="wp_soon">Coming soon</span></div><span class="mx-btn v" aria-disabled="true"><span data-y="wp_dl">Download</span></span></div><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:9/16;font-size:13px"><span data-y="wp_soon">Coming soon</span></div><span class="mx-btn v" aria-disabled="true"><span data-y="wp_dl">Download</span></span></div></div></section>
 <section id="instagram" class="mx-sec"><div class="mx-lab"><span data-y="ig_label">Instagram</span></div><h2><span data-y="ig_title">Latest from @ismailtenni_art</span></h2><div id="ig-wrap" class="ig-wrap"><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a></div><a class="mx-btn v" style="margin-top:28px" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer"><span data-y="ig_btn">See more on Instagram</span></a></section>
 <section id="reviews" style="max-width: 1440px; margin: 0 auto; box-sizing: border-box; padding: clamp(72px, 10vw, 140px) clamp(20px, 4vw, 48px) 0">
@@ -548,7 +551,7 @@ document.getElementById('vw-img').onclick=function(){zoom=!zoom;this.style.cssTe
 
 <footer style="max-width: 1440px; margin: 0 auto; padding: clamp(80px, 11vw, 160px) clamp(20px, 4vw, 48px) 40px; box-sizing: border-box">
 <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.14); font-size: 14px; color: #9fb0c8">
-<span>© 2026 ISMAILTENNI ART</span>
+<span>© 2026 ISMAILTENNI ART &nbsp;·&nbsp; <a href="/play"><span data-z="g_play">Play a game</span></a></span>
 <span><a href="https://wa.me/212651543275" target="_blank" rel="noopener noreferrer">WhatsApp · +212 6 51 54 32 75</a> &nbsp;·&nbsp; <a href="https://www.instagram.com/ismailtenni_art/">Instagram · @ismailtenni_art</a></span>
 </div>
 </footer>
@@ -761,8 +764,7 @@ new MutationObserver(tr).observe(root,{attributes:true,attributeFilter:['lang']}
 })();
 
 </script>
-<script id="admin-js">
-(function(){
+<script id="admin-js">(function(){
 'use strict';
 var d=document,w=window;
 function clone(x){return JSON.parse(JSON.stringify(x||[]))}
@@ -790,7 +792,9 @@ function init(){
   var data={works:clone(w.C&&w.C.works),photos:clone(w.C&&w.C.photos),films:clone(w.C&&w.C.films),texts:JSON.parse(JSON.stringify((w.C&&w.C.texts)||{}))};
   var textsInfo=null;
   ['shop','gifts','reviews','behind','wallpapers','timelapse'].forEach(function(k){data[k]=clone(w.C&&w.C[k])});
-  ['spotlight','ba','about','settings'].forEach(function(k){data[k]=JSON.parse(JSON.stringify((w.C&&w.C[k])||{}))});
+  data.imgs=JSON.parse(JSON.stringify((w.C&&w.C.imgs)||{}));
+  data.posts=JSON.parse(JSON.stringify((w.C&&w.C.posts)||[]));
+  ['spotlight','ba','about','settings','challenge'].forEach(function(k){data[k]=JSON.parse(JSON.stringify((w.C&&w.C[k])||{}))});
   data.orders=[];var ordersLoaded=false,reqList=null;
   var tab='works',editing=null,cur=null,busy=0,msg='';
   var btn=h('button',{id:'ed-btn',type:'button',style:'position:fixed;left:18px;bottom:82px;z-index:950;'+BTN2+';box-shadow:0 8px 26px rgba(70,50,200,.55)',text:'✎ Edit my site'});
@@ -799,6 +803,79 @@ function init(){
   btn.addEventListener('click',function(){box.style.display='block';d.body.style.overflow='hidden';render()});
   function close(){box.style.display='none';d.body.style.overflow=''}
   d.addEventListener('keydown',function(e){if(e.key==='Escape'&&box.style.display==='block'&&!cur)close()});
+
+
+  /* ===== click-to-edit mode: tap any text or picture on the page ===== */
+  var live=h('button',{id:'ed-live',type:'button',style:'position:fixed;left:18px;bottom:136px;z-index:950;'+BTN+';box-shadow:0 8px 26px rgba(70,50,200,.4)',text:'✎ Click to edit'});
+  d.body.appendChild(live);
+  var bar2=h('div',{id:'ed-bar',style:'display:none;position:fixed;top:0;left:0;right:0;z-index:3100;padding:10px 14px;background:#0b1030;border-bottom:1px solid rgba(190,170,255,.5);color:#fff;font:14px Inter,system-ui,sans-serif;gap:10px;align-items:center;flex-wrap:wrap'});
+  var toast=h('span',{style:'flex:1 1 220px;color:#a8d6ff',text:'Tap any text or picture on the page to change it.'});
+  bar2.appendChild(toast);
+  bar2.appendChild(h('button',{type:'button',style:BTNG,text:'Save and publish',on:{click:function(){save()}}}));
+  bar2.appendChild(h('button',{type:'button',style:BTN,text:'Done',on:{click:function(){liveOff()}}}));
+  d.body.appendChild(bar2);
+  var css=d.createElement('style');
+  css.textContent='body.ed-on [data-t]:hover,body.ed-on [data-x]:hover,body.ed-on [data-y]:hover,body.ed-on [data-z]:hover{outline:2px dashed #b79cff;outline-offset:3px;cursor:text}body.ed-on img:hover{outline:3px dashed #7be0a6;outline-offset:-3px;cursor:pointer}body.ed-on #intro,body.ed-on #fxglow{display:none}';
+  d.head.appendChild(css);
+  var pop=null;
+  function liveOn(){d.body.classList.add('ed-on');bar2.style.display='flex';live.style.display='none';btn.style.display='none'}
+  function liveOff(){d.body.classList.remove('ed-on');bar2.style.display='none';live.style.display='';btn.style.display='';closePop()}
+  function tmsg(t){toast.textContent=t}
+  function closePop(){if(pop){pop.remove();pop=null}}
+  live.addEventListener('click',liveOn);
+  var KEYS={t:'t',x:'x',y:'y',z:'z'};
+  function keyOf(el){var a=['t','x','y','z'];for(var i=0;i<4;i++){if(el.hasAttribute('data-'+a[i]))return a[i]+':'+el.getAttribute('data-'+a[i])}return null}
+  function editText(el){
+    closePop();
+    var k=keyOf(el),lang=d.documentElement.getAttribute('lang')||'en';
+    var names={en:'English',fr:'French',ar:'Arabic'};
+    var ta=h('textarea',{style:INP+';min-height:120px;direction:'+(lang==='ar'?'rtl':'ltr')});ta.value=el.textContent.trim();
+    var r=el.getBoundingClientRect();
+    pop=h('div',{id:'ed-pop',style:'position:fixed;left:50%;top:'+Math.max(70,Math.min(r.bottom+10,innerHeight-330))+'px;translate:-50% 0;width:min(560px,92vw);z-index:3200;padding:16px;border-radius:16px;background:#0b1030;border:1px solid rgba(190,170,255,.6);box-shadow:0 20px 60px #000;color:#fff;font-family:Inter,system-ui,sans-serif'},[
+      h('div',{style:'font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#c4a0ff;margin-bottom:8px',text:'Text in '+(names[lang]||lang)+' (change the language at the top of the site to edit the others)'}),ta,
+      h('div',{style:'display:flex;gap:10px;margin-top:12px;flex-wrap:wrap'},[
+        h('button',{type:'button',style:BTNG,text:'OK',on:{click:function(){
+          var v=ta.value.trim();if(!v){closePop();return}
+          data.texts[k]=data.texts[k]||{};data.texts[k][lang]=v;el.textContent=v;closePop();tmsg('Changed. Press "Save and publish" when you are done.');textsInfo=null}}}),
+        h('button',{type:'button',style:BTN,text:'Cancel',on:{click:closePop}}),
+        h('button',{type:'button',style:BTNR,text:'Back to original',on:{click:function(){if(data.texts[k]){delete data.texts[k][lang];if(!Object.keys(data.texts[k]).length)delete data.texts[k]}closePop();tmsg('Original text comes back after you press "Save and publish".')}}})])]);
+    d.body.appendChild(pop);ta.focus();
+  }
+  function origName(src){var m=/([a-f0-9]{32}\.(?:png|jpg))/.exec(src||'');return m?m[1]:null}
+  function editImg(im){
+    closePop();
+    var inp=h('input',{type:'file',accept:'image/*',style:'display:none'});d.body.appendChild(inp);
+    inp.addEventListener('change',function(){
+      var f=inp.files&&inp.files[0];inp.remove();if(!f)return;
+      var cur=im.getAttribute('src')||'',name=im.getAttribute('data-ed-orig')||origName(cur);
+      if(!name){tmsg('This picture is part of your artwork list. Use the "✎ Edit my site" button and the Artwork, Photos or Page parts tab.');return}
+      tmsg('Uploading ... please wait');busy++;
+      shrink(f,1800).then(function(b64){return post('/api/admin/upload',{mime:'image/jpeg',data:b64})}).then(function(r){
+        busy--;data.imgs[name]=r.url;if(w.__swapImgs){var o={};o[name]=r.url;w.__swapImgs(o)}
+        [].forEach.call(d.querySelectorAll('img'),function(x){if((x.getAttribute('src')||'').indexOf(r.url)>-1&&!x.getAttribute('data-ed-orig'))x.setAttribute('data-ed-orig',name)});
+        tmsg('Picture changed. Press "Save and publish" when you are done.');
+      }).catch(function(e){busy--;tmsg('Problem: '+e.message)});
+    });
+    inp.click();
+  }
+  d.addEventListener('click',function(e){
+    if(!d.body.classList.contains('ed-on'))return;
+    var t=e.target;if(t.tagName==='INPUT'||(t.closest&&(t.closest('#ed-bar')||t.closest('#ed-pop')||t.closest('#ed')||t.closest('#lang'))))return;
+    e.preventDefault();e.stopPropagation();
+    var el=t.closest&&t.closest('[data-t],[data-x],[data-y],[data-z]');
+    if(el&&keyOf(el)){editText(el);return}
+    var stack=d.elementsFromPoint?d.elementsFromPoint(e.clientX,e.clientY):[t];
+    for(var i=0;i<stack.length;i++){if(stack[i].tagName==='IMG'){editImg(stack[i]);return}}
+    var best=null,ba=1e12;
+    [].forEach.call(d.querySelectorAll('img'),function(im){
+      var r=im.getBoundingClientRect();
+      if(r.width<40||r.height<40||e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)return;
+      var cs=getComputedStyle(im);if(cs.display==='none'||cs.visibility==='hidden')return;
+      var a=r.width*r.height;if(a<ba){ba=a;best=im}
+    });
+    if(best){editImg(best);return}
+    tmsg('I cannot change that part by tapping. Use the "✎ Edit my site" tabs (Artwork, Photos, Blog, Words ...).');
+  },true);
 
   function say(t){msg=t;var m=d.getElementById('ed-msg');if(m)m.textContent=t}
   function post(url,body){
@@ -904,11 +981,11 @@ function init(){
     box.appendChild(h('div',{id:'ed-msg',style:'margin-top:12px;min-height:20px;color:#a8d6ff;font-size:14px',text:msg}));
     if(cur){box.appendChild(workForm(cur.o,cur.n));return}
     var tabs=h('div',{style:'display:flex;gap:10px;margin:18px 0;flex-wrap:wrap'});
-    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['page','Page parts'],['orders','Orders'],['reqs','Requests'],['texts','Words']].forEach(function(t){
+    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['page','Page parts'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['orders','Orders'],['reqs','Requests'],['texts','Words']].forEach(function(t){
       tabs.appendChild(h('button',{type:'button',style:(tab===t[0]?BTN2:BTN),text:t[1],on:{click:function(){tab=t[0];render()}}}));
     });
     box.appendChild(tabs);
-    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else renderFilms();
+    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
   }
   function renderWorks(){
     box.appendChild(h('button',{type:'button',style:BTN2,text:'+ Add new artwork',on:{click:function(){editing='new';cur={n:true,o:{id:'',title:'',meta:'',series:'',status:'',ratio:'3 / 4',desc:'',cover:'',shots:[],process:[]}};render()}}}));
@@ -1115,6 +1192,54 @@ function init(){
       box.appendChild(card);
     });
   }
+
+  function renderBlogTab(){
+    box.appendChild(note1('Write short diary posts about your art. Newest first is up to you: use the arrows. The date is written like 2026-10-21.'));
+    box.appendChild(listEd(data.posts,[{k:'title',l:'Title'},{k:'date',l:'Date (YYYY-MM-DD)',p:'2026-10-21'},{k:'image',l:'Picture (optional)',t:'img',max:1400},{k:'text',l:'Text',t:'area'}],'+ Add post',function(){return {title:'',text:'',image:'',date:new Date().toISOString().slice(0,10)}}));
+  }
+  function renderChalTab(){
+    var c=data.challenge;
+    var on=h('input',{type:'checkbox'});on.checked=String(c.on||'').toLowerCase().indexOf('y')===0;
+    on.addEventListener('change',function(){c.on=on.checked?'yes':''});
+    box.appendChild(note1('A drawing challenge or giveaway. People send their entry from your site and you see it in the Requests tab.'));
+    box.appendChild(h('label',{style:'display:flex;gap:10px;align-items:center;margin:14px 0;font-size:16px'},[on,'Show the challenge on my site']));
+    box.appendChild(field1(c,'title','Title','Draw a planet challenge'));
+    box.appendChild(field1(c,'text','Rules / description','',true));
+    box.appendChild(field1(c,'prize','Prize','A free A4 print'));
+    box.appendChild(field1(c,'deadline','Last day (YYYY-MM-DD)','2026-12-31'));
+    var out=h('div',{style:'margin-top:20px;font-size:18px;color:#7be0a6'});
+    box.appendChild(h('button',{type:'button',style:BTN2,text:'Pick a random winner',on:{click:function(){
+      get('/api/admin/requests').then(function(r){
+        var l=(r.requests||[]).filter(function(q){return q.kind==='Challenge entry'});
+        out.textContent=l.length?'Winner: '+l[Math.floor(Math.random()*l.length)].name+' ('+l.length+' entries)':'No entries yet.';
+      }).catch(function(e){say('Problem: '+e.message)})}}}));
+    box.appendChild(out);
+  }
+  var stats=null;
+  function renderStatsTab(){
+    box.appendChild(note1('Private numbers. Only you can see this. Your own visits are not counted.'));
+    if(!stats){box.appendChild(h('p',{style:'color:#9fb0c8',text:'Loading ...'}));
+      post('/api/admin/stats',{}).then(function(r){stats=r;render()}).catch(function(e){say('Problem: '+e.message)});return}
+    var s=stats;
+    var g=h('div',{style:'display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;max-width:780px'});
+    [['Visitors (30 days)',(s.days||[]).reduce(function(a,d){return a+(d.u||0)},0)],['Page views (30 days)',(s.days||[]).reduce(function(a,d){return a+(d.v||0)},0)],['Members',s.members],['Newsletter',s.subscribers],['Requests',s.requests],['Comments',s.comments]].forEach(function(p){
+      g.appendChild(h('div',{style:'padding:14px;border:1px solid rgba(190,170,255,.3);border-radius:14px;background:rgba(20,26,66,.4)'},[h('div',{style:'font-size:28px',text:String(p[1]==null?0:p[1])}),h('div',{style:'font-size:13px;color:#9fb0c8',text:p[0]})]));
+    });
+    box.appendChild(g);
+    var days=s.days||[],mx=Math.max.apply(null,[1].concat(days.map(function(d){return d.v||0})));
+    var bars=h('div',{style:'display:flex;align-items:flex-end;gap:3px;height:110px;max-width:780px;margin:22px 0 4px'});
+    days.forEach(function(d){bars.appendChild(h('div',{title:d.day+': '+(d.v||0)+' views',style:'flex:1;min-height:2px;border-radius:3px 3px 0 0;background:linear-gradient(#b79cff,#5cbcff);height:'+Math.round((d.v||0)/mx*100)+'%'}))});
+    box.appendChild(sub('Last 30 days'));box.appendChild(bars);
+    function top(title,obj,map){
+      box.appendChild(sub(title));
+      var e=(obj||[]).slice(0,8);
+      if(!e.length)box.appendChild(h('p',{style:'color:#9fb0c8',text:'Nothing yet.'}));
+      e.forEach(function(p){box.appendChild(h('div',{style:'max-width:780px;padding:6px 0;border-bottom:1px solid rgba(190,170,255,.15)',text:(map?map(p[0]):p[0])+'  -  '+p[1]}))});
+    }
+    function wt(id){var w=(data.works||[]).filter(function(x){return String(x.id)===String(id)})[0];return w?w.title:'#'+id}
+    top('Countries',s.countries);top('Where visitors come from',s.refs);top('Most opened artwork',s.works,wt);top('Most loved artwork',s.loved,wt);
+    box.appendChild(h('button',{type:'button',style:BTN,text:'Refresh',on:{click:function(){stats=null;render()}}}));
+  }
   function save(){
     if(busy){say('Please wait, a photo is still uploading.');return}
     data.films=data.films.filter(function(f){return (f.url||f.file||'').trim()});
@@ -1128,7 +1253,6 @@ function init(){
   }
 }
 })();
-
 </script>
 <script id="more-js">
 (function(){
@@ -1220,19 +1344,19 @@ try{
 var d=document,w=window,root=d.documentElement,C=w.C||{};
 var WA='https://wa.me/212651543275?text=';
 var Z={
-fr:{sp_label:"Œuvre du mois",sp_btn:"Demander cette œuvre",
+fr:{bl_label:"Journal",bl_title:"Depuis mon carnet de croquis",bl_soon:"Mon premier article arrive bientôt.",bl_read:"Lire la suite",bl_less:"Fermer",fv_label:"Vos favoris",fv_title:"Les œuvres que vous aimez",fv_empty:"Touchez le cœur d’une œuvre pour l’enregistrer ici.",ch_label:"Défi",ch_prize:"Prix",ch_days:"jours restants",ch_ended:"Ce défi est terminé.",ch_name:"Votre nom",ch_contact:"Instagram ou WhatsApp",ch_link:"Lien de votre dessin (facultatif)",ch_join:"Participer",ch_ok:"C’est enregistré ! Bonne chance.",g_play:"Jouer à un jeu",sp_label:"Œuvre du mois",sp_btn:"Demander cette œuvre",
 gf_label:"Cartes cadeaux",gf_title:"Offrez un dessin",gf_intro:"Choisissez un montant. La personne choisit ensuite l’œuvre.",gf_ask:"Demander une carte cadeau",gf_soon:"Montant bientôt",
 rq_label:"Demande de dessin",rq_title:"Racontez-moi votre idée",rq_intro:"Remplissez ce petit formulaire. Je vous réponds avec un prix et un délai.",
 rq_name:"Votre nom",rq_contact:"Email ou numéro WhatsApp",rq_kind:"Type de dessin",k1:"Portrait",k2:"Scène fantastique",k3:"Autre idée",rq_size:"Taille souhaitée",rq_budget:"Budget",rq_idea:"Votre idée",rq_ref:"Lien d’une photo de référence (facultatif)",rq_send:"Envoyer ma demande",rq_wa:"Envoyer sur WhatsApp",rq_ok:"Merci ! J’ai bien reçu votre demande et je vous réponds vite.",rq_err:"Un problème est survenu. Essayez WhatsApp.",
 sh_buy:"Acheter sur WhatsApp",sh_pay:"Payer en ligne",sh_soon:"Prix bientôt",sh_lim:"Édition limitée",sh_left:"restants",sh_out:"Épuisé",
 dl:"Télécharger",tr_nf:"Code introuvable. Écrivez-moi sur WhatsApp, je vérifie."},
-ar:{sp_label:"عمل الشهر",sp_btn:"اسأل عن هذا العمل",
+ar:{bl_label:"المدونة",bl_title:"من دفتر رسوماتي",bl_soon:"أول منشور قريباً.",bl_read:"اقرأ المزيد",bl_less:"إغلاق",fv_label:"مفضلتك",fv_title:"الأعمال التي تحبها",fv_empty:"اضغط على القلب في أي عمل لحفظه هنا.",ch_label:"تحدٍّ",ch_prize:"الجائزة",ch_days:"أيام متبقية",ch_ended:"انتهى هذا التحدي.",ch_name:"اسمك",ch_contact:"إنستغرام أو واتساب",ch_link:"رابط رسمتك (اختياري)",ch_join:"شارك",ch_ok:"تم تسجيلك! حظاً موفقاً.",g_play:"العب لعبة",sp_label:"عمل الشهر",sp_btn:"اسأل عن هذا العمل",
 gf_label:"بطاقات الهدايا",gf_title:"أهدِ رسمة",gf_intro:"اختر مبلغاً، ثم يختار المُهدى إليه العمل.",gf_ask:"اسأل عن بطاقة هدية",gf_soon:"المبلغ قريباً",
 rq_label:"طلب رسمة",rq_title:"أخبرني بفكرتك",rq_intro:"املأ هذا النموذج الصغير وسأرد عليك بالسعر والمدة.",
 rq_name:"اسمك",rq_contact:"البريد أو رقم واتساب",rq_kind:"نوع الرسمة",k1:"بورتريه",k2:"مشهد فانتازي",k3:"فكرة أخرى",rq_size:"الحجم المطلوب",rq_budget:"الميزانية",rq_idea:"فكرتك",rq_ref:"رابط صورة مرجعية (اختياري)",rq_send:"أرسل طلبي",rq_wa:"أرسل عبر واتساب",rq_ok:"شكراً! وصلني طلبك وسأرد عليك قريباً.",rq_err:"حدثت مشكلة. جرّب واتساب.",
 sh_buy:"اشترِ عبر واتساب",sh_pay:"ادفع عبر الإنترنت",sh_soon:"السعر قريباً",sh_lim:"إصدار محدود",sh_left:"متبقية",sh_out:"نفدت",
 dl:"تحميل",tr_nf:"الرمز غير موجود. راسلني على واتساب وسأتحقق."}};
-var EN={sp_label:"Art of the month",sp_btn:"Ask about this artwork",gf_ask:"Ask about a gift card",gf_soon:"Amount coming soon",rq_ok:"Thank you! I got your request and I will reply soon.",rq_err:"Something went wrong. Please try WhatsApp.",sh_buy:"Buy on WhatsApp",sh_pay:"Pay online",sh_soon:"Price coming soon",sh_lim:"Limited edition",sh_left:"left",sh_out:"Sold out",dl:"Download"};
+var EN={bl_read:"Read more",bl_less:"Close",fv_empty:"Tap the heart on an artwork to save it here.",ch_prize:"Prize",ch_days:"days left",ch_ended:"This challenge has ended.",ch_ok:"You are in! Good luck.",ch_join:"Join",g_play:"Play a game",sp_label:"Art of the month",sp_btn:"Ask about this artwork",gf_ask:"Ask about a gift card",gf_soon:"Amount coming soon",rq_ok:"Thank you! I got your request and I will reply soon.",rq_err:"Something went wrong. Please try WhatsApp.",sh_buy:"Buy on WhatsApp",sh_pay:"Pay online",sh_soon:"Price coming soon",sh_lim:"Limited edition",sh_left:"left",sh_out:"Sold out",dl:"Download"};
 function L(){return root.getAttribute('lang')||'en'}
 function T(k){var x=Z[L()];return (x&&x[k])||EN[k]||''}
 function el(tag,attrs,kids){var e=d.createElement(tag);for(var k in (attrs||{})){if(k==='text')e.textContent=attrs[k];else if(k==='style')e.style.cssText=attrs[k];else e.setAttribute(k,attrs[k])}(kids||[]).forEach(function(c){if(c)e.appendChild(c)});return e}
@@ -1360,20 +1484,103 @@ if(rq){
   var wb=d.getElementById('rq-wa');
   if(wb)wb.addEventListener('click',function(e){e.preventDefault();w.open(waLink(summary()),'_blank','noopener')});
 }
-function all(){labels();renderShop();renderGifts();renderSpot();renderReviews();renderBehind();renderWall();renderTL();renderBA();renderAbout()}
+
+/* more3 */
+function yes(v){return String(v||'').toLowerCase().indexOf('y')===0}
+function renderBlog(){
+  var s=d.getElementById('blog');if(!s)return;var g=s.querySelector('.bl-grid');g.innerHTML='';
+  var posts=(C.posts||[]).slice().reverse();
+  if(!posts.length){g.appendChild(el('div',{'class':'mx-ph bob',style:'min-height:140px;grid-column:1/-1'},[el('span',{'data-z':'bl_soon',text:T('bl_soon')})]));return}
+  posts.forEach(function(p){
+    var full=el('div',{style:'display:none;white-space:pre-line;line-height:1.7;color:#c4d0e6;margin-top:10px',text:p.text||''});
+    var short=(p.text||'').length>170?(p.text||'').slice(0,170).replace(/\s+\S*$/,'')+' ...':(p.text||'');
+    var sh=el('div',{style:'line-height:1.6;color:#b7c4dc;font-size:15px;margin-top:8px',text:short});
+    var more=el('button',{type:'button','class':'mx-btn v',style:'margin-top:14px;align-self:flex-start'},[el('span',{text:T('bl_read')})]);
+    var open=false;
+    more.addEventListener('click',function(){open=!open;full.style.display=open?'block':'none';sh.style.display=open?'none':'';more.firstChild.textContent=open?T('bl_less'):T('bl_read')});
+    var card=el('article',{'class':'mx-card art-card'});
+    if(p.image&&ok(p.image))card.appendChild(el('div',{style:'aspect-ratio:16/10;border-radius:12px;overflow:hidden;background:#07091a'},[img(p.image,p.title)]));
+    if(p.date)card.appendChild(el('div',{style:'font-size:12px;letter-spacing:.2em;color:#c4a0ff',text:p.date}));
+    card.appendChild(el('div',{'class':'t',text:p.title||''}));card.appendChild(sh);card.appendChild(full);
+    if((p.text||'').length>170)card.appendChild(more);
+    g.appendChild(card);
+  });
+}
+var favIds=null;
+function loadFavs(){
+  fetch('/api/mylikes',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():null}).then(function(j){favIds=j&&j.works?j.works:null;renderFavs()}).catch(function(){});
+}
+function renderFavs(){
+  var s=d.getElementById('favorites');if(!s)return;
+  if(favIds===null){s.style.display='none';return}
+  s.style.display='';var g=s.querySelector('.fv-grid');g.innerHTML='';
+  var list=(C.works||[]).filter(function(x){return favIds.indexOf(x.id)>-1});
+  if(!list.length){g.appendChild(el('div',{'class':'mx-ph',style:'min-height:100px;grid-column:1/-1'},[el('span',{'data-z':'fv_empty',text:T('fv_empty')})]));return}
+  list.forEach(function(x){
+    var b=el('button',{type:'button','class':'mx-card art-card',style:'padding:10px;cursor:pointer;font-family:inherit;text-align:left'},[el('div',{style:'aspect-ratio:3/4;border-radius:10px;overflow:hidden;background:#07091a'},[img(x.cover,x.title)]),el('div',{style:'font-size:15px;margin-top:8px',text:x.title||''})]);
+    b.addEventListener('click',function(){
+      var c=d.querySelector('#g-works .cnt[data-id="'+x.id+'"]');var f=c&&c.closest('figure');var bt=f&&f.querySelector('button');if(bt)bt.click();
+    });
+    g.appendChild(b);
+  });
+}
+function renderChallenge(){
+  var s=d.getElementById('challenge');if(!s)return;var c=C.challenge||{};
+  if(!(yes(c.on)&&c.title)){s.style.display='none';return}
+  s.style.display='';var box=s.querySelector('.ch-slot');box.innerHTML='';
+  var days=null;if(/^\d{4}-\d{2}-\d{2}$/.test(c.deadline||'')){days=Math.ceil((new Date(c.deadline+'T23:59:59').getTime()-Date.now())/86400000)}
+  var ended=days!==null&&days<0;
+  var card=el('div',{'class':'sp-card',style:'display:block'});
+  card.appendChild(el('h3',{text:c.title}));
+  if(c.text)card.appendChild(el('p',{text:c.text}));
+  var meta=el('div',{style:'display:flex;gap:10px;flex-wrap:wrap;margin-top:16px'});
+  if(c.prize)meta.appendChild(el('span',{'class':'mx-badge',text:T('ch_prize')+': '+c.prize}));
+  if(days!==null)meta.appendChild(el('span',{'class':'mx-badge'+(ended?' out':''),text:ended?T('ch_ended'):days+' '+T('ch_days')}));
+  card.appendChild(meta);
+  if(!ended){
+    var f=el('form',{'class':'rq-f',style:'margin-top:22px'});
+    function fld(k,lab,type,full){var i=el('input',{name:k,type:type||'text',maxlength:'200'});if(k!=='link')i.required=true;f.appendChild(el('div',{'class':full?'full':''},[el('label',{},[el('span',{'data-z':lab[0],text:T(lab[0])})]),i]))}
+    fld('name',['ch_name']);fld('contact',['ch_contact']);fld('link',['ch_link'],'url',true);
+    var btn=el('button',{'class':'mx-btn v',type:'submit'},[el('span',{'data-z':'ch_join',text:T('ch_join')})]);
+    var msg=el('div',{'class':'rq-msg full',role:'status'});
+    f.appendChild(el('div',{'class':'full'},[btn]));f.appendChild(msg);
+    f.addEventListener('submit',function(e){
+      e.preventDefault();msg.textContent='...';
+      var v=function(n){return (f.elements[n].value||'').trim()};
+      fetch('/api/commission',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:v('name'),contact:v('contact'),kind:'Challenge entry',idea:'Challenge: '+c.title,ref:v('link')})})
+        .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})
+        .then(function(x){if(x.ok){msg.textContent=T('ch_ok');f.reset()}else msg.textContent=x.j.error||T('rq_err')})
+        .catch(function(){msg.textContent=T('rq_err')});
+    });
+    card.appendChild(f);
+  }
+  box.appendChild(card);
+}
+/* private, cookie-free visit counter (the owner is not counted) */
+try{
+  fetch('/api/hit',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},body:JSON.stringify({ref:d.referrer||''})}).catch(function(){});
+  var gwk=d.getElementById('g-works');
+  if(gwk)gwk.addEventListener('click',function(e){
+    var f=e.target.closest&&e.target.closest('figure');var c=f&&f.querySelector('.cnt[data-id]');
+    if(c)fetch('/api/hit',{method:'POST',keepalive:true,headers:{'content-type':'application/json'},body:JSON.stringify({work:c.getAttribute('data-id')})}).catch(function(){});
+  });
+}catch(e){}
+var vwEl=d.getElementById('vw');
+if(vwEl)new MutationObserver(function(){if(vwEl.style.display==='none')loadFavs()}).observe(vwEl,{attributes:true,attributeFilter:['style']});
+loadFavs();
+function all(){labels();renderBlog();renderFavs();renderChallenge();renderShop();renderGifts();renderSpot();renderReviews();renderBehind();renderWall();renderTL();renderBA();renderAbout()}
 all();
-new MutationObserver(function(){labels();renderShop();renderGifts();renderSpot();renderWall()}).observe(root,{attributes:true,attributeFilter:['lang']});
+new MutationObserver(function(){labels();renderBlog();renderFavs();renderChallenge();renderShop();renderGifts();renderSpot();renderWall()}).observe(root,{attributes:true,attributeFilter:['lang']});
 }catch(err){try{console.warn('dyn off',err)}catch(_){}}
 })();
 
 </script>
-<script id="texts-js">
-(function(){
+<script id="texts-js">(function(){
 try{
 var d=document,root=d.documentElement,T=(window.C&&window.C.texts)||null;
-if(!T)return;
 function key(el){return el.hasAttribute('data-t')?'t:'+el.getAttribute('data-t'):el.hasAttribute('data-x')?'x:'+el.getAttribute('data-x'):el.hasAttribute('data-z')?'z:'+el.getAttribute('data-z'):'y:'+el.getAttribute('data-y')}
 function ap(){
+  if(!T)return;
   var l=root.getAttribute('lang')||'en';
   [].forEach.call(d.querySelectorAll('[data-t],[data-x],[data-y],[data-z]'),function(el){
     var o=T[key(el)];if(o&&typeof o[l]==='string'&&o[l])el.textContent=o[l];
@@ -1381,6 +1588,38 @@ function ap(){
 }
 ap();
 new MutationObserver(ap).observe(root,{attributes:true,attributeFilter:['lang']});
+/* picture swaps: C.imgs = { "<original file name>": "<new url>" } */
+var done={};
+function swapImgs(M){
+  try{
+    var names=Object.keys(M||{});if(!names.length)return;
+    [].forEach.call(d.querySelectorAll('img'),function(im){
+      var s=im.getAttribute('src')||'';
+      names.forEach(function(n){if(s.indexOf(n)>-1){im.setAttribute('data-ed-orig',n);im.setAttribute('src',M[n]);if(im.srcset)im.removeAttribute('srcset')}});
+    });
+    [].forEach.call(d.querySelectorAll('[style*="assets/"]'),function(el){
+      var st=el.getAttribute('style')||'';
+      names.forEach(function(n){if(st.indexOf(n)>-1)el.setAttribute('style',st.split(n).join('x').replace(/assets\/x/g,M[n].replace(/^\//,'')).replace(/url\((['"]?)(?!\/|http|data)/g,'url($1/'))});
+    });
+    function rules(list){
+      [].forEach.call(list,function(r){
+        if(r.cssRules&&!r.selectorText){rules(r.cssRules);return}
+        if(!r.style||!r.selectorText)return;
+        var bg=r.style.getPropertyValue('background-image')||r.style.getPropertyValue('background')||'';
+        names.forEach(function(n){
+          if(bg.indexOf(n)>-1&&!done[r.selectorText+n+M[n]]){
+            done[r.selectorText+n+M[n]]=1;
+            var nb=bg.replace(/url\((['"]?)[^)'"]*?\/?[^)'"\/]*?\)/g,function(m){return m.indexOf(n)>-1?'url("'+M[n]+'")':m});
+            try{d.styleSheets[d.styleSheets.length-1];var s=d.createElement('style');s.textContent=r.selectorText+'{background-image:'+nb+' !important}';d.head.appendChild(s)}catch(e){}
+          }
+        });
+      });
+    }
+    [].forEach.call(d.styleSheets,function(ss){try{rules(ss.cssRules)}catch(e){}});
+  }catch(e){}
+}
+window.__swapImgs=swapImgs;
+swapImgs((window.C&&window.C.imgs)||{});
 }catch(e){try{console.warn('texts off',e)}catch(_){}}
 })();
 </script>
@@ -1415,7 +1654,7 @@ $$('#prices div[style*="padding:24px"],#reviews figure').forEach(function(e){e.c
 /* 3. scroll reveal */
 var rv=[];
 function add(el,delay){if(!el||el.classList.contains('rv'))return;el.classList.add('rv');el.style.setProperty('--d',delay+'s');rv.push(el)}
-['spotlight','gallery','collections','photography','film','timelapse','commission','request','prices','shop','gifts','tracker','beforeafter','behind','wallpapers','instagram','reviews','news','about'].forEach(function(id){
+['spotlight','gallery','favorites','collections','photography','film','timelapse','commission','request','prices','shop','gifts','challenge','tracker','beforeafter','behind','wallpapers','instagram','reviews','news','about'].forEach(function(id){
   var s=d.getElementById(id);if(!s)return;var i=0;
   Array.prototype.forEach.call(s.children,function(c){
     if(c.tagName==='SCRIPT'||c.tagName==='STYLE')return;

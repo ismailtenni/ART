@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Star Catcher - ISMAILTENNI ART</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%}
+body{background:radial-gradient(ellipse at 50% 20%,#1b1442,#070b1c 60%,#03040e);color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;flex-direction:column;align-items:center;padding:24px 16px 40px;overflow-x:hidden}
+.moon{position:fixed;right:-90px;top:-70px;width:300px;height:300px;border-radius:50%;background:url(/assets/d97c2e76c1883fa920ea01d73709d95e.jpg) center/cover;opacity:.55;animation:sp 120s linear infinite;pointer-events:none}
+.pluto{position:fixed;left:-60px;bottom:-60px;width:200px;height:200px;border-radius:50%;background:url(/assets/1ee5693540621d5ce3af77afbe5fe9a6.jpg) center/cover;opacity:.5;animation:sp 90s linear infinite reverse;pointer-events:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+a.back{align-self:flex-start;color:#d6ccff;text-decoration:none;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:10px 20px;background:rgba(10,18,40,.6);position:relative;z-index:2}
+h1{font-weight:400;letter-spacing:.14em;font-size:clamp(28px,5vw,52px);margin:26px 0 6px;text-align:center;text-shadow:0 0 26px rgba(150,120,255,.8);position:relative;z-index:2}
+p.sub{color:#b7c4dc;margin:0 0 18px;text-align:center;max-width:520px;line-height:1.6;position:relative;z-index:2}
+#wrap{position:relative;width:100%;max-width:720px;z-index:2}
+canvas{display:block;width:100%;aspect-ratio:3/2;border-radius:20px;border:1px solid rgba(190,170,255,.45);background:rgba(4,6,20,.8);box-shadow:0 0 60px rgba(110,90,255,.35);touch-action:manipulation;cursor:crosshair}
+#hud{display:flex;justify-content:space-between;margin:0 6px 10px;font-size:15px;color:#d6ccff;letter-spacing:.08em}
+#ov{position:absolute;left:0;right:0;top:0;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px;border-radius:20px;background:rgba(3,4,14,.72)}
+button{padding:13px 28px;border-radius:999px;border:1px solid rgba(255,255,255,.45);background:linear-gradient(90deg,rgba(42,120,170,.9),rgba(100,70,200,.9));color:#fff;font:600 16px inherit;font-family:inherit;cursor:pointer}
+.small{font-size:14px;color:#b7c4dc;max-width:420px;line-height:1.6}
+</style></head><body>
+<div class="moon"></div><div class="pluto"></div>
+<a class="back" href="/">&larr; ISMAILTENNI ART</a>
+<h1>STAR CATCHER</h1>
+<p class="sub">A small game from my universe. How many stars can you catch?</p>
+<div id="wrap">
+<div id="hud"><span>Score: <b id="sc">0</b></span><span>Time: <b id="tm">30</b></span><span>Best: <b id="bs">0</b></span></div>
+<canvas id="cv" width="1080" height="720" aria-label="Star catcher game"></canvas>
+<div id="ov"><div style="font-size:24px">Star Catcher</div><div class="small">Tap the golden stars. Blue comets give 3 points. Avoid the grey rocks, they take 2 points away. You have 30 seconds.</div><button id="go" type="button">Play</button></div>
+</div>
+<script>
+(function(){
+var cv=document.getElementById('cv'),cx=cv.getContext('2d'),W=1080,H=720;
+var ov=document.getElementById('ov'),go=document.getElementById('go'),sc=document.getElementById('sc'),tm=document.getElementById('tm'),bs=document.getElementById('bs');
+var best=0;try{best=+localStorage.getItem('starBest')||0}catch(e){}bs.textContent=best;
+var items=[],score=0,left=30,run=false,last=0,spawn=0,bg=[],pops=[];
+for(var i=0;i<90;i++)bg.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.6+.3,s:Math.random()*.4+.1});
+function add(){
+  var r=Math.random(),t=r<.62?'star':r<.8?'comet':'rock';
+  items.push({t:t,x:60+Math.random()*(W-120),y:-40,v:(110+Math.random()*120)*(1+(30-left)/40),r:t==='rock'?34:t==='comet'?24:28,a:Math.random()*6});
+}
+function draw(){
+  cx.clearRect(0,0,W,H);
+  bg.forEach(function(b){cx.fillStyle='rgba(255,255,255,'+(.3+b.s)+')';cx.beginPath();cx.arc(b.x,b.y,b.r,0,6.3);cx.fill()});
+  items.forEach(function(o){
+    cx.save();cx.translate(o.x,o.y);cx.rotate(o.a);
+    if(o.t==='star'){cx.shadowColor='#ffd98a';cx.shadowBlur=24;cx.fillStyle='#ffd98a';cx.beginPath();for(var k=0;k<10;k++){var rr=k%2?o.r*.45:o.r;var an=k*Math.PI/5;cx.lineTo(Math.cos(an)*rr,Math.sin(an)*rr)}cx.closePath();cx.fill()}
+    else if(o.t==='comet'){cx.shadowColor='#7fd0ff';cx.shadowBlur=26;cx.fillStyle='#bfe6ff';cx.beginPath();cx.arc(0,0,o.r*.7,0,6.3);cx.fill();cx.fillStyle='rgba(127,208,255,.35)';cx.beginPath();cx.moveTo(-o.r*.6,0);cx.lineTo(0,-o.r*2.6);cx.lineTo(o.r*.6,0);cx.fill()}
+    else{cx.fillStyle='#8a8478';cx.beginPath();for(var j=0;j<9;j++){var a2=j*Math.PI*2/9,r2=o.r*(.75+.25*Math.sin(j*2.3));cx.lineTo(Math.cos(a2)*r2,Math.sin(a2)*r2)}cx.closePath();cx.fill();cx.fillStyle='rgba(0,0,0,.25)';cx.beginPath();cx.arc(-6,-4,7,0,6.3);cx.fill()}
+    cx.restore();
+  });
+  pops.forEach(function(p){cx.fillStyle='rgba(255,255,255,'+p.l+')';cx.font='bold 34px sans-serif';cx.fillText(p.txt,p.x,p.y)});
+}
+function tick(ts){
+  if(!run)return;var dt=Math.min(.05,(ts-last)/1000);last=ts;
+  left-=dt;spawn-=dt;if(spawn<=0){add();spawn=.45-Math.min(.25,(30-left)/100)}
+  items.forEach(function(o){o.y+=o.v*dt;o.a+=dt});items=items.filter(function(o){return o.y<H+60});
+  bg.forEach(function(b){b.y+=b.s*30*dt;if(b.y>H)b.y=0});
+  pops.forEach(function(p){p.y-=40*dt;p.l-=dt*1.4});pops=pops.filter(function(p){return p.l>0});
+  tm.textContent=Math.max(0,Math.ceil(left));
+  draw();
+  if(left<=0)return end();
+  requestAnimationFrame(tick);
+}
+function end(){
+  run=false;if(score>best){best=score;try{localStorage.setItem('starBest',best)}catch(e){}bs.textContent=best}
+  ov.style.display='flex';ov.innerHTML='<div style="font-size:26px">Time is up!</div><div style="font-size:20px">You scored <b>'+score+'</b></div><button id="go2" type="button">Play again</button><div class="small">Share your score with the artist on WhatsApp!</div><a style="color:#7be0a6" target="_blank" rel="noopener" href="https://wa.me/212651543275?text='+encodeURIComponent('Hi! I scored '+score+' in Star Catcher on your website!')+'">Send my score</a>';
+  document.getElementById('go2').onclick=start;
+}
+function start(){score=0;left=30;items=[];pops=[];spawn=0;sc.textContent=0;ov.style.display='none';run=true;last=performance.now();requestAnimationFrame(tick)}
+go.onclick=start;
+function hit(e){
+  if(!run)return;var r=cv.getBoundingClientRect(),p=e.touches?e.touches[0]:e;
+  var x=(p.clientX-r.left)*W/r.width,y=(p.clientY-r.top)*H/r.height;
+  for(var i=items.length-1;i>=0;i--){var o=items[i],dx=x-o.x,dy=y-o.y;
+    if(dx*dx+dy*dy<(o.r+22)*(o.r+22)){var pts=o.t==='star'?1:o.t==='comet'?3:-2;score=Math.max(0,score+pts);sc.textContent=score;pops.push({x:o.x,y:o.y,l:1,txt:(pts>0?'+':'')+pts});items.splice(i,1);break}}
+  e.preventDefault&&e.preventDefault();
+}
+cv.addEventListener('pointerdown',hit);
+bg.forEach(function(){});draw();
+})();
+</script></body></html>

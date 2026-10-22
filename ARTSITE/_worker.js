@@ -58,6 +58,8 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS content (k TEXT PRIMARY KEY, v TEXT NOT NULL, updated_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS media (id TEXT PRIMARY KEY, mime TEXT NOT NULL, n INTEGER NOT NULL, created_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, contact TEXT NOT NULL, kind TEXT, size TEXT, budget TEXT, idea TEXT NOT NULL, ref TEXT, created_at INTEGER NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS hits (day TEXT NOT NULL, k TEXT NOT NULL, n INTEGER NOT NULL, PRIMARY KEY (day, k))',
+  'CREATE TABLE IF NOT EXISTS visitors (day TEXT NOT NULL, h TEXT NOT NULL, PRIMARY KEY (day, h))',
   'CREATE TABLE IF NOT EXISTS media_chunks (id TEXT NOT NULL, i INTEGER NOT NULL, d TEXT NOT NULL, PRIMARY KEY (id, i))',
 ];
 
@@ -94,6 +96,8 @@ const SCH = {
   ba: { before: 'img', after: 'img', caption: 's100' },
   about: { portrait: 'img' },
   settings: { payDefault: 'url', payLabel: 's30' },
+  posts: { title: 's100', text: 's6000', image: 'img', date: 's10' },
+  challenge: { on: 's3', title: 's100', text: 's800', prize: 's100', deadline: 's10' },
 };
 function cleanRow(o, sch) {
   const out = {};
@@ -131,7 +135,14 @@ function cleanContent(b) {
       if (Object.keys(o).length) texts[k] = o;
     }
   }
+  const imgs = {};
+  if (b.imgs && typeof b.imgs === 'object') {
+    for (const [k, v] of Object.entries(b.imgs).slice(0, 60)) {
+      if (/^[a-f0-9]{32}\.(png|jpg)$/.test(k) && typeof v === 'string' && /^\/api\/media\/[a-f0-9]{8,32}$/.test(v)) imgs[k] = v;
+    }
+  }
   const extra = {
+    imgs,
     shop: cleanList(b.shop, SCH.shop, 40, ['name', 'photo']),
     gifts: cleanList(b.gifts, SCH.gifts, 12, ['name', 'price']),
     reviews: cleanList(b.reviews, SCH.reviews, 40, ['text']),
@@ -142,6 +153,8 @@ function cleanContent(b) {
     ba: cleanRow(b.ba, SCH.ba),
     about: cleanRow(b.about, SCH.about),
     settings: cleanRow(b.settings, SCH.settings),
+    posts: cleanList(b.posts, SCH.posts, 80, ['title']),
+    challenge: cleanRow(b.challenge, SCH.challenge),
   };
   return { works, photos, films, texts, ...extra };
 }
@@ -215,6 +228,12 @@ export default {
         (l.results || []).forEach((r) => { out[r.id] = { likes: r.n, comments: 0 }; });
         (c.results || []).forEach((r) => { (out[r.id] = out[r.id] || { likes: 0, comments: 0 }).comments = r.n; });
         return json(out);
+      }
+      if (url.pathname === '/api/mylikes' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!me) return json({ error: 'Please log in.' }, 401);
+        const r = await env.DB.prepare('SELECT work_id FROM likes WHERE user_id = ? ORDER BY created_at DESC LIMIT 200').bind(me.id).all();
+        return json({ works: (r.results || []).map((x) => x.work_id) });
       }
       if (url.pathname === '/api/social' && req.method === 'GET') {
         const work = url.searchParams.get('work') || '';
@@ -337,6 +356,56 @@ export default {
         await env.DB.prepare('INSERT INTO requests (name, contact, kind, size, budget, idea, ref, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
           .bind(name, contact, str(body.kind, 40), str(body.size, 60), str(body.budget, 60), idea, str(body.ref, 300), Date.now()).run();
         return json({ ok: true });
+      }
+      if (url.pathname === '/api/hit') {
+        const ua = req.headers.get('user-agent') || '';
+        if (/bot|crawl|spider|preview|headless|monitor/i.test(ua)) return json({ ok: true });
+        const me = await currentUser(env, req);
+        if (isAdmin(env, me)) return json({ ok: true });
+        const day = new Date().toISOString().slice(0, 10);
+        const up = (k) => env.DB.prepare('INSERT INTO hits (day, k, n) VALUES (?, ?, 1) ON CONFLICT(day, k) DO UPDATE SET n = n + 1').bind(day, k).run();
+        const wk = String(body.work || '');
+        if (wk) { if (WORK.test(wk)) await up('w:' + wk); return json({ ok: true }); }
+        await up('v');
+        const ip = req.headers.get('cf-connecting-ip') || 'x';
+        const hv = (await sha256(ip + '|' + ua + '|' + day)).slice(0, 22);
+        const ins = await env.DB.prepare('INSERT OR IGNORE INTO visitors (day, h) VALUES (?, ?)').bind(day, hv).run();
+        if (ins.meta && ins.meta.changes > 0) {
+          await up('u');
+          const cc = String((req.cf && req.cf.country) || '').toUpperCase();
+          if (/^[A-Z]{2}$/.test(cc)) await up('c:' + cc);
+          try {
+            const rh = new URL(String(body.ref || '')).host.slice(0, 60);
+            if (rh && rh !== url.host) await up('r:' + rh);
+          } catch (e) {}
+        }
+        return json({ ok: true });
+      }
+      if (url.pathname === '/api/admin/stats') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const since = new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10);
+        await env.DB.prepare('DELETE FROM visitors WHERE day < ?').bind(since).run();
+        const rows = await env.DB.prepare('SELECT day, k, n FROM hits WHERE day >= ?').bind(since).all();
+        const perDay = {}, countries = {}, refs = {}, works = {};
+        let views = 0, uniques = 0;
+        (rows.results || []).forEach((r) => {
+          const d = (perDay[r.day] = perDay[r.day] || { v: 0, u: 0 });
+          if (r.k === 'v') { d.v += r.n; views += r.n; }
+          else if (r.k === 'u') { d.u += r.n; uniques += r.n; }
+          else if (r.k.startsWith('c:')) countries[r.k.slice(2)] = (countries[r.k.slice(2)] || 0) + r.n;
+          else if (r.k.startsWith('r:')) refs[r.k.slice(2)] = (refs[r.k.slice(2)] || 0) + r.n;
+          else if (r.k.startsWith('w:')) works[r.k.slice(2)] = (works[r.k.slice(2)] || 0) + r.n;
+        });
+        const top = (o) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, 8);
+        const days = [];
+        for (let i = 29; i >= 0; i--) { const dd = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10); days.push({ day: dd, v: (perDay[dd] || {}).v || 0, u: (perDay[dd] || {}).u || 0 }); }
+        const one = async (q) => { const r = await env.DB.prepare(q).first(); return r ? r.n : 0; };
+        const lk = await env.DB.prepare('SELECT work_id AS id, COUNT(*) AS n FROM likes GROUP BY work_id ORDER BY n DESC LIMIT 8').all();
+        return json({ views, uniques, days, countries: top(countries), refs: top(refs), works: top(works),
+          loved: (lk.results || []).map((r) => [r.id, r.n]),
+          members: await one('SELECT COUNT(*) AS n FROM users'), subscribers: await one('SELECT COUNT(*) AS n FROM subscribers'),
+          requests: await one('SELECT COUNT(*) AS n FROM requests'), comments: await one('SELECT COUNT(*) AS n FROM comments') });
       }
       if (url.pathname === '/api/admin/orders') {
         const me = await currentUser(env, req);
