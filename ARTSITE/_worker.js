@@ -135,14 +135,18 @@ function cleanContent(b) {
       if (Object.keys(o).length) texts[k] = o;
     }
   }
+  const pr = b.pricing && typeof b.pricing === 'object' ? b.pricing : {};
+  const pnum = { name: 's60', price: 's10' };
+  const pricing = { cur: str(pr.cur, 6).trim(), person: str(pr.person, 10).trim(), rush: str(pr.rush, 10).trim(), note: str(pr.note, 300).trim(),
+    sizes: cleanList(pr.sizes, pnum, 12, ['name']), styles: cleanList(pr.styles, pnum, 12, ['name']) };
   const imgs = {};
   if (b.imgs && typeof b.imgs === 'object') {
     for (const [k, v] of Object.entries(b.imgs).slice(0, 60)) {
-      if (/^[a-f0-9]{32}\.(png|jpg)$/.test(k) && typeof v === 'string' && /^\/api\/media\/[a-f0-9]{8,32}$/.test(v)) imgs[k] = v;
+      if (/^[a-f0-9]{32}\.(png|jpg|webp)$/.test(k) && typeof v === 'string' && /^\/api\/media\/[a-f0-9]{8,32}$/.test(v)) imgs[k] = v;
     }
   }
   const extra = {
-    imgs,
+    imgs, pricing,
     shop: cleanList(b.shop, SCH.shop, 40, ['name', 'photo']),
     gifts: cleanList(b.gifts, SCH.gifts, 12, ['name', 'price']),
     reviews: cleanList(b.reviews, SCH.reviews, 40, ['text']),
@@ -167,20 +171,44 @@ async function injectContent(env, req, url) {
   const res = await env.ASSETS.fetch(new Request(url.origin + '/', { method: 'GET' }));
   const headers = new Headers({ 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' });
   let html = await res.text();
+  let share = '/share.jpg';
   try {
     await ensureSchema(env);
     const row = await env.DB.prepare("SELECT v FROM content WHERE k = 'site'").first();
     if (row && row.v) {
+      const saved = JSON.parse(row.v);
       const a = html.indexOf('var C=');
       const b = html.indexOf(';\nfunction E(', a);
       if (a > -1 && b > a) {
-        const data = JSON.stringify(JSON.parse(row.v)).replace(/</g, '\\u003c');
+        const data = JSON.stringify(saved).replace(/</g, '\\u003c');
         html = html.slice(0, a) + 'var C=' + data + html.slice(b);
       }
+      const sp = saved.spotlight && saved.spotlight.on && saved.spotlight.image;
+      if (sp && okUrl(sp)) share = sp.startsWith('/') ? sp : '/' + sp;
     }
   } catch (e) { /* if the database is not ready, show the normal page */ }
+  html = html.split('{{ORIGIN}}').join(url.origin).split('{{SHARE}}').join(url.origin + share);
   return new Response(html, { status: 200, headers });
 }
+async function secretKey(env) {
+  let raw = env.NEWSLETTER_SECRET;
+  if (!raw) {
+    const row = await env.DB.prepare("SELECT v FROM content WHERE k = 'secret'").first();
+    if (row && row.v) raw = row.v;
+    else {
+      raw = b64(crypto.getRandomValues(new Uint8Array(32)).buffer);
+      await env.DB.prepare("INSERT OR IGNORE INTO content (k, v, updated_at) VALUES ('secret', ?, ?)").bind(raw, Date.now()).run();
+      const again = await env.DB.prepare("SELECT v FROM content WHERE k = 'secret'").first();
+      raw = again.v;
+    }
+  }
+  return crypto.subtle.importKey('raw', enc.encode(raw), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+}
+async function unsubToken(env, email) {
+  const sig = await crypto.subtle.sign('HMAC', await secretKey(env), enc.encode(email));
+  return [...new Uint8Array(sig)].slice(0, 16).map((x) => x.toString(16).padStart(2, '0')).join('');
+}
+const escH = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 function b64bytes(s) {
   const bin = atob(s); const out = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
@@ -211,7 +239,9 @@ export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (!url.pathname.startsWith('/api/')) {
-      if ((url.pathname === '/' || url.pathname === '/index.html') && req.method === 'GET' && env.DB) return injectContent(env, req, url);
+      if (url.pathname === '/robots.txt') return new Response('User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: ' + url.origin + '/sitemap.xml\n', { headers: { 'content-type': 'text/plain; charset=utf-8' } });
+      if (url.pathname === '/sitemap.xml') return new Response('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' + url.origin + '/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url><url><loc>' + url.origin + '/play</loc><changefreq>monthly</changefreq><priority>0.3</priority></url></urlset>\n', { headers: { 'content-type': 'application/xml; charset=utf-8' } });
+      if ((url.pathname === '/' || url.pathname === '/index.html') && req.method === 'GET') return injectContent(env, req, url);
       return env.ASSETS.fetch(req);
     }
     if (!env.DB) return json({ error: 'The database is not connected yet.' }, 503);
@@ -229,9 +259,22 @@ export default {
         (c.results || []).forEach((r) => { (out[r.id] = out[r.id] || { likes: 0, comments: 0 }).comments = r.n; });
         return json(out);
       }
+      if (url.pathname === '/api/unsubscribe' && req.method === 'GET') {
+        const em = String(url.searchParams.get('e') || '').trim().toLowerCase().slice(0, 120);
+        const ok = em && (await unsubToken(env, em)) === url.searchParams.get('t');
+        if (ok) await env.DB.prepare('DELETE FROM subscribers WHERE email = ?').bind(em).run();
+        const msg = ok ? 'You are unsubscribed. / Vous \u00eates d\u00e9sinscrit(e). / \u062a\u0645 \u0625\u0644\u063a\u0627\u0621 \u0627\u0634\u062a\u0631\u0627\u0643\u0643.' : 'This link is not valid.';
+        return new Response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ISMAILTENNI ART</title><body style="background:#070b1c;color:#fff;font-family:system-ui,sans-serif;display:flex;min-height:90vh;align-items:center;justify-content:center;text-align:center;padding:20px"><div><h1 style="font-weight:400;letter-spacing:.12em">ISMAILTENNI ART</h1><p>' + escH(msg) + '</p><p><a style="color:#a8d6ff" href="/">Back to the site</a></p></div>', { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+      }
+      if (url.pathname === '/api/admin/subscribers' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const r = await env.DB.prepare('SELECT email, created_at FROM subscribers ORDER BY created_at DESC LIMIT 5000').all();
+        return json({ subscribers: r.results || [], canSend: !!(env.RESEND_API_KEY && env.MAIL_FROM) });
+      }
       if (url.pathname === '/api/mylikes' && req.method === 'GET') {
         const me = await currentUser(env, req);
-        if (!me) return json({ error: 'Please log in.' }, 401);
+        if (!me) return json({ works: null });
         const r = await env.DB.prepare('SELECT work_id FROM likes WHERE user_id = ? ORDER BY created_at DESC LIMIT 200').bind(me.id).all();
         return json({ works: (r.results || []).map((x) => x.work_id) });
       }
@@ -380,6 +423,35 @@ export default {
           } catch (e) {}
         }
         return json({ ok: true });
+      }
+      if (url.pathname === '/api/admin/newsletter') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        if (!(env.RESEND_API_KEY && env.MAIL_FROM)) return json({ error: 'Sending is not set up yet. Use the copy buttons instead.' }, 400);
+        const subject = str(body.subject, 150).trim(), text = str(body.body, 5000).trim();
+        if (!subject || !text) return json({ error: 'Please write a subject and a message.' }, 400);
+        const test = body.test === true;
+        let list = test ? [{ email: String(env.ADMIN_EMAIL).trim().toLowerCase() }] : ((await env.DB.prepare('SELECT email FROM subscribers LIMIT 1000').all()).results || []);
+        if (!list.length) return json({ error: 'No subscribers yet.' }, 400);
+        const origin = url.origin;
+        const paras = text.split(/\n{2,}/).map((p) => '<p style="margin:0 0 16px;line-height:1.6">' + escH(p).replace(/\n/g, '<br>') + '</p>').join('');
+        let sent = 0, failed = 0;
+        for (let i = 0; i < list.length; i += 100) {
+          const chunk = list.slice(i, i + 100);
+          const mails = [];
+          for (const r of chunk) {
+            const un = origin + '/api/unsubscribe?e=' + encodeURIComponent(r.email) + '&t=' + (await unsubToken(env, r.email));
+            mails.push({ from: env.MAIL_FROM, to: [r.email], subject,
+              html: '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#111">' + paras + '<p><a href="' + origin + '" style="display:inline-block;padding:12px 22px;background:#5b46d6;color:#fff;border-radius:999px;text-decoration:none">Visit my site</a></p><p style="font-size:12px;color:#777;margin-top:30px">ISMAILTENNI ART &middot; <a href="' + un + '" style="color:#777">Unsubscribe</a></p></div>',
+              text: text + '\n\n' + origin + '\n\nUnsubscribe: ' + un,
+              headers: { 'List-Unsubscribe': '<' + un + '>' } });
+          }
+          try {
+            const rs = await fetch('https://api.resend.com/emails/batch', { method: 'POST', headers: { authorization: 'Bearer ' + env.RESEND_API_KEY, 'content-type': 'application/json' }, body: JSON.stringify(mails) });
+            if (rs.ok) sent += chunk.length; else failed += chunk.length;
+          } catch (e) { failed += chunk.length; }
+        }
+        return json({ sent, failed });
       }
       if (url.pathname === '/api/admin/stats') {
         const me = await currentUser(env, req);
