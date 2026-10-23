@@ -288,10 +288,10 @@ header nav>a:not([style]):hover::after{transform:scaleX(1)}
 <div class="mv" style="position: absolute; top: 3900px; left: -150px; animation: rockA 35s linear -22s infinite"><img class="mv" src="assets/a6109552bb8845f49489881939289756.webp" alt="" style="display: block; width: 100px; height: auto; filter: drop-shadow(0 0 14px rgba(140,150,255,0.45)); animation: spin 50s linear infinite"></div>
 
 
-<div class="mv" style="position: absolute; top: 120px; left: clamp(-70px, -2vw, 0px); width: clamp(160px, 23vw, 360px); aspect-ratio: 1 / 1; border-radius: 50%; box-shadow: 0 0 70px rgba(110,140,255,0.5), 0 0 170px rgba(150,70,255,0.35); animation: floatY 9s ease-in-out infinite alternate, glowPulse 6s ease-in-out infinite alternate">
-<div style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; isolation: isolate; transform: translateZ(0); background: transparent">
-<img class="mv" src="assets/495f40647af3f36590617f0838aad3cc.jpg" alt="Moon, colored pencil drawing by Ismail Tenni" style="display: block; width: 112%; height: 112%; margin: -6%; object-fit: cover; animation: moonDrift 40s ease-in-out infinite alternate">
-<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; pointer-events: none; background: radial-gradient(circle at 30% 28%, rgba(255,255,255,0.16) 0, rgba(255,255,255,0) 34%)"></div>
+<div class="mv" style="position: absolute; top: 130px; right: clamp(-60px, 3vw, 70px); width: clamp(170px, 27vw, 420px); aspect-ratio: 1 / 1; border-radius: 50%; box-shadow: 0 0 70px rgba(110,140,255,0.5), 0 0 170px rgba(150,70,255,0.35); animation: floatY 9s ease-in-out infinite alternate">
+<div style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; isolation: isolate; transform: translateZ(0); background: #000">
+<img class="mv" src="assets/d97c2e76c1883fa920ea01d73709d95e.jpg" alt="Moon" style="display: block; width: 111%; height: 111%; margin: -5.5%; object-fit: cover; animation: spin 40s linear infinite">
+<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle at 30% 28%, rgba(255,255,255,0.22) 0, rgba(255,255,255,0) 32%), radial-gradient(circle at 50% 50%, rgba(0,0,12,0) 52%, rgba(2,3,20,0.55) 78%, rgba(2,3,20,0.95) 100%); box-shadow: inset -26px -20px 50px rgba(2,2,20,0.85), inset 6px 6px 22px rgba(190,205,255,0.25)"></div>
 </div>
 </div>
 
@@ -1956,7 +1956,7 @@ function hashStr(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt
 function renderCard(){
   var s=d.getElementById('card');if(!s)return;var box=s.querySelector('.cd-box');if(box.getAttribute('data-ready'))return;box.setAttribute('data-ready','1');
   var nm=el('input',{type:'text',maxlength:'30',placeholder:T('cd_name'),'aria-label':T('cd_name'),style:'max-width:360px'});
-  var pl=el('select',{'aria-label':'Planet',style:'max-width:360px'},[el('option',{value:'495f40647af3f36590617f0838aad3cc.jpg','data-z':'cd_moon',text:T('cd_moon')}),el('option',{value:'1ee5693540621d5ce3af77afbe5fe9a6.jpg','data-z':'cd_pluto',text:T('cd_pluto')})]);
+  var pl=el('select',{'aria-label':'Planet',style:'max-width:360px'},[el('option',{value:'d97c2e76c1883fa920ea01d73709d95e.jpg','data-z':'cd_moon',text:T('cd_moon')}),el('option',{value:'1ee5693540621d5ce3af77afbe5fe9a6.jpg','data-z':'cd_pluto',text:T('cd_pluto')})]);
   var mk=el('button',{type:'button','class':'mx-btn v'},[el('span',{'data-z':'cd_make',text:T('cd_make')})]);
   var cv=el('canvas',{width:'1080',height:'1920',style:'display:none;width:100%;max-width:300px;aspect-ratio:9/16;border-radius:18px;border:1px solid rgba(190,170,255,.45);box-shadow:0 0 50px rgba(110,90,255,.35)',role:'img'});
   var dl=el('button',{type:'button','class':'mx-btn',style:'display:none'},[el('span',{'data-z':'cd_dl',text:T('cd_dl')})]);
