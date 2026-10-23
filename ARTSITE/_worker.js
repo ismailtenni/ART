@@ -90,7 +90,8 @@ function cleanFilm(f) {
 }
 
 const SCH = {
-  shop: { name: 's80', price: 's40', photo: 'img', pay: 'url', edition: 'n', left: 'n' },
+  shop: { name: 's80', price: 's40', photo: 'img', pay: 'url', edition: 'n', left: 'n', ends: 's10' },
+  prints: { name: 's60', price: 's20', pay: 'url' },
   gifts: { name: 's80', price: 's40', pay: 'url' },
   reviews: { name: 's60', text: 's500', stars: 'n' },
   behind: { photo: 'img', caption: 's100' },
@@ -125,6 +126,7 @@ function cleanContent(b) {
     if (!WORK.test(id)) id = 'w' + Date.now().toString(36) + i;
     return { id, series: str(w.series, 40), title: str(w.title, 100), meta: str(w.meta, 100), desc: str(w.desc, 2000),
       ratio: RATIOS.includes(w.ratio) ? w.ratio : '3 / 4', status: str(w.status, 24), cover: w.cover,
+      price: str(w.price, 40).trim(), pay: (() => { const u = str(w.pay, 300).trim(); return /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : ''; })(),
       shots: cleanShots(w.shots, 30), process: cleanShots(w.process, 30) };
   }).filter(Boolean);
   const photos = (Array.isArray(b.photos) ? b.photos : []).slice(0, 200).filter(okUrl);
@@ -151,6 +153,7 @@ function cleanContent(b) {
   const extra = {
     imgs, pricing,
     shop: cleanList(b.shop, SCH.shop, 40, ['name', 'photo']),
+    prints: cleanList(b.prints, SCH.prints, 12, ['name']),
     gifts: cleanList(b.gifts, SCH.gifts, 12, ['name', 'price']),
     reviews: cleanList(b.reviews, SCH.reviews, 40, ['text']),
     behind: cleanList(b.behind, SCH.behind, 60, ['photo']),

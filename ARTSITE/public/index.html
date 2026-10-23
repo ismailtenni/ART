@@ -44,6 +44,21 @@ a:hover{color:#ffffff}
 
 
 /* more4 */
+/* rooms */
+#mx-wroom{display:none;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:#b7c4dc}
+#mx-wroom button{padding:7px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(10,14,40,.7);color:#fff;cursor:pointer;font-family:inherit}
+#mx-wroom button.on{border-color:#b79cff;background:rgba(120,90,230,.5)}
+#mx-wall[data-room=bed]{background:linear-gradient(#b9c3d9 0,#a3aec8 70%,#8b97b3 100%)}
+#mx-wall[data-room=bed] .fl{background:linear-gradient(#8a6a52,#6b4f3b)}
+#mx-wall[data-room=bed] .sofa{left:8%;width:84%;height:22%;bottom:9%;border-radius:12px;background:linear-gradient(#efe9e1,#d6cec3)}
+#mx-wall[data-room=bed] .sofa::before{left:0;right:0;height:42%;border-radius:10px;background:#5d5170}
+#mx-wall[data-room=bed] .sofa::after{left:6%;right:auto;width:26%;top:-16%;height:46%;border-radius:12px;background:#fff;opacity:.9}
+#mx-wall[data-room=off]{background:linear-gradient(#2e3a3a 0,#26302f 70%,#1e2625 100%)}
+#mx-wall[data-room=off] .fl{background:linear-gradient(#3b2e26,#2a201a)}
+#mx-wall[data-room=off] .sofa{left:20%;width:60%;height:7%;bottom:22%;border-radius:6px;background:linear-gradient(#a9784c,#7c5334);box-shadow:0 14px 24px rgba(0,0,0,.45)}
+#mx-wall[data-room=off] .sofa::before{left:8%;right:8%;top:100%;bottom:auto;height:260%;border-radius:0;background:linear-gradient(90deg,#4a3526 0 6%,transparent 6% 94%,#4a3526 94%)}
+#mx-wall[data-room=off] .sofa::after{left:38%;right:38%;top:-300%;height:300%;border-radius:6px;background:linear-gradient(#10151c,#1b2330);border:3px solid #0a0d12}
+
 @keyframes moonDrift{from{transform:translate(-3%,-2%) rotate(-5deg)}to{transform:translate(3%,2%) rotate(5deg)}}@keyframes glowPulse{from{box-shadow:0 0 60px rgba(110,140,255,.42),0 0 150px rgba(150,70,255,.28)}to{box-shadow:0 0 90px rgba(120,160,255,.7),0 0 210px rgba(160,80,255,.5)}}
 @media (max-width:480px){#top h1{font-size:clamp(26px,8.2vw,34px)!important;letter-spacing:.09em!important;white-space:nowrap}}
 @media (pointer:coarse){header nav a,footer a,#lang button{padding-block:12px}#lang button{min-width:40px}header nav a,footer a{display:inline-block}}
@@ -295,7 +310,7 @@ header nav>a:not([style]):hover::after{transform:scaleX(1)}
 </div>
 </div>
 
-<div style="position: absolute; top: 700px; right: clamp(40px, 8vw, 120px); width: clamp(120px, 15vw, 230px); aspect-ratio: 1 / 1">
+<div style="position: absolute; top: 700px; left: clamp(40px, 8vw, 120px); width: clamp(120px, 15vw, 230px); aspect-ratio: 1 / 1">
 <div class="mv" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 0 50px rgba(130,150,255,0.4), 0 0 130px rgba(160,70,255,0.32); animation: floatY 12s ease-in-out infinite alternate-reverse">
 <div style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; isolation: isolate; transform: translateZ(0); background: #000">
 <img class="mv" src="assets/1ee5693540621d5ce3af77afbe5fe9a6.jpg" alt="Pluto" style="display: block; width: 111%; height: 111%; margin: -5.5%; object-fit: cover; animation: spin 24s linear infinite">
@@ -451,7 +466,7 @@ C.works.forEach(function(w,k){var f=document.createElement('figure');f.className
 f.innerHTML='<button class="art-card" aria-label="Open artwork details" style="display:block;position:relative;width:100%;padding:0;border:1px solid rgba(190,170,255,0.35);border-radius:16px;overflow:hidden;cursor:pointer;background:#07091a;font-family:inherit;box-shadow:0 0 40px rgba(110,90,255,0.25)"><img loading="lazy" decoding="async" src="'+E(w.cover)+'" alt="'+E(w.title)+'" style="display:block;width:100%;aspect-ratio:'+E(w.ratio||'3 / 4')+';object-fit:cover"><span style="position:absolute;left:0;right:0;bottom:0;padding:40px 12px 12px;background:linear-gradient(to top,rgba(4,5,18,0.85),rgba(4,5,18,0));color:#fff;font-size:12px;letter-spacing:0.18em;text-align:left">VIEW DETAILS &#8594;</span>'+CHIP(w)+'</button><figcaption style="margin-top:12px;font-size:15px;color:#e8eefc">'+E(w.title)+'<br><span style="color:#9fb0c8;font-size:13px">'+E(w.meta)+'</span><div class="cnt" data-id="'+E(w.id)+'" style="margin-top:6px;font-size:12px;letter-spacing:0.08em;color:#c4a0ff;min-height:16px"></div></figcaption>';
 f.querySelector('button').onclick=function(){var d=(w.shots&&w.shots.length?w.shots:[{src:w.cover,label:'Full artwork'}]),p=(w.process||[]).map(function(s,j){return typeof s==='string'?{src:s,label:'Process '+(j+1)}:s});
 var side='<div style="font-size:12px;letter-spacing:0.3em;text-transform:uppercase;color:#c4a0ff">Artwork</div><h3 style="margin:12px 0 0;font-weight:400;font-size:clamp(26px,3vw,38px);line-height:1.15;color:#fff">'+E(w.title)+'</h3><div style="margin-top:8px;font-size:14px;color:#9fb0c8">'+E(w.meta)+'</div>'+(w.desc?'<p style="margin:18px 0 0;font-size:15px;line-height:1.7;font-weight:300;color:#c4d0e6;white-space:pre-line">'+E(w.desc)+'</p>':'')+(d.length>1?thumbs(d,0,'Details'):'')+thumbs(p,d.length,'The process');
-side+='<div id="mk"></div><div id="wl-slot"></div>';open_(d.concat(p),0,side,w.id);if(window.__vwHook)window.__vwHook(w,p.length?p.concat([{src:w.cover,label:'Finished'}]):[]);};gw.appendChild(f);});
+side+='<div id="buy-slot"></div><div id="mk"></div><div id="wl-slot"></div>';open_(d.concat(p),0,side,w.id);if(window.__vwHook)window.__vwHook(w,p.length?p.concat([{src:w.cover,label:'Finished'}]):[]);};gw.appendChild(f);});
 var rt=['3 / 4','1 / 1','4 / 5','3 / 4','1 / 1'];
 for(var q=C.works.length;q<6;q++){var h=document.createElement('div');h.className='bob';h.style.cssText='aspect-ratio:'+rt[q%5]+';border:1px dashed rgba(159,176,200,0.5);border-radius:16px;background:linear-gradient(160deg,rgba(20,34,70,0.6),rgba(8,12,28,0.6));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#9fb0c8;font-size:13px';h.innerHTML='<svg aria-hidden="true" width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="#9fb0c8" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="6" width="24" height="20" rx="3"/><circle cx="12" cy="13" r="2.5"/><path d="M4 23l7-6 5 4 4-3 8 6"/></svg><span>Coming soon</span>';gw.appendChild(h);}
 var gp=document.getElementById('g-photos');
@@ -805,7 +820,7 @@ fetch('/api/me',{credentials:'same-origin'}).then(function(r){return r.json()}).
 function init(){
   var data={works:clone(w.C&&w.C.works),photos:clone(w.C&&w.C.photos),films:clone(w.C&&w.C.films),texts:JSON.parse(JSON.stringify((w.C&&w.C.texts)||{}))};
   var textsInfo=null;
-  ['shop','gifts','reviews','behind','wallpapers','timelapse'].forEach(function(k){data[k]=clone(w.C&&w.C[k])});
+  ['shop','gifts','reviews','behind','wallpapers','timelapse','prints'].forEach(function(k){data[k]=clone(w.C&&w.C[k])});
   data.pricing=JSON.parse(JSON.stringify((w.C&&w.C.pricing)||{}));data.pricing.sizes=data.pricing.sizes||[];data.pricing.styles=data.pricing.styles||[];
   data.imgs=JSON.parse(JSON.stringify((w.C&&w.C.imgs)||{}));
   data.posts=JSON.parse(JSON.stringify((w.C&&w.C.posts)||[]));
@@ -1028,6 +1043,8 @@ function init(){
     field('Title','title','Name of the artwork');
     field('Medium and year','meta','Example: Pencil on paper - 2026');
     field('Collection (Portraits, Fantasy, Space ...)','series','Portraits');
+    field('Price (optional, shown with a Buy button)','price','$120');
+    field('Payment link for this artwork (optional)','pay','https://paypal.me/...');
     var st=h('select',{style:INP});['','Available','Sold','Commission','Not for sale'].forEach(function(v){var op=h('option',{value:v,text:v||'No label'});if(o.status===v)op.selected=true;st.appendChild(op)});
     st.addEventListener('change',function(){o.status=st.value});f.appendChild(h('label',{style:LAB,text:'Label on the picture'}));f.appendChild(st);
     var ra=h('select',{style:INP});[['3 / 4','Tall (3:4)'],['4 / 5','Tall (4:5)'],['2 / 3','Very tall (2:3)'],['1 / 1','Square'],['4 / 3','Wide (4:3)'],['16 / 9','Very wide (16:9)']].forEach(function(p){var op=h('option',{value:p[0],text:p[1]});if((o.ratio||'3 / 4')===p[0])op.selected=true;ra.appendChild(op)});
@@ -1197,9 +1214,12 @@ function init(){
     box.appendChild(note1('Paste your PayPal.me link (for example https://paypal.me/yourname) or any payment link from PayPal or Stripe. A "Pay online" button then appears next to "Buy on WhatsApp" on every product that has a price. For an exact amount, paste a payment link with that amount inside the product below.'));
     box.appendChild(field1(data.settings,'payDefault','My payment link (https://...)','https://paypal.me/yourname'));
     box.appendChild(field1(data.settings,'payLabel','Text on the pay button (optional)','Pay online'));
+    box.appendChild(sub('Prints (offered under every artwork)'));
+    box.appendChild(note1('Add print sizes with a price. They appear under every artwork, each with a Buy button. Even a sold original can sell prints.'));
+    box.appendChild(listEd(data.prints,[{k:'name',l:'Size',p:'A4 print'},{k:'price',l:'Price',p:'$25'},{k:'pay',l:'Payment link (optional)',p:'https://...'}],'+ Add print size'));
     box.appendChild(sub('Products'));
     box.appendChild(note1('Limited edition: write how many exist in total and how many are left. When "left" is 0 the product shows Sold out. Leave total empty if the product is not limited.'));
-    box.appendChild(listEd(data.shop,[{k:'name',l:'Product name',p:'Art print A4'},{k:'photo',l:'Product photo',t:'img',max:1200},{k:'price',l:'Price (written as you want it shown)',p:'$25'},{k:'pay',l:'Payment link for this product (optional)',p:'https://...'},{k:'edition',l:'Limited edition: total made',p:'20'},{k:'left',l:'Limited edition: how many left',p:'7'}],'+ Add product'));
+    box.appendChild(listEd(data.shop,[{k:'name',l:'Product name',p:'Art print A4'},{k:'photo',l:'Product photo',t:'img',max:1200},{k:'price',l:'Price (written as you want it shown)',p:'$25'},{k:'pay',l:'Payment link for this product (optional)',p:'https://...'},{k:'edition',l:'Limited edition: total made',p:'20'},{k:'left',l:'Limited edition: how many left',p:'7'},{k:'ends',l:'Offer last day (YYYY-MM-DD, optional)',p:'2026-12-31'}],'+ Add product'));
   }
   function renderGiftsTab(){
     box.appendChild(note1('Gift cards people can ask for. Each one has a name and a price, and gets a Buy button that opens WhatsApp (plus Pay online if you set your payment link in the Shop tab).'));
@@ -1502,8 +1522,7 @@ function init(){
 }
 })();
 </script>
-<script id="more-js">
-(function(){
+<script id="more-js">(function(){
 try{
 var d=document,w=window,root=d.documentElement;
 var X={
@@ -1511,12 +1530,12 @@ fr:{nav_shop:"Boutique",col_label:"Collections",col_title:"Explorer par univers"
 tl_label:"Time-lapse",tl_title:"Regardez le dessin se faire",tl_intro:"Chaque œuvre en accéléré, du premier trait à la touche finale.",tl_soon:"Vidéo bientôt",
 sh_label:"Boutique",sh_title:"Tirages et plus",sh_intro:"Choisissez un article et touchez Acheter : on termine la commande sur WhatsApp.",pr1:"Tirage d’art",pr2:"Affiche",pr3:"Pack d’autocollants",pr4:"Coque de téléphone",sh_price:"Prix bientôt",sh_buy:"Acheter sur WhatsApp",sh_img:"Photo du produit",
 ba_hint:"Faites glisser la ligne pour comparer l’esquisse et l’œuvre finie.",ba_s:"Esquisse",ba_f:"Œuvre finie",
-wl_btn:"Voir sur un mur",wl_back:"Retour à l’œuvre",wl_size:"Taille"},
+wl_btn:"Voir sur un mur",wl_back:"Retour à l’œuvre",wl_size:"Taille",wl_room:"Pièce",wl_r1:"Salon",wl_r2:"Chambre",wl_r3:"Bureau"},
 ar:{nav_shop:"المتجر",col_label:"المجموعات",col_title:"تصفح حسب العالم",col_p:"وجوه ومشاعر مرسومة باليد.",col_f:"عوالم ومخلوقات من الخيال.",col_s:"كواكب وسدم ومجهول.",col_open:"افتح المجموعة",n_p:"بورتريه",n_f:"فانتازيا",n_s:"الفضاء",
 tl_label:"تسريع الزمن",tl_title:"شاهد الرسم وهو يولد",tl_intro:"كل عمل بالتسريع، من أول خط إلى اللمسة الأخيرة.",tl_soon:"الفيديو قريباً",
 sh_label:"المتجر",sh_title:"مطبوعات وأكثر",sh_intro:"اختر منتجاً واضغط شراء، ونُكمل الطلب عبر واتساب.",pr1:"مطبوعة فنية",pr2:"ملصق كبير",pr3:"حزمة ستيكرات",pr4:"غطاء هاتف",sh_price:"السعر قريباً",sh_buy:"اشترِ عبر واتساب",sh_img:"صورة المنتج",
 ba_hint:"اسحب الخط للمقارنة بين الرسم الأولي والعمل النهائي.",ba_s:"الرسم الأولي",ba_f:"العمل النهائي",
-wl_btn:"شاهدها على الجدار",wl_back:"العودة للعمل",wl_size:"الحجم"}};
+wl_btn:"شاهدها على الجدار",wl_back:"العودة للعمل",wl_size:"الحجم",wl_room:"الغرفة",wl_r1:"الصالة",wl_r2:"غرفة النوم",wl_r3:"المكتب"}};
 function tr(){
   var l=root.getAttribute('lang')||'en',dd=X[l]||{};
   d.querySelectorAll('[data-x]').forEach(function(el){
@@ -1555,23 +1574,28 @@ if(ba){
 var vb=d.getElementById('vw-box'),img=d.getElementById('vw-img');
 if(vb&&img){
   var wall=d.createElement('div');wall.id='mx-wall';
-  wall.innerHTML='<div class="lamp"></div><div class="fl"></div><div class="sofa"></div><div class="fr"><div><img loading="lazy" decoding="async" alt=""></div></div>';
+  wall.innerHTML='<div class="lamp"></div><div class="fl"></div><div class="sofa"></div><div class="fr"><div><img alt=""></div></div>';
   var sz=d.createElement('div');sz.id='mx-wsz';
   sz.innerHTML='<span data-x="wl_size">Size</span><button data-s="1">S</button><button data-s="2" class="on">M</button><button data-s="3">L</button>';
+  var rm=d.createElement('div');rm.id='mx-wroom';
+  rm.innerHTML='<span data-x="wl_room">Room</span><button data-r="" class="on"><span data-x="wl_r1">Living room</span></button><button data-r="bed"><span data-x="wl_r2">Bedroom</span></button><button data-r="off"><span data-x="wl_r3">Office</span></button>';
   var btn=d.createElement('button');btn.id='mx-wallbtn';btn.className='mx-btn v';btn.type='button';
   btn.innerHTML='<span data-x="wl_btn">See it on a wall</span>';
   vb.parentNode.insertBefore(wall,vb.nextSibling);
   var anchor=vb.parentNode.lastElementChild;
-  vb.parentNode.appendChild(btn);vb.parentNode.appendChild(sz);
+  vb.parentNode.appendChild(btn);vb.parentNode.appendChild(sz);vb.parentNode.appendChild(rm);
   var on=false;
   function sync(){wall.querySelector('img').src=img.src}
   function set(v){
-    on=v;wall.style.display=v?'block':'none';vb.style.display=v?'none':'';sz.style.display=v?'flex':'none';
+    on=v;wall.style.display=v?'block':'none';vb.style.display=v?'none':'';sz.style.display=v?'flex':'none';rm.style.display=v?'flex':'none';
     btn.firstChild.setAttribute('data-x',v?'wl_back':'wl_btn');
     btn.firstChild.setAttribute('data-xen',v?'Back to artwork':'See it on a wall');tr();
     if(v)sync();
   }
   btn.addEventListener('click',function(){set(!on)});
+  rm.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;
+    var r=b.getAttribute('data-r');if(r)wall.setAttribute('data-room',r);else wall.removeAttribute('data-room');
+    Array.prototype.forEach.call(rm.querySelectorAll('button'),function(x){x.classList.toggle('on',x===b)})});
   sz.addEventListener('click',function(e){
     var s=e.target.getAttribute&&e.target.getAttribute('data-s');if(!s)return;
     wall.className=s==='2'?'':'s'+s;
@@ -1584,7 +1608,6 @@ if(vb&&img){
 }
 }catch(err){try{console.warn('more off',err)}catch(_){}}
 })();
-
 </script>
 <script id="dyn-js">
 (function(){
@@ -1592,19 +1615,19 @@ try{
 var d=document,w=window,root=d.documentElement,C=w.C||{};
 var WA='https://wa.me/212651543275?text=';
 var Z={
-fr:{mk_title:"Le making-of",mk_hint:"Glissez pour voir le dessin prendre vie",mk_play:"Lecture",mk_stop:"Pause",mk_step:"Étape",mk_final:"Terminé",rv_form_title:"Laissez votre avis",rv_name:"Votre nom",rv_stars:"Votre note",rv_text:"Vos mots",rv_send:"Envoyer mon avis",rv_thanks:"Merci ! Votre avis apparaîtra après ma vérification.",rv_bad:"Ce lien d’avis n’est pas valide ou a déjà été utilisé.",rv_close:"Fermer",wl_btn:"Prévenez-moi du retour",wl_email:"Votre email",wl_send:"Me prévenir",wl_ok:"C’est noté ! Je vous écrirai.",wl_bad:"Entrez un email valide.",wl_sold:"Cette œuvre est vendue. Laissez votre email pour être prévenu(e) si j’en fais une similaire.",cd_label:"Carte de l’espace",cd_title:"Créez votre carte spatiale",cd_intro:"Écrivez votre nom et recevez une carte à partager en story Instagram.",cd_name:"Votre nom",cd_moon:"Lune",cd_pluto:"Pluton",cd_make:"Créer ma carte",cd_dl:"Télécharger",cd_share:"Partager",cd_tag:"Une étoile d’Eternal Space",pc_label:"Calculateur de prix",pc_title:"Combien coûte mon dessin ?",pc_intro:"Choisissez vos options et voyez le prix tout de suite. Le prix final est confirmé par moi.",pc_size:"Taille",pc_style:"Style",pc_people:"Nombre de personnes",pc_rush:"Commande rapide",pc_total:"Prix estimé",pc_send:"Envoyer sur WhatsApp",pc_hello:"Bonjour ! Je voudrais un dessin.",pc_est:"Prix estimé",ins_link:"Installer l’appli",ins_help:"Sur iPhone : touchez Partager, puis « Sur l’écran d’accueil ». Sur Android : ouvrez le menu du navigateur et touchez « Installer l’application ».",bl_label:"Journal",bl_title:"Depuis mon carnet de croquis",bl_soon:"Mon premier article arrive bientôt.",bl_read:"Lire la suite",bl_less:"Fermer",fv_label:"Vos favoris",fv_title:"Les œuvres que vous aimez",fv_empty:"Touchez le cœur d’une œuvre pour l’enregistrer ici.",ch_label:"Défi",ch_prize:"Prix",ch_days:"jours restants",ch_ended:"Ce défi est terminé.",ch_name:"Votre nom",ch_contact:"Instagram ou WhatsApp",ch_link:"Lien de votre dessin (facultatif)",ch_join:"Participer",ch_ok:"C’est enregistré ! Bonne chance.",g_play:"Jouer à un jeu",sp_label:"Œuvre du mois",sp_btn:"Demander cette œuvre",
+fr:{by_prints:"Tirages de cette œuvre",by_from:"Choisissez une taille",rv_n:"avis",mk_title:"Le making-of",mk_hint:"Glissez pour voir le dessin prendre vie",mk_play:"Lecture",mk_stop:"Pause",mk_step:"Étape",mk_final:"Terminé",rv_form_title:"Laissez votre avis",rv_name:"Votre nom",rv_stars:"Votre note",rv_text:"Vos mots",rv_send:"Envoyer mon avis",rv_thanks:"Merci ! Votre avis apparaîtra après ma vérification.",rv_bad:"Ce lien d’avis n’est pas valide ou a déjà été utilisé.",rv_close:"Fermer",wl_btn:"Prévenez-moi du retour",wl_email:"Votre email",wl_send:"Me prévenir",wl_ok:"C’est noté ! Je vous écrirai.",wl_bad:"Entrez un email valide.",wl_sold:"Cette œuvre est vendue. Laissez votre email pour être prévenu(e) si j’en fais une similaire.",cd_label:"Carte de l’espace",cd_title:"Créez votre carte spatiale",cd_intro:"Écrivez votre nom et recevez une carte à partager en story Instagram.",cd_name:"Votre nom",cd_moon:"Lune",cd_pluto:"Pluton",cd_make:"Créer ma carte",cd_dl:"Télécharger",cd_share:"Partager",cd_tag:"Une étoile d’Eternal Space",pc_label:"Calculateur de prix",pc_title:"Combien coûte mon dessin ?",pc_intro:"Choisissez vos options et voyez le prix tout de suite. Le prix final est confirmé par moi.",pc_size:"Taille",pc_style:"Style",pc_people:"Nombre de personnes",pc_rush:"Commande rapide",pc_total:"Prix estimé",pc_send:"Envoyer sur WhatsApp",pc_hello:"Bonjour ! Je voudrais un dessin.",pc_est:"Prix estimé",ins_link:"Installer l’appli",ins_help:"Sur iPhone : touchez Partager, puis « Sur l’écran d’accueil ». Sur Android : ouvrez le menu du navigateur et touchez « Installer l’application ».",bl_label:"Journal",bl_title:"Depuis mon carnet de croquis",bl_soon:"Mon premier article arrive bientôt.",bl_read:"Lire la suite",bl_less:"Fermer",fv_label:"Vos favoris",fv_title:"Les œuvres que vous aimez",fv_empty:"Touchez le cœur d’une œuvre pour l’enregistrer ici.",ch_label:"Défi",ch_prize:"Prix",ch_days:"jours restants",ch_ended:"Ce défi est terminé.",ch_name:"Votre nom",ch_contact:"Instagram ou WhatsApp",ch_link:"Lien de votre dessin (facultatif)",ch_join:"Participer",ch_ok:"C’est enregistré ! Bonne chance.",g_play:"Jouer à un jeu",sp_label:"Œuvre du mois",sp_btn:"Demander cette œuvre",
 gf_label:"Cartes cadeaux",gf_title:"Offrez un dessin",gf_intro:"Choisissez un montant. La personne choisit ensuite l’œuvre.",gf_ask:"Demander une carte cadeau",gf_soon:"Montant bientôt",
 rq_label:"Demande de dessin",rq_title:"Racontez-moi votre idée",rq_intro:"Remplissez ce petit formulaire. Je vous réponds avec un prix et un délai.",
 rq_name:"Votre nom",rq_contact:"Email ou numéro WhatsApp",rq_kind:"Type de dessin",k1:"Portrait",k2:"Scène fantastique",k3:"Autre idée",rq_size:"Taille souhaitée",rq_budget:"Budget",rq_idea:"Votre idée",rq_ref:"Lien d’une photo de référence (facultatif)",rq_send:"Envoyer ma demande",rq_wa:"Envoyer sur WhatsApp",rq_ok:"Merci ! J’ai bien reçu votre demande et je vous réponds vite.",rq_err:"Un problème est survenu. Essayez WhatsApp.",
 sh_buy:"Acheter sur WhatsApp",sh_pay:"Payer en ligne",sh_soon:"Prix bientôt",sh_lim:"Édition limitée",sh_left:"restants",sh_out:"Épuisé",
 dl:"Télécharger",tr_nf:"Code introuvable. Écrivez-moi sur WhatsApp, je vérifie."},
-ar:{mk_title:"كواليس الرسم",mk_hint:"حرّك الشريط لترى الرسمة تولد",mk_play:"تشغيل",mk_stop:"إيقاف",mk_step:"الخطوة",mk_final:"النتيجة النهائية",rv_form_title:"اترك تقييمك",rv_name:"اسمك",rv_stars:"تقييمك",rv_text:"كلماتك",rv_send:"أرسل تقييمي",rv_thanks:"شكراً! سيظهر تقييمك بعد أن أراجعه.",rv_bad:"رابط التقييم غير صالح أو استُخدم من قبل.",rv_close:"إغلاق",wl_btn:"أخبرني عند توفرها",wl_email:"بريدك الإلكتروني",wl_send:"أخبرني",wl_ok:"تم! سأراسلك.",wl_bad:"أدخل بريداً صحيحاً.",wl_sold:"هذه الرسمة بيعت. اترك بريدك لأخبرك إذا رسمت واحدة مشابهة.",cd_label:"بطاقة الفضاء",cd_title:"اصنع بطاقتك الفضائية",cd_intro:"اكتب اسمك واحصل على بطاقة لمشاركتها في ستوري إنستغرام.",cd_name:"اسمك",cd_moon:"القمر",cd_pluto:"بلوتو",cd_make:"أنشئ بطاقتي",cd_dl:"تحميل",cd_share:"مشاركة",cd_tag:"نجمة في Eternal Space",pc_label:"حاسبة الأسعار",pc_title:"كم سعر رسمتي؟",pc_intro:"اختر خياراتك وشاهد السعر فوراً. السعر النهائي أؤكده أنا.",pc_size:"الحجم",pc_style:"الأسلوب",pc_people:"عدد الأشخاص",pc_rush:"طلب مستعجل",pc_total:"السعر التقديري",pc_send:"أرسل عبر واتساب",pc_hello:"مرحباً! أريد رسمة.",pc_est:"السعر التقديري",ins_link:"ثبّت التطبيق",ins_help:"على الآيفون: اضغط مشاركة ثم «إضافة إلى الشاشة الرئيسية». على الأندرويد: افتح قائمة المتصفح واضغط «تثبيت التطبيق».",bl_label:"المدونة",bl_title:"من دفتر رسوماتي",bl_soon:"أول منشور قريباً.",bl_read:"اقرأ المزيد",bl_less:"إغلاق",fv_label:"مفضلتك",fv_title:"الأعمال التي تحبها",fv_empty:"اضغط على القلب في أي عمل لحفظه هنا.",ch_label:"تحدٍّ",ch_prize:"الجائزة",ch_days:"أيام متبقية",ch_ended:"انتهى هذا التحدي.",ch_name:"اسمك",ch_contact:"إنستغرام أو واتساب",ch_link:"رابط رسمتك (اختياري)",ch_join:"شارك",ch_ok:"تم تسجيلك! حظاً موفقاً.",g_play:"العب لعبة",sp_label:"عمل الشهر",sp_btn:"اسأل عن هذا العمل",
+ar:{by_prints:"نسخ مطبوعة من هذه الرسمة",by_from:"اختر الحجم",rv_n:"تقييمات",mk_title:"كواليس الرسم",mk_hint:"حرّك الشريط لترى الرسمة تولد",mk_play:"تشغيل",mk_stop:"إيقاف",mk_step:"الخطوة",mk_final:"النتيجة النهائية",rv_form_title:"اترك تقييمك",rv_name:"اسمك",rv_stars:"تقييمك",rv_text:"كلماتك",rv_send:"أرسل تقييمي",rv_thanks:"شكراً! سيظهر تقييمك بعد أن أراجعه.",rv_bad:"رابط التقييم غير صالح أو استُخدم من قبل.",rv_close:"إغلاق",wl_btn:"أخبرني عند توفرها",wl_email:"بريدك الإلكتروني",wl_send:"أخبرني",wl_ok:"تم! سأراسلك.",wl_bad:"أدخل بريداً صحيحاً.",wl_sold:"هذه الرسمة بيعت. اترك بريدك لأخبرك إذا رسمت واحدة مشابهة.",cd_label:"بطاقة الفضاء",cd_title:"اصنع بطاقتك الفضائية",cd_intro:"اكتب اسمك واحصل على بطاقة لمشاركتها في ستوري إنستغرام.",cd_name:"اسمك",cd_moon:"القمر",cd_pluto:"بلوتو",cd_make:"أنشئ بطاقتي",cd_dl:"تحميل",cd_share:"مشاركة",cd_tag:"نجمة في Eternal Space",pc_label:"حاسبة الأسعار",pc_title:"كم سعر رسمتي؟",pc_intro:"اختر خياراتك وشاهد السعر فوراً. السعر النهائي أؤكده أنا.",pc_size:"الحجم",pc_style:"الأسلوب",pc_people:"عدد الأشخاص",pc_rush:"طلب مستعجل",pc_total:"السعر التقديري",pc_send:"أرسل عبر واتساب",pc_hello:"مرحباً! أريد رسمة.",pc_est:"السعر التقديري",ins_link:"ثبّت التطبيق",ins_help:"على الآيفون: اضغط مشاركة ثم «إضافة إلى الشاشة الرئيسية». على الأندرويد: افتح قائمة المتصفح واضغط «تثبيت التطبيق».",bl_label:"المدونة",bl_title:"من دفتر رسوماتي",bl_soon:"أول منشور قريباً.",bl_read:"اقرأ المزيد",bl_less:"إغلاق",fv_label:"مفضلتك",fv_title:"الأعمال التي تحبها",fv_empty:"اضغط على القلب في أي عمل لحفظه هنا.",ch_label:"تحدٍّ",ch_prize:"الجائزة",ch_days:"أيام متبقية",ch_ended:"انتهى هذا التحدي.",ch_name:"اسمك",ch_contact:"إنستغرام أو واتساب",ch_link:"رابط رسمتك (اختياري)",ch_join:"شارك",ch_ok:"تم تسجيلك! حظاً موفقاً.",g_play:"العب لعبة",sp_label:"عمل الشهر",sp_btn:"اسأل عن هذا العمل",
 gf_label:"بطاقات الهدايا",gf_title:"أهدِ رسمة",gf_intro:"اختر مبلغاً، ثم يختار المُهدى إليه العمل.",gf_ask:"اسأل عن بطاقة هدية",gf_soon:"المبلغ قريباً",
 rq_label:"طلب رسمة",rq_title:"أخبرني بفكرتك",rq_intro:"املأ هذا النموذج الصغير وسأرد عليك بالسعر والمدة.",
 rq_name:"اسمك",rq_contact:"البريد أو رقم واتساب",rq_kind:"نوع الرسمة",k1:"بورتريه",k2:"مشهد فانتازي",k3:"فكرة أخرى",rq_size:"الحجم المطلوب",rq_budget:"الميزانية",rq_idea:"فكرتك",rq_ref:"رابط صورة مرجعية (اختياري)",rq_send:"أرسل طلبي",rq_wa:"أرسل عبر واتساب",rq_ok:"شكراً! وصلني طلبك وسأرد عليك قريباً.",rq_err:"حدثت مشكلة. جرّب واتساب.",
 sh_buy:"اشترِ عبر واتساب",sh_pay:"ادفع عبر الإنترنت",sh_soon:"السعر قريباً",sh_lim:"إصدار محدود",sh_left:"متبقية",sh_out:"نفدت",
 dl:"تحميل",tr_nf:"الرمز غير موجود. راسلني على واتساب وسأتحقق."}};
-var EN={mk_title:"Making of",mk_hint:"Drag the slider to watch it come to life",mk_play:"Play",mk_stop:"Pause",mk_step:"Step",mk_final:"Finished",rv_form_title:"Leave your review",rv_name:"Your name",rv_stars:"Your rating",rv_text:"Your words",rv_send:"Send my review",rv_thanks:"Thank you! Your review will appear after I check it.",rv_bad:"This review link is not valid or was already used.",rv_close:"Close",wl_btn:"Tell me when it is back",wl_email:"Your email",wl_send:"Notify me",wl_ok:"Done! I will write to you.",wl_bad:"Please enter a valid email.",wl_sold:"This artwork is sold. Leave your email and I will tell you if I make a similar one.",cd_label:"Space card",cd_title:"Make your space card",cd_intro:"Type your name and get a card to share on Instagram Stories.",cd_name:"Your name",cd_moon:"Moon",cd_pluto:"Pluto",cd_make:"Create my card",cd_dl:"Download",cd_share:"Share",cd_tag:"A star in Eternal Space",pc_label:"Price calculator",pc_title:"How much is my drawing?",pc_intro:"Choose your options and see the price straight away. I confirm the final price.",pc_size:"Size",pc_style:"Style",pc_people:"Number of people",pc_rush:"Rush order (faster)",pc_total:"Estimated price",pc_send:"Send to the artist on WhatsApp",pc_hello:"Hello! I would like a drawing.",pc_est:"Estimated price",ins_link:"Install the app",ins_help:"On iPhone: tap Share, then Add to Home Screen. On Android: open the browser menu and tap Install app.",bl_read:"Read more",bl_less:"Close",fv_empty:"Tap the heart on an artwork to save it here.",ch_prize:"Prize",ch_days:"days left",ch_ended:"This challenge has ended.",ch_ok:"You are in! Good luck.",ch_join:"Join",g_play:"Play a game",sp_label:"Art of the month",sp_btn:"Ask about this artwork",gf_ask:"Ask about a gift card",gf_soon:"Amount coming soon",rq_ok:"Thank you! I got your request and I will reply soon.",rq_err:"Something went wrong. Please try WhatsApp.",sh_buy:"Buy on WhatsApp",sh_pay:"Pay online",sh_soon:"Price coming soon",sh_lim:"Limited edition",sh_left:"left",sh_out:"Sold out",dl:"Download"};
+var EN={by_prints:"Prints of this artwork",by_from:"Choose a size",rv_n:"reviews",mk_title:"Making of",mk_hint:"Drag the slider to watch it come to life",mk_play:"Play",mk_stop:"Pause",mk_step:"Step",mk_final:"Finished",rv_form_title:"Leave your review",rv_name:"Your name",rv_stars:"Your rating",rv_text:"Your words",rv_send:"Send my review",rv_thanks:"Thank you! Your review will appear after I check it.",rv_bad:"This review link is not valid or was already used.",rv_close:"Close",wl_btn:"Tell me when it is back",wl_email:"Your email",wl_send:"Notify me",wl_ok:"Done! I will write to you.",wl_bad:"Please enter a valid email.",wl_sold:"This artwork is sold. Leave your email and I will tell you if I make a similar one.",cd_label:"Space card",cd_title:"Make your space card",cd_intro:"Type your name and get a card to share on Instagram Stories.",cd_name:"Your name",cd_moon:"Moon",cd_pluto:"Pluto",cd_make:"Create my card",cd_dl:"Download",cd_share:"Share",cd_tag:"A star in Eternal Space",pc_label:"Price calculator",pc_title:"How much is my drawing?",pc_intro:"Choose your options and see the price straight away. I confirm the final price.",pc_size:"Size",pc_style:"Style",pc_people:"Number of people",pc_rush:"Rush order (faster)",pc_total:"Estimated price",pc_send:"Send to the artist on WhatsApp",pc_hello:"Hello! I would like a drawing.",pc_est:"Estimated price",ins_link:"Install the app",ins_help:"On iPhone: tap Share, then Add to Home Screen. On Android: open the browser menu and tap Install app.",bl_read:"Read more",bl_less:"Close",fv_empty:"Tap the heart on an artwork to save it here.",ch_prize:"Prize",ch_days:"days left",ch_ended:"This challenge has ended.",ch_ok:"You are in! Good luck.",ch_join:"Join",g_play:"Play a game",sp_label:"Art of the month",sp_btn:"Ask about this artwork",gf_ask:"Ask about a gift card",gf_soon:"Amount coming soon",rq_ok:"Thank you! I got your request and I will reply soon.",rq_err:"Something went wrong. Please try WhatsApp.",sh_buy:"Buy on WhatsApp",sh_pay:"Pay online",sh_soon:"Price coming soon",sh_lim:"Limited edition",sh_left:"left",sh_out:"Sold out",dl:"Download"};
 function L(){return root.getAttribute('lang')||'en'}
 function T(k){var x=Z[L()];return (x&&x[k])||EN[k]||''}
 function el(tag,attrs,kids){var e=d.createElement(tag);for(var k in (attrs||{})){if(k==='text')e.textContent=attrs[k];else if(k==='style')e.style.cssText=attrs[k];else e.setAttribute(k,attrs[k])}(kids||[]).forEach(function(c){if(c)e.appendChild(c)});return e}
@@ -1637,7 +1660,10 @@ function renderShop(){
     var edition=+p.edition>0,left=(p.left==null?null:+p.left);
     if(edition){var out=left===0;card.appendChild(el('div',{},[el('span',{'class':'mx-badge'+(out?' out':''),text:out?T('sh_out'):T('sh_lim')+(left!=null?' · '+left+' '+T('sh_left'):' · '+p.edition)})]))}
     card.appendChild(el('div',{'class':'d',text:p.price||T('sh_soon')}));
-    var sold=edition&&left===0;
+    var ends=(p.ends&&/^\d{4}-\d{2}-\d{2}$/.test(p.ends))?Date.parse(p.ends+'T23:59:59'):0,closed=ends&&Date.now()>ends;
+    if(ends&&!closed){var dl=Math.max(1,Math.ceil((ends-Date.now())/864e5));card.appendChild(el('div',{},[el('span',{'class':'mx-badge',text:'⏳ '+dl+' '+T('ch_days')})]))}
+    if(closed&&!(edition&&left===0))card.appendChild(el('div',{},[el('span',{'class':'mx-badge out',text:T('sh_out')})]));
+    var sold=(edition&&left===0)||closed;
     if(sold)card.appendChild(waitForm(p.name||'Product'));
     if(!sold){
       card.appendChild(btnA(waLink('Hi! I want to buy: '+(p.name||'')+(p.price?' ('+p.price+')':'')+'.'),T('sh_buy')));
@@ -1671,7 +1697,7 @@ function renderSpot(){
   tx.appendChild(row);card.appendChild(tx);box.appendChild(card);
 }
 function renderReviews(){
-  var g=grid('reviews'),RV=(C.reviews||[]).concat(w.__cr||[]);if(!g||!RV.length)return;g.innerHTML='';
+  var g=grid('reviews'),RV=(C.reviews||[]).concat(w.__cr||[]);renderRating();if(!g||!RV.length)return;g.innerHTML='';
   RV.forEach(function(r){
     var n=Math.min(5,Math.max(0,+r.stars||0)),stars=n?new Array(n+1).join('★'):'';
     g.appendChild(el('figure',{'class':'rv-fig fx-tilt'},[stars?el('div',{'class':'s',text:stars}):null,el('blockquote',{text:r.text||''}),r.name?el('figcaption',{text:'— '+r.name}):null]));
@@ -1899,6 +1925,7 @@ function waitForm(key){
   box.appendChild(b);box.appendChild(f);box.appendChild(m);return box;
 }
 w.__vwHook=function(wk,steps){
+  var by=d.getElementById('buy-slot');if(by)buyBlock(by,wk);
   var mk=d.getElementById('mk');
   if(mk&&steps&&steps.length>=2){
     var frame=el('div',{style:'position:relative;margin-top:12px;border-radius:14px;overflow:hidden;border:1px solid rgba(190,170,255,.35);background:#04050f;aspect-ratio:'+(wk.ratio||'3 / 4')});
@@ -1993,9 +2020,45 @@ function renderCard(){
   dl.addEventListener('click',function(){cv.toBlob(function(b){var a=el('a',{href:URL.createObjectURL(b),download:'space-card.png'});d.body.appendChild(a);a.click();a.remove()},'image/png')});
   sh.addEventListener('click',function(){cv.toBlob(function(b){var f=new File([b],'space-card.png',{type:'image/png'});navigator.share({files:[f],title:'ISMAILTENNI ART'}).catch(function(){})},'image/png')});
 }
-function all(){labels();renderCard();renderPricing();renderBlog();renderFavs();renderChallenge();renderShop();renderGifts();renderSpot();renderReviews();renderBehind();renderWall();renderTL();renderBA();renderAbout()}
+
+/* more6 */
+function buyBlock(by,wk){
+  var def=safeHttps(C.settings&&C.settings.payDefault),lab=(C.settings&&C.settings.payLabel)||'';
+  var st=String(wk.status||''),box=el('div',{style:'margin-top:22px'});
+  if(wk.price)box.appendChild(el('div',{style:'font-size:26px;margin-bottom:10px',text:wk.price}));
+  if(st!=='Sold'&&st!=='Not for sale'){
+    var row=el('div',{style:'display:flex;gap:10px;flex-wrap:wrap'});
+    row.appendChild(btnA(waLink('Hi! I want to buy the artwork: '+(wk.title||'')+(wk.price?' ('+wk.price+')':'')+'.'),T('sh_buy')));
+    var pay=safeHttps(wk.pay)||def;if(pay&&wk.price)row.appendChild(btnA(pay,lab||T('sh_pay'),'v'));
+    box.appendChild(row);
+  }
+  var pr=(C.prints||[]).filter(function(x){return x&&x.name});
+  if(pr.length){
+    box.appendChild(el('div',{style:'margin-top:26px;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:#5cbcff','data-z':'by_prints',text:T('by_prints')}));
+    pr.forEach(function(x){
+      var r=el('div',{style:'display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;padding:12px;border:1px solid rgba(190,170,255,.3);border-radius:14px;background:rgba(20,26,66,.35)'});
+      r.appendChild(el('div',{style:'flex:1 1 120px;font-size:15px',text:x.name+(x.price?'  ·  '+x.price:'')}));
+      r.appendChild(btnA(waLink('Hi! I want a print of "'+(wk.title||'')+'" in size '+x.name+(x.price?' ('+x.price+')':'')+'.'),T('sh_buy')));
+      var pp=safeHttps(x.pay)||def;if(pp&&x.price)r.appendChild(btnA(pp,lab||T('sh_pay'),'v'));
+      box.appendChild(r);
+    });
+  }
+  if(box.childNodes.length)by.appendChild(box);
+}
+function renderRating(){
+  var all=(C.reviews||[]).concat(w.__cr||[]).filter(function(r){return +r.stars>0});
+  var top=d.getElementById('top'),old=d.getElementById('rate-strip');if(old)old.remove();
+  if(all.length<3||!top)return;
+  var avg=all.reduce(function(a,r){return a+(+r.stars)},0)/all.length;
+  var p=top.querySelector('p');
+  var a=el('a',{id:'rate-strip',href:'#reviews',style:'display:inline-flex;gap:10px;align-items:center;margin-top:18px;padding:8px 18px;border-radius:999px;border:1px solid rgba(255,217,138,.5);background:rgba(10,18,40,.6);color:#ffd98a;font-size:15px;letter-spacing:.06em'},[el('span',{text:'★ '+(Math.round(avg*10)/10).toFixed(1)}),el('span',{style:'color:#d6ccff',text:all.length+' '+T('rv_n')})]);
+  if(p)p.parentNode.insertBefore(a,p.nextSibling);
+  var g=d.getElementById('gallery'),rv=d.getElementById('reviews');
+  if(g&&rv&&!rv.getAttribute('data-moved')){rv.setAttribute('data-moved','1');g.parentNode.insertBefore(rv,g.nextSibling)}
+}
+function all(){labels();renderRating();renderCard();renderPricing();renderBlog();renderFavs();renderChallenge();renderShop();renderGifts();renderSpot();renderReviews();renderBehind();renderWall();renderTL();renderBA();renderAbout()}
 all();
-new MutationObserver(function(){labels();renderPricing();renderBlog();renderFavs();renderChallenge();renderShop();renderGifts();renderSpot();renderWall()}).observe(root,{attributes:true,attributeFilter:['lang']});
+new MutationObserver(function(){labels();renderRating();renderPricing();renderBlog();renderFavs();renderChallenge();renderShop();renderGifts();renderSpot();renderWall()}).observe(root,{attributes:true,attributeFilter:['lang']});
 }catch(err){try{console.warn('dyn off',err)}catch(_){}}
 })();
 
