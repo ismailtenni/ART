@@ -44,6 +44,8 @@ a:hover{color:#ffffff}
 
 
 /* more4 */
+@keyframes moonDrift{from{transform:translate(-3%,-2%) rotate(-5deg)}to{transform:translate(3%,2%) rotate(5deg)}}@keyframes glowPulse{from{box-shadow:0 0 60px rgba(110,140,255,.42),0 0 150px rgba(150,70,255,.28)}to{box-shadow:0 0 90px rgba(120,160,255,.7),0 0 210px rgba(160,80,255,.5)}}
+@media (max-width:480px){#top h1{font-size:clamp(26px,8.2vw,34px)!important;letter-spacing:.09em!important;white-space:nowrap}}
 @media (pointer:coarse){header nav a,footer a,#lang button{padding-block:12px}#lang button{min-width:40px}header nav a,footer a{display:inline-block}}
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #a8d6ff;outline-offset:3px}
 
@@ -286,14 +288,14 @@ header nav>a:not([style]):hover::after{transform:scaleX(1)}
 <div class="mv" style="position: absolute; top: 3900px; left: -150px; animation: rockA 35s linear -22s infinite"><img class="mv" src="assets/a6109552bb8845f49489881939289756.webp" alt="" style="display: block; width: 100px; height: auto; filter: drop-shadow(0 0 14px rgba(140,150,255,0.45)); animation: spin 50s linear infinite"></div>
 
 
-<div class="mv" style="position: absolute; top: 130px; right: clamp(-60px, 3vw, 70px); width: clamp(170px, 27vw, 420px); aspect-ratio: 1 / 1; border-radius: 50%; box-shadow: 0 0 70px rgba(110,140,255,0.5), 0 0 170px rgba(150,70,255,0.35); animation: floatY 9s ease-in-out infinite alternate">
-<div style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; isolation: isolate; transform: translateZ(0); background: #000">
-<img class="mv" src="assets/d97c2e76c1883fa920ea01d73709d95e.jpg" alt="Moon" style="display: block; width: 111%; height: 111%; margin: -5.5%; object-fit: cover; animation: spin 40s linear infinite">
-<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle at 30% 28%, rgba(255,255,255,0.22) 0, rgba(255,255,255,0) 32%), radial-gradient(circle at 50% 50%, rgba(0,0,12,0) 52%, rgba(2,3,20,0.55) 78%, rgba(2,3,20,0.95) 100%); box-shadow: inset -26px -20px 50px rgba(2,2,20,0.85), inset 6px 6px 22px rgba(190,205,255,0.25)"></div>
+<div class="mv" style="position: absolute; top: 120px; left: clamp(-70px, -2vw, 0px); width: clamp(160px, 23vw, 360px); aspect-ratio: 1 / 1; border-radius: 50%; box-shadow: 0 0 70px rgba(110,140,255,0.5), 0 0 170px rgba(150,70,255,0.35); animation: floatY 9s ease-in-out infinite alternate, glowPulse 6s ease-in-out infinite alternate">
+<div style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; isolation: isolate; transform: translateZ(0); background: transparent">
+<img class="mv" src="assets/495f40647af3f36590617f0838aad3cc.jpg" alt="Moon, colored pencil drawing by Ismail Tenni" style="display: block; width: 112%; height: 112%; margin: -6%; object-fit: cover; animation: moonDrift 40s ease-in-out infinite alternate">
+<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; pointer-events: none; background: radial-gradient(circle at 30% 28%, rgba(255,255,255,0.16) 0, rgba(255,255,255,0) 34%)"></div>
 </div>
 </div>
 
-<div style="position: absolute; top: 700px; left: clamp(40px, 8vw, 120px); width: clamp(120px, 15vw, 230px); aspect-ratio: 1 / 1">
+<div style="position: absolute; top: 700px; right: clamp(40px, 8vw, 120px); width: clamp(120px, 15vw, 230px); aspect-ratio: 1 / 1">
 <div class="mv" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 0 50px rgba(130,150,255,0.4), 0 0 130px rgba(160,70,255,0.32); animation: floatY 12s ease-in-out infinite alternate-reverse">
 <div style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; isolation: isolate; transform: translateZ(0); background: #000">
 <img class="mv" src="assets/1ee5693540621d5ce3af77afbe5fe9a6.jpg" alt="Pluto" style="display: block; width: 111%; height: 111%; margin: -5.5%; object-fit: cover; animation: spin 24s linear infinite">
@@ -828,7 +830,7 @@ function init(){
   bar2.appendChild(h('button',{type:'button',style:BTN,text:'Done',on:{click:function(){liveOff()}}}));
   d.body.appendChild(bar2);
   var css=d.createElement('style');
-  css.textContent='body.ed-on [data-t]:hover,body.ed-on [data-x]:hover,body.ed-on [data-y]:hover,body.ed-on [data-z]:hover{outline:2px dashed #b79cff;outline-offset:3px;cursor:text}body.ed-on img:hover{outline:3px dashed #7be0a6;outline-offset:-3px;cursor:pointer}body.ed-on #intro,body.ed-on #fxglow{display:none}';
+  css.textContent='body.ed-on [data-t]:hover,body.ed-on [data-x]:hover,body.ed-on [data-y]:hover,body.ed-on [data-z]:hover{outline:2px dashed #b79cff;outline-offset:3px;cursor:text}body.ed-on #story .mx-card:hover,body.ed-on #about .bob:hover,body.ed-on #story .mx-ph:hover,body.ed-on #story .ab-vid:hover{outline:2px dashed #7be0a6;outline-offset:3px;cursor:pointer}body.ed-on img:hover{outline:3px dashed #7be0a6;outline-offset:-3px;cursor:pointer}body.ed-on #intro,body.ed-on #fxglow{display:none}';
   d.head.appendChild(css);
   var pop=null;
   function pickBA(key){
@@ -837,10 +839,10 @@ function init(){
       var f=inp.files&&inp.files[0];inp.remove();if(!f)return;
       tmsg('Uploading ... please wait');busy++;
       shrink(f,1400).then(function(b64){return post('/api/admin/upload',{mime:'image/jpeg',data:b64})}).then(function(r){
-        busy--;data.ba[key]=r.url;var ba=d.getElementById('ba');
+        busy=Math.max(0,busy-1);data.ba[key]=r.url;var ba=d.getElementById('ba');
         if(ba){var L=ba.querySelector(key==='before'?'.L1':'.L2');if(L)L.style.backgroundImage='url("'+r.url+'")'}
         tmsg((key==='before'?'Sketch':'Finished')+' photo added. Press "Save and publish" when you are done.');
-      }).catch(function(e){busy--;tmsg('Problem: '+e.message)});
+      }).catch(function(e){busy=Math.max(0,busy-1);tmsg('Problem: '+e.message)});
     });
     inp.click();
   }
@@ -874,6 +876,45 @@ function init(){
         h('button',{type:'button',style:BTNR,text:'Back to original',on:{click:function(){if(data.texts[k]){delete data.texts[k][lang];if(!Object.keys(data.texts[k]).length)delete data.texts[k]}closePop();tmsg('Original text comes back after you press "Save and publish".')}}})])]);
     d.body.appendChild(pop);ta.focus();
   }
+
+  function pickUpload(max,cb){
+    var inp=h('input',{type:'file',accept:'image/*',style:'display:none'});d.body.appendChild(inp);
+    inp.addEventListener('change',function(){
+      var f=inp.files&&inp.files[0];inp.remove();if(!f)return;
+      tmsg('Uploading ... please wait');busy++;
+      shrink(f,max).then(function(b64){return post('/api/admin/upload',{mime:'image/jpeg',data:b64})}).then(function(r){busy=Math.max(0,busy-1);try{cb(r.url)}catch(e){tmsg('Problem: '+e.message);console.error(e)}},function(e){busy=Math.max(0,busy-1);tmsg('Problem: '+e.message)});
+    });
+    inp.click();
+  }
+  function syncAbout(){w.C=w.C||{};w.C.about=JSON.parse(JSON.stringify(data.about));if(w.__renderAbout)w.__renderAbout()}
+  function aboutDialog(title,fields,note){
+    closePop();
+    var cp=JSON.parse(JSON.stringify(data.about));
+    var wrap=h('div',{style:'max-height:70vh;overflow:auto'});
+    function build(){
+      wrap.innerHTML='';
+      fields.forEach(function(f){
+        if(f.t==='img'){
+          var row=h('div',{style:'display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0'});
+          if(cp[f.k])row.appendChild(thumb(cp[f.k],64));
+          row.appendChild(h('button',{type:'button',style:BTN2,text:cp[f.k]?'Change photo':'+ Add photo',on:{click:function(){pickUpload(f.max||1400,function(u){cp[f.k]=u;build();tmsg('Photo added. Press OK.')})}}}));
+          if(cp[f.k])row.appendChild(h('button',{type:'button',style:BTNR,text:'Remove',on:{click:function(){delete cp[f.k];build()}}}));
+          wrap.appendChild(h('label',{style:LAB,text:f.l}));wrap.appendChild(row);
+        }else{
+          var i=h(f.t==='area'?'textarea':'input',f.t==='area'?{style:INP+';min-height:110px',placeholder:f.p||''}:{type:'text',style:INP,placeholder:f.p||''});
+          i.value=cp[f.k]||'';i.addEventListener('input',function(){cp[f.k]=i.value});
+          wrap.appendChild(h('label',{style:LAB,text:f.l}));wrap.appendChild(i);
+        }
+      });
+    }
+    build();
+    pop=h('div',{id:'ed-pop',style:'position:fixed;left:50%;top:70px;translate:-50% 0;width:min(560px,92vw);z-index:3200;padding:16px;border-radius:16px;background:#0b1030;border:1px solid rgba(190,170,255,.6);box-shadow:0 20px 60px #000;color:#fff;font-family:Inter,system-ui,sans-serif'},[
+      h('div',{style:'font-size:18px;margin-bottom:6px',text:title}),note?h('div',{style:'font-size:13px;color:#9fb0c8;margin-bottom:6px',text:note}):'',wrap,
+      h('div',{style:'display:flex;gap:10px;margin-top:12px'},[
+        h('button',{type:'button',style:BTNG,text:'OK',on:{click:function(){data.about=cp;syncAbout();closePop();tmsg('Changed. Press "Save and publish" when you are done.')}}}),
+        h('button',{type:'button',style:BTN,text:'Cancel',on:{click:closePop}})])]);
+    d.body.appendChild(pop);
+  }
   function origName(src){var m=/([a-f0-9]{32}\.(?:png|jpg|webp))/.exec(src||'');return m?m[1]:null}
   function editImg(im){
     closePop();
@@ -884,10 +925,10 @@ function init(){
       if(!name){tmsg('This picture is part of your artwork list. Use the "✎ Edit my site" button and the Artwork, Photos or Page parts tab.');return}
       tmsg('Uploading ... please wait');busy++;
       shrink(f,1800).then(function(b64){return post('/api/admin/upload',{mime:'image/jpeg',data:b64})}).then(function(r){
-        busy--;data.imgs[name]=r.url;if(w.__swapImgs){var o={};o[name]=r.url;w.__swapImgs(o)}
+        busy=Math.max(0,busy-1);data.imgs[name]=r.url;if(w.__swapImgs){var o={};o[name]=r.url;w.__swapImgs(o)}
         [].forEach.call(d.querySelectorAll('img'),function(x){if((x.getAttribute('src')||'').indexOf(r.url)>-1&&!x.getAttribute('data-ed-orig'))x.setAttribute('data-ed-orig',name)});
         tmsg('Picture changed. Press "Save and publish" when you are done.');
-      }).catch(function(e){busy--;tmsg('Problem: '+e.message)});
+      }).catch(function(e){busy=Math.max(0,busy-1);tmsg('Problem: '+e.message)});
     });
     inp.click();
   }
@@ -895,6 +936,12 @@ function init(){
     if(!d.body.classList.contains('ed-on'))return;
     var t=e.target;if(t.tagName==='INPUT'||(t.closest&&(t.closest('#ed-bar')||t.closest('#ed-ba-bar')||t.closest('#ed-pop')||t.closest('#ed')||t.closest('#lang'))))return;
     e.preventDefault();e.stopPropagation();
+    var stC=t.closest&&t.closest('#story .mx-card');
+    if(stC&&!(t.closest('.t'))){var ix=[].indexOf.call(stC.parentNode.querySelectorAll('.mx-card'),stC)+1;
+      aboutDialog('Story card '+ix,[{k:'t'+ix,l:'Text',t:'area',p:'Write your story here ...'},{k:'p'+ix,l:'Photo',t:'img',max:1400}],'Write in one language. Visitors see this text in every language.');return}
+    if(t.closest&&t.closest('#story .mx-ph,#story .ab-vid')){aboutDialog('Story video',[{k:'vurl',l:'Video link (YouTube, Vimeo or .mp4)',p:'https://youtu.be/...'},{k:'poster',l:'Photo for the video box',t:'img',max:1600}],'The video shows after you press "Save and publish".');return}
+    var pf=t.closest&&t.closest('#about .bob');
+    if(pf&&!t.closest('#story')){pickUpload(1400,function(u){data.about.portrait=u;syncAbout();tmsg('Portrait added. Press "Save and publish" when you are done.')});return}
     var el=t.closest&&t.closest('[data-t],[data-x],[data-y],[data-z]');
     if(el&&keyOf(el)){editText(el);return}
     var baEl=t.closest&&t.closest('#ba');
@@ -939,11 +986,11 @@ function init(){
     var list=Array.prototype.slice.call(files||[]);if(!list.length)return;
     busy++;var n=0;
     (function next(){
-      if(!list.length){busy--;say(n+' photo(s) added. Press "Save and publish" when you are ready.');render();return}
+      if(!list.length){busy=Math.max(0,busy-1);say(n+' photo(s) added. Press "Save and publish" when you are ready.');render();return}
       var f=list.shift();say('Uploading '+(n+1)+' ... please wait');
       shrink(f,max).then(function(b64){return post('/api/admin/upload',{mime:'image/jpeg',data:b64})})
         .then(function(r){n++;done(r.url,f.name.replace(/\.[^.]+$/,''));next()})
-        .catch(function(e){busy--;say('Problem: '+e.message);render()});
+        .catch(function(e){busy=Math.max(0,busy-1);say('Problem: '+e.message);render()});
     })();
   }
   function fileInput(multi,cb,label){
@@ -1176,6 +1223,15 @@ function init(){
     box.appendChild(img1(data.ba,'after','Finished (after)',1400));
     box.appendChild(sub('About: my portrait'));
     box.appendChild(img1(data.about,'portrait','My portrait',1400));
+    [['1','Why I draw'],['2','How I started'],['3','What inspires me']].forEach(function(c){
+      box.appendChild(sub('My story: '+c[1]));
+      box.appendChild(field1(data.about,'t'+c[0],'Text','Write your story here ...',true));
+      box.appendChild(img1(data.about,'p'+c[0],'Photo for this card',1400));
+    });
+    box.appendChild(sub('My story: video'));
+    box.appendChild(note1('Paste a YouTube or Vimeo link (or a direct .mp4 link). Or add only a photo.'));
+    box.appendChild(field1(data.about,'vurl','Video link','https://youtu.be/...'));
+    box.appendChild(img1(data.about,'poster','Photo for the video box',1600));
     box.appendChild(sub('Behind the art'));
     box.appendChild(listEd(data.behind,[{k:'photo',l:'Photo',t:'img',max:1200},{k:'caption',l:'Short caption (optional)'}],'+ Add photo'));
     box.appendChild(sub('Free wallpapers'));
@@ -1648,10 +1704,23 @@ function renderBA(){
   if(ok(C.ba.after))ba.querySelector('.L2').style.backgroundImage='url("'+C.ba.after+'")';
 }
 function renderAbout(){
-  if(!C.about||!ok(C.about.portrait))return;
-  var s=d.getElementById('about');if(!s)return;var f=s.querySelector('div.bob');
-  if(f&&/portrait/i.test(f.textContent)&&!f.querySelector('img')){f.textContent='';f.style.padding='0';f.style.overflow='hidden';f.style.border='1px solid rgba(190,170,255,.4)';f.appendChild(img(C.about.portrait,'Portrait'))}
+  var A=C.about||{};var s=d.getElementById('about');if(!s)return;
+  if(ok(A.portrait)){var f=s.querySelector('div.bob');if(f&&!f.closest('#story')){f.textContent='';f.style.padding='0';f.style.overflow='hidden';f.style.border='1px solid rgba(190,170,255,.4)';f.appendChild(img(A.portrait,'Portrait'))}}
+  var st=d.getElementById('story');if(!st)return;
+  var cards=st.querySelectorAll('.mx-card');
+  [1,2,3].forEach(function(i){var c=cards[i-1];if(!c)return;
+    var t=A['t'+i],p=A['p'+i];
+    if(t){var dd=c.querySelector('.d');if(dd){dd.textContent=t;dd.style.whiteSpace='pre-line'}}
+    [].forEach.call(c.querySelectorAll('.ab-ph'),function(x){x.remove()});
+    if(ok(p))c.insertBefore(el('div',{'class':'ab-ph',style:'aspect-ratio:4/3;border-radius:12px;overflow:hidden;background:#07091a'},[img(p,'')]),c.firstChild);
+  });
+  var vb=st.querySelector('.mx-ph,.ab-vid'),V=A.video,box=null;
+  if(V&&(V.embed||V.file))box=V.embed?el('iframe',{src:V.embed,title:'Video',allow:'fullscreen; picture-in-picture',allowfullscreen:'',loading:'lazy',style:'display:block;width:100%;aspect-ratio:16/9;border:1px solid rgba(190,170,255,.35);border-radius:20px;background:#000'}):el('video',{controls:'',playsinline:'',preload:'metadata',src:V.file,poster:ok(A.poster)?A.poster:'',style:'display:block;width:100%;border-radius:20px;background:#000;border:1px solid rgba(190,170,255,.35)'});
+  else if(V&&V.url)box=btnA(V.url,'Watch','v');
+  else if(ok(A.poster))box=el('div',{style:'aspect-ratio:16/9;border-radius:20px;overflow:hidden;border:1px solid rgba(190,170,255,.35);background:#07091a'},[img(A.poster,'')]);
+  if(vb&&box){var w2=el('div',{'class':'ab-vid',style:'grid-column:1/-1'},[box]);vb.parentNode.replaceChild(w2,vb)}
 }
+w.__renderAbout=renderAbout;
 /* static labels in the new sections */
 function labels(){
   var x=Z[L()]||{};
@@ -1887,7 +1956,7 @@ function hashStr(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt
 function renderCard(){
   var s=d.getElementById('card');if(!s)return;var box=s.querySelector('.cd-box');if(box.getAttribute('data-ready'))return;box.setAttribute('data-ready','1');
   var nm=el('input',{type:'text',maxlength:'30',placeholder:T('cd_name'),'aria-label':T('cd_name'),style:'max-width:360px'});
-  var pl=el('select',{'aria-label':'Planet',style:'max-width:360px'},[el('option',{value:'d97c2e76c1883fa920ea01d73709d95e.jpg','data-z':'cd_moon',text:T('cd_moon')}),el('option',{value:'1ee5693540621d5ce3af77afbe5fe9a6.jpg','data-z':'cd_pluto',text:T('cd_pluto')})]);
+  var pl=el('select',{'aria-label':'Planet',style:'max-width:360px'},[el('option',{value:'495f40647af3f36590617f0838aad3cc.jpg','data-z':'cd_moon',text:T('cd_moon')}),el('option',{value:'1ee5693540621d5ce3af77afbe5fe9a6.jpg','data-z':'cd_pluto',text:T('cd_pluto')})]);
   var mk=el('button',{type:'button','class':'mx-btn v'},[el('span',{'data-z':'cd_make',text:T('cd_make')})]);
   var cv=el('canvas',{width:'1080',height:'1920',style:'display:none;width:100%;max-width:300px;aspect-ratio:9/16;border-radius:18px;border:1px solid rgba(190,170,255,.45);box-shadow:0 0 50px rgba(110,90,255,.35)',role:'img'});
   var dl=el('button',{type:'button','class':'mx-btn',style:'display:none'},[el('span',{'data-z':'cd_dl',text:T('cd_dl')})]);
