@@ -1563,12 +1563,12 @@ fr:{nav_shop:"Boutique",col_label:"Collections",col_title:"Explorer par univers"
 tl_label:"Time-lapse",tl_title:"Regardez le dessin se faire",tl_intro:"Chaque œuvre en accéléré, du premier trait à la touche finale.",tl_soon:"Vidéo bientôt",
 sh_label:"Boutique",sh_title:"Tirages et plus",sh_intro:"Choisissez un article et touchez Acheter : on termine la commande sur WhatsApp.",pr1:"Tirage d’art",pr2:"Affiche",pr3:"Pack d’autocollants",pr4:"Coque de téléphone",sh_price:"Prix bientôt",sh_buy:"Acheter sur WhatsApp",sh_img:"Photo du produit",
 ba_hint:"Faites glisser la ligne pour comparer l’esquisse et l’œuvre finie.",ba_s:"Esquisse",ba_f:"Œuvre finie",
-wl_btn:"Voir sur un mur",wl_back:"Retour à l’œuvre",wl_size:"Taille",wl_room:"Pièce",wl_r1:"Salon",wl_r2:"Chambre",wl_r3:"Bureau",wl_r4:"Café",wl_r5:"Galerie",wl_r6:"Couloir",wl_r7:"Salle à manger",wl_r8:"Chambre d’enfant",wl_ask:"Prix : demandez-moi",wl_orig:"Original",wl_fit:"Ce tirage est affiché à la taille maximale qui rentre sur ce mur.",wl_buy:"Acheter sur WhatsApp"},
+wl_btn:"Voir sur un mur",wl_back:"Retour à l’œuvre",wl_size:"Taille",wl_room:"Pièce",wl_r1:"Salon",wl_r2:"Chambre",wl_r3:"Bureau",wl_r4:"Café",wl_r5:"Galerie",wl_r6:"Couloir",wl_r7:"Salle à manger",wl_r8:"Chambre d’enfant",wl_r9:"Salle de jeux",wl_ask:"Prix : demandez-moi",wl_orig:"Original",wl_fit:"Ce tirage est affiché à la taille maximale qui rentre sur ce mur.",wl_buy:"Acheter sur WhatsApp"},
 ar:{nav_shop:"المتجر",col_label:"المجموعات",col_title:"تصفح حسب العالم",col_p:"وجوه ومشاعر مرسومة باليد.",col_f:"عوالم ومخلوقات من الخيال.",col_s:"كواكب وسدم ومجهول.",col_open:"افتح المجموعة",n_p:"بورتريه",n_f:"فانتازيا",n_s:"الفضاء",
 tl_label:"تسريع الزمن",tl_title:"شاهد الرسم وهو يولد",tl_intro:"كل عمل بالتسريع، من أول خط إلى اللمسة الأخيرة.",tl_soon:"الفيديو قريباً",
 sh_label:"المتجر",sh_title:"مطبوعات وأكثر",sh_intro:"اختر منتجاً واضغط شراء، ونُكمل الطلب عبر واتساب.",pr1:"مطبوعة فنية",pr2:"ملصق كبير",pr3:"حزمة ستيكرات",pr4:"غطاء هاتف",sh_price:"السعر قريباً",sh_buy:"اشترِ عبر واتساب",sh_img:"صورة المنتج",
 ba_hint:"اسحب الخط للمقارنة بين الرسم الأولي والعمل النهائي.",ba_s:"الرسم الأولي",ba_f:"العمل النهائي",
-wl_btn:"شاهدها على الجدار",wl_back:"العودة للعمل",wl_size:"الحجم",wl_room:"الغرفة",wl_r1:"الصالة",wl_r2:"غرفة النوم",wl_r3:"المكتب",wl_r4:"المقهى",wl_r5:"المعرض",wl_r6:"الممر",wl_r7:"غرفة الطعام",wl_r8:"غرفة الأطفال",wl_ask:"السعر: اسألني",wl_orig:"الأصلية",wl_fit:"عُرضت بأكبر حجم يناسب هذا الجدار.",wl_buy:"اشترِ عبر واتساب"}};
+wl_btn:"شاهدها على الجدار",wl_back:"العودة للعمل",wl_size:"الحجم",wl_room:"الغرفة",wl_r1:"الصالة",wl_r2:"غرفة النوم",wl_r3:"المكتب",wl_r4:"المقهى",wl_r5:"المعرض",wl_r6:"الممر",wl_r7:"غرفة الطعام",wl_r8:"غرفة الأطفال",wl_r9:"غرفة الألعاب",wl_ask:"السعر: اسألني",wl_orig:"الأصلية",wl_fit:"عُرضت بأكبر حجم يناسب هذا الجدار.",wl_buy:"اشترِ عبر واتساب"}};
 function tr(){
   var l=root.getAttribute('lang')||'en',dd=X[l]||{};
   d.querySelectorAll('[data-x]').forEach(function(el){
@@ -1609,13 +1609,14 @@ if(vb&&img){
   var WCx=window.C||{};
   var BUILT=[
     {k:'wl_r1',n:'Living room',img:'assets/rooms/living.jpg',x:86.8,y:35,z:[62,8,99,50],cm:250},
-    {k:'wl_r2',n:'Bedroom',img:'assets/rooms/bedroom.jpg',x:48,y:24,z:[22,6,74,42],cm:220},
-    {k:'wl_r3',n:'Office',img:'assets/rooms/office.jpg',x:47,y:24,z:[30,8,64,40],cm:190},
-    {k:'wl_r4',n:'Café',img:'assets/rooms/cafe.jpg',x:50,y:36,z:[20,12,80,58],cm:250},
-    {k:'wl_r5',n:'Gallery',img:'assets/rooms/gallery.jpg',x:50,y:34,z:[16,6,84,64],cm:340},
-    {k:'wl_r6',n:'Hallway',img:'assets/rooms/hall.jpg',x:54,y:28,z:[36,8,72,50],cm:190},
-    {k:'wl_r7',n:'Dining room',img:'assets/rooms/dining.jpg',x:46,y:30,z:[20,10,78,50],cm:230},
-    {k:'wl_r8',n:'Kids room',img:'assets/rooms/kids.jpg',x:50,y:28,z:[22,8,78,50],cm:210}
+    {k:'wl_r2',n:'Bedroom',img:'assets/rooms/bedroom.jpg',x:77,y:35,z:[56,23.5,97.5,46.5],cm:340},
+    {k:'wl_r3',n:'Office',img:'assets/rooms/office.jpg',x:48.6,y:44,z:[34.5,29,62.5,60],cm:250},
+    {k:'wl_r4',n:'Café',img:'assets/rooms/cafe.jpg',x:54,y:38,z:[36.5,17,71.5,60],cm:380},
+    {k:'wl_r5',n:'Gallery',img:'assets/rooms/gallery.jpg',x:47,y:42,z:[27.5,15,67,72],cm:380},
+    {k:'wl_r6',n:'Hallway',img:'assets/rooms/hall.jpg',x:51.7,y:49,z:[42,32,61.5,64],cm:500},
+    {k:'wl_r7',n:'Dining room',img:'assets/rooms/dining.jpg',x:33,y:26,z:[24.2,12,41.8,41],cm:330},
+    {k:'wl_r8',n:'Kids room',img:'assets/rooms/kids.jpg',x:63.9,y:33.3,z:[52,5,81,56],cm:270},
+    {k:'wl_r9',n:'Gaming room',img:'assets/rooms/gaming.jpg',x:40,y:61,z:[28,53,52,70],cm:420}
   ];
   var rooms=[];
   if(!(WCx.settings&&String(WCx.settings.noRooms||'').toLowerCase().indexOf('y')===0))rooms=BUILT.slice();
