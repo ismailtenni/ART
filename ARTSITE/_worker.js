@@ -162,6 +162,7 @@ function cleanContent(b) {
     timelapse: (Array.isArray(b.timelapse) ? b.timelapse : []).slice(0, 20).map(cleanFilm).filter(Boolean),
     spotlight: cleanRow(b.spotlight, SCH.spotlight),
     ba: cleanRow(b.ba, SCH.ba),
+    bamore: cleanList(b.bamore, SCH.ba, 6, ['before', 'after']),
     about: (() => { const a = cleanRow(b.about, SCH.about); const v = cleanFilm({ url: a.vurl }); if (v) a.video = v; return a; })(),
     settings: cleanRow(b.settings, SCH.settings),
     posts: cleanList(b.posts, SCH.posts, 80, ['title']),

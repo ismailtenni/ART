@@ -44,6 +44,7 @@ a:hover{color:#ffffff}
 
 
 /* more4 */
+#ba-wrap{display:flex;flex-wrap:wrap;gap:0 28px;align-items:flex-start}#ba-wrap>:is(#ba,.ba2){flex:1 1 300px;min-width:0;width:100%}
 /* rooms */
 #mx-wroom{display:none;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:#b7c4dc}
 #mx-wroom button{padding:7px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(10,14,40,.7);color:#fff;cursor:pointer;font-family:inherit}
@@ -172,14 +173,14 @@ header nav>a:not([style]):hover::after{transform:scaleX(1)}
 [dir=rtl] .mx-steps div::after{left:auto;right:-50%}
 
 /* before/after slider */
-#ba{position:relative;max-width:640px;aspect-ratio:4/5;border-radius:16px;overflow:hidden;border:1px solid rgba(190,170,255,.4);margin-top:30px;--p:50%;background:#070b1c;user-select:none}
-#ba .L{position:absolute;top:0;left:0;right:0;bottom:0;background-size:cover;background-position:center;display:flex;align-items:flex-end;padding:18px;box-sizing:border-box;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:#fff}
-#ba .L1{background-image:linear-gradient(160deg,#18204a,#070b1c);}
-#ba .L2{background-image:linear-gradient(160deg,#3b1f78,#0f2f6a);clip-path:inset(0 calc(100% - var(--p)) 0 0);}
-#ba .L2{justify-content:flex-start}#ba .L1{justify-content:flex-end}
-#ba .h{position:absolute;top:0;bottom:0;left:var(--p);width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 18px #9a7bff;pointer-events:none}
-#ba .h::after{content:"\2194";position:absolute;top:50%;left:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(20,16,60,.85);border:1px solid #fff;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px}
-#ba input{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;margin:0;cursor:ew-resize}
+:is(#ba,.ba2){position:relative;max-width:640px;aspect-ratio:4/5;border-radius:16px;overflow:hidden;border:1px solid rgba(190,170,255,.4);margin-top:30px;--p:50%;background:#070b1c;user-select:none}
+:is(#ba,.ba2) .L{position:absolute;top:0;left:0;right:0;bottom:0;background-size:cover;background-position:center;display:flex;align-items:flex-end;padding:18px;box-sizing:border-box;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:#fff}
+:is(#ba,.ba2) .L1{background-image:linear-gradient(160deg,#18204a,#070b1c);}
+:is(#ba,.ba2) .L2{background-image:linear-gradient(160deg,#3b1f78,#0f2f6a);clip-path:inset(0 calc(100% - var(--p)) 0 0);}
+:is(#ba,.ba2) .L2{justify-content:flex-start}#ba .L1{justify-content:flex-end}
+:is(#ba,.ba2) .h{position:absolute;top:0;bottom:0;left:var(--p);width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 18px #9a7bff;pointer-events:none}
+:is(#ba,.ba2) .h::after{content:"\2194";position:absolute;top:50%;left:50%;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(20,16,60,.85);border:1px solid #fff;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px}
+:is(#ba,.ba2) input{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;margin:0;cursor:ew-resize}
 
 /* wall preview */
 #mx-wallbtn{margin-top:14px}
@@ -808,7 +809,7 @@ fetch('/api/me',{credentials:'same-origin'}).then(function(r){return r.json()}).
 function init(){
   var data={works:clone(w.C&&w.C.works),photos:clone(w.C&&w.C.photos),films:clone(w.C&&w.C.films),texts:JSON.parse(JSON.stringify((w.C&&w.C.texts)||{}))};
   var textsInfo=null;
-  ['shop','gifts','reviews','behind','wallpapers','timelapse','prints'].forEach(function(k){data[k]=clone(w.C&&w.C[k])});
+  ['shop','gifts','reviews','behind','wallpapers','timelapse','prints','bamore'].forEach(function(k){data[k]=clone(w.C&&w.C[k])});
   data.pricing=JSON.parse(JSON.stringify((w.C&&w.C.pricing)||{}));data.pricing.sizes=data.pricing.sizes||[];data.pricing.styles=data.pricing.styles||[];
   data.imgs=JSON.parse(JSON.stringify((w.C&&w.C.imgs)||{}));data.rooms=JSON.parse(JSON.stringify((w.C&&w.C.rooms)||[]));if(w.C){w.C.layout=(w.C.layout&&typeof w.C.layout==='object')?w.C.layout:{};w.C.layout.order=w.C.layout.order||[];w.C.layout.hidden=w.C.layout.hidden||[];data.layout=w.C.layout}else data.layout={order:[],hidden:[]};
   data.posts=JSON.parse(JSON.stringify((w.C&&w.C.posts)||[]));
@@ -947,6 +948,7 @@ function init(){
     if(pf&&!t.closest('#story')){pickUpload(1400,function(u){data.about.portrait=u;syncAbout();tmsg('Portrait added. Press "Save and publish" when you are done.')});return}
     var el=t.closest&&t.closest('[data-t],[data-x],[data-y],[data-z]');
     if(el&&keyOf(el)){editText(el);return}
+    if(t.closest&&t.closest('.ba2')){tmsg('To change this slider: press "Done", then "Edit my site" and open "Page parts".');return}
     var baEl=t.closest&&t.closest('#ba');
     if(baEl){var hh=baEl.querySelector('.h');var hr=hh?hh.getBoundingClientRect():null;pickBA(hr&&e.clientX>hr.left+hr.width/2?'before':'after');return}
     var stack=d.elementsFromPoint?d.elementsFromPoint(e.clientX,e.clientY):[t];
@@ -1249,6 +1251,8 @@ function init(){
     box.appendChild(field1(data.settings,'payLabel','Text on the pay button (optional)','Pay online'));
     box.appendChild(sub('Prints (offered under every artwork)'));
     box.appendChild(note1('Add print sizes with a price. They appear under every artwork, each with a Buy button. Even a sold original can sell prints.'));
+    if(!data.prints.length)box.appendChild(h('button',{type:'button',style:BTN2,text:'Add sizes S, M and L (then type your prices)',on:{click:function(){
+      data.prints.push({name:'S print - 30 cm',price:''},{name:'M print - 50 cm',price:''},{name:'L print - 70 cm',price:''});render()}}}));
     box.appendChild(listEd(data.prints,[{k:'name',l:'Size',p:'A4 print'},{k:'price',l:'Price',p:'$25'},{k:'pay',l:'Payment link (optional)',p:'https://...'}],'+ Add print size'));
     box.appendChild(sub('Products'));
     box.appendChild(note1('Limited edition: write how many exist in total and how many are left. When "left" is 0 the product shows Sold out. Leave total empty if the product is not limited.'));
@@ -1274,6 +1278,9 @@ function init(){
     box.appendChild(sub('Before and after'));
     box.appendChild(img1(data.ba,'before','Sketch (before)',1400));
     box.appendChild(img1(data.ba,'after','Finished (after)',1400));
+    box.appendChild(sub('More before and after sliders'));
+    box.appendChild(note1('Each one you add appears next to the first slider on your site. Add the sketch (before) and the finished picture (after).'));
+    box.appendChild(listEd(data.bamore,[{k:'before',l:'Sketch (before)',t:'img',max:1400},{k:'after',l:'Finished (after)',t:'img',max:1400}],'+ Add another slider'));
     box.appendChild(sub('About: my portrait'));
     box.appendChild(img1(data.about,'portrait','My portrait',1400));
     [['1','Why I draw'],['2','How I started'],['3','What inspires me']].forEach(function(c){
@@ -1632,6 +1639,8 @@ if(vb&&img){
     if(m)return ['84.1 × 118.9','59.4 × 84.1','42 × 59.4','29.7 × 42','21 × 29.7','14.8 × 21','10.5 × 14.8'][+m[1]]+' cm';
     m=s.match(/(\d+(?:[.,]\d+)?)\s*[x×*]\s*(\d+(?:[.,]\d+)?)\s*(cm|in|inch|")?/i);
     if(m)return m[1]+' × '+m[2]+' '+((m[3]&&!/cm/i.test(m[3]))?'in':'cm');
+    m=s.match(/(\d+(?:[.,]\d+)?)\s*cm/i);
+    if(m&&String(name).indexOf(m[0])<0)return m[1]+' cm';
     return '';
   }
   function cmOf(name){
@@ -1645,7 +1654,8 @@ if(vb&&img){
   }
   var sizes=[],fb=[30,50,70,90],nfb=0;
   (WCx.prints||[]).forEach(function(p){if(p&&p.name){var c=cmOf(p.name);if(!c){c=fb[Math.min(nfb,3)];nfb++}sizes.push({n:p.name,p:p.price||'',dim:dimOf(p.name),cm:Math.min(Math.max(c,8),150)})}});
-  if(!sizes.length)sizes=[{n:'S',p:'',cm:30},{n:'M',p:'',cm:50},{n:'L',p:'',cm:70}];
+  var noPrints=!sizes.length;
+  if(noPrints)sizes=[{n:'S',p:'',dim:'30 cm',cm:30},{n:'M',p:'',dim:'50 cm',cm:50},{n:'L',p:'',dim:'70 cm',cm:70}];
   var ri=0,si=Math.floor((sizes.length-1)/2),R=4/3,on=false;
 
   var wall=d.createElement('div');wall.id='mx-wall';
@@ -1672,7 +1682,7 @@ if(vb&&img){
     sizes.forEach(function(s,i){
       var b=d.createElement('button');b.type='button';b.setAttribute('data-s',i);if(i===si)b.className='on';
       b.appendChild(d.createTextNode(s.n));
-      if(s.dim){var dm=d.createElement('small');dm.style.color='#b7c4dc';dm.textContent=s.dim;b.appendChild(dm)}
+      if(s.dim&&String(s.n).indexOf(s.dim)<0){var dm=d.createElement('small');dm.style.color='#b7c4dc';dm.textContent=s.dim;b.appendChild(dm)}
       if(s.p){var sm=d.createElement('small');sm.textContent=s.p;b.appendChild(sm)}
       sz.appendChild(b);
     });
@@ -1718,6 +1728,15 @@ if(vb&&img){
     var a=d.createElement('a');a.className='mx-btn';a.target='_blank';a.rel='noopener noreferrer';
     a.href='https://wa.me/212651543275?text='+encodeURIComponent('Hi! I want a print'+(title?' of "'+title+'"':'')+' in size '+s.n+(s.p?' ('+s.p+')':'')+'.');
     a.textContent=t2('wl_buy','Buy on WhatsApp');info.appendChild(a);
+    if(!s.p&&d.getElementById('ed-btn')){
+      var hb=d.createElement('button');hb.type='button';hb.className='mx-btn v';hb.textContent='✎ Set the price for '+s.n+' (only you see this)';
+      hb.addEventListener('click',function(){
+        var vx=d.getElementById('vw-x');if(vx)vx.click();
+        d.getElementById('ed-btn').click();
+        setTimeout(function(){var bs=d.querySelectorAll('#ed button');for(var i=0;i<bs.length;i++){if(bs[i].textContent==='Shop and payments'){bs[i].click();break}}},250);
+      });
+      info.appendChild(hb);
+    }
     if(wk&&wk.price){var o=d.createElement('span');o.style.cssText='color:#b7c4dc;font-size:14px';o.textContent=t2('wl_orig','Original')+': '+wk.price;info.appendChild(o)}
     if(wall.getAttribute('data-fit')==='1'){var n=d.createElement('div');n.className='nt';n.textContent=t2('wl_fit','Shown at the largest size that fits this wall.');info.appendChild(n)}
   }
@@ -1865,9 +1884,22 @@ function renderTL(){
   });
 }
 function renderBA(){
-  var ba=d.getElementById('ba');if(!ba||!C.ba)return;
-  if(ok(C.ba.before))ba.querySelector('.L1').style.backgroundImage='url("'+C.ba.before+'")';
-  if(ok(C.ba.after))ba.querySelector('.L2').style.backgroundImage='url("'+C.ba.after+'")';
+  var ba=d.getElementById('ba');if(!ba)return;
+  if(C.ba&&ok(C.ba.before))ba.querySelector('.L1').style.backgroundImage='url("'+C.ba.before+'")';
+  if(C.ba&&ok(C.ba.after))ba.querySelector('.L2').style.backgroundImage='url("'+C.ba.after+'")';
+  var more=(C.bamore||[]).filter(function(x){return x&&(ok(x.before)||ok(x.after))});
+  var wrap=d.getElementById('ba-wrap');
+  if(!wrap){wrap=el('div',{id:'ba-wrap'});ba.parentNode.insertBefore(wrap,ba);wrap.appendChild(ba)}
+  Array.prototype.forEach.call(wrap.querySelectorAll('.ba2'),function(x){x.remove()});
+  more.slice(0,6).forEach(function(it){
+    var c=ba.cloneNode(true);c.removeAttribute('id');c.removeAttribute('data-before');c.removeAttribute('data-after');c.className='ba2';
+    var l1=c.querySelector('.L1'),l2=c.querySelector('.L2');l1.style.backgroundImage='';l2.style.backgroundImage='';
+    if(ok(it.before))l1.style.backgroundImage='url("'+it.before+'")';
+    if(ok(it.after))l2.style.backgroundImage='url("'+it.after+'")';
+    var r=c.querySelector('input');r.value=50;
+    var up=function(){c.style.setProperty('--p',r.value+'%')};r.addEventListener('input',up);up();
+    wrap.appendChild(c);
+  });
 }
 function renderAbout(){
   var A=C.about||{};var s=d.getElementById('about');if(!s)return;
