@@ -1616,7 +1616,7 @@ if(vb&&img){
     {k:'wl_r6',n:'Hallway',img:'assets/rooms/hall.jpg',x:51.7,y:49,z:[42,32,61.5,64],cm:500},
     {k:'wl_r7',n:'Dining room',img:'assets/rooms/dining.jpg',x:33,y:26,z:[24.2,12,41.8,41],cm:330},
     {k:'wl_r8',n:'Kids room',img:'assets/rooms/kids.jpg',x:63.9,y:33.3,z:[52,5,81,56],cm:270},
-    {k:'wl_r9',n:'Gaming room',img:'assets/rooms/gaming.jpg',x:40,y:61,z:[28,53,52,70],cm:420}
+    {k:'wl_r9',n:'Gaming room',img:'assets/rooms/gaming.jpg',x:36,y:24,z:[18,4,56,45],cm:240}
   ];
   var rooms=[];
   if(!(WCx.settings&&String(WCx.settings.noRooms||'').toLowerCase().indexOf('y')===0))rooms=BUILT.slice();
@@ -1627,6 +1627,13 @@ if(vb&&img){
   });
   if(!rooms.length)rooms=BUILT.slice();
   function t2(k,en){var dd=X[root.getAttribute('lang')||'en'];return (dd&&dd[k])||en}
+  function dimOf(name){
+    var s=String(name||''),m=s.match(/\bA\s?([0-6])\b/i);
+    if(m)return ['84.1 × 118.9','59.4 × 84.1','42 × 59.4','29.7 × 42','21 × 29.7','14.8 × 21','10.5 × 14.8'][+m[1]]+' cm';
+    m=s.match(/(\d+(?:[.,]\d+)?)\s*[x×*]\s*(\d+(?:[.,]\d+)?)\s*(cm|in|inch|")?/i);
+    if(m)return m[1]+' × '+m[2]+' '+((m[3]&&!/cm/i.test(m[3]))?'in':'cm');
+    return '';
+  }
   function cmOf(name){
     var s=String(name||''),m=s.match(/\bA\s?([0-6])\b/i),inch=/\binch|\bin\b|"|”/i.test(s);
     if(m)return [118.9,84.1,59.4,42,29.7,21,14.8][+m[1]];
@@ -1637,7 +1644,7 @@ if(vb&&img){
     return null;
   }
   var sizes=[],fb=[30,50,70,90],nfb=0;
-  (WCx.prints||[]).forEach(function(p){if(p&&p.name){var c=cmOf(p.name);if(!c){c=fb[Math.min(nfb,3)];nfb++}sizes.push({n:p.name,p:p.price||'',cm:Math.min(Math.max(c,8),150)})}});
+  (WCx.prints||[]).forEach(function(p){if(p&&p.name){var c=cmOf(p.name);if(!c){c=fb[Math.min(nfb,3)];nfb++}sizes.push({n:p.name,p:p.price||'',dim:dimOf(p.name),cm:Math.min(Math.max(c,8),150)})}});
   if(!sizes.length)sizes=[{n:'S',p:'',cm:30},{n:'M',p:'',cm:50},{n:'L',p:'',cm:70}];
   var ri=0,si=Math.floor((sizes.length-1)/2),R=4/3,on=false;
 
@@ -1665,6 +1672,7 @@ if(vb&&img){
     sizes.forEach(function(s,i){
       var b=d.createElement('button');b.type='button';b.setAttribute('data-s',i);if(i===si)b.className='on';
       b.appendChild(d.createTextNode(s.n));
+      if(s.dim){var dm=d.createElement('small');dm.style.color='#b7c4dc';dm.textContent=s.dim;b.appendChild(dm)}
       if(s.p){var sm=d.createElement('small');sm.textContent=s.p;b.appendChild(sm)}
       sz.appendChild(b);
     });
@@ -1688,8 +1696,18 @@ if(vb&&img){
     var soc=d.getElementById('soc'),id=soc&&soc.getAttribute('data-id');
     var l=WCx.works||[];for(var i=0;i<l.length;i++)if(l[i]&&l[i].id===id)return l[i];return null;
   }
+  function hl(){
+    var rows=d.querySelectorAll('#vw-side [data-pr]');
+    Array.prototype.forEach.call(rows,function(r){var yes=on&&+r.getAttribute('data-pr')===si;r.style.borderColor=yes?'#b79cff':'rgba(190,170,255,.3)';r.style.background=yes?'rgba(120,90,230,.28)':'rgba(20,26,66,.35)'});
+  }
+  w.__wallPick=function(i){
+    if(!(i>=0&&i<sizes.length))return;
+    si=i;
+    if(!on)set(true);else{buildSizes();place()}
+    try{wall.scrollIntoView({block:'nearest',behavior:'smooth'})}catch(e){}
+  };
   function upd(){
-    info.innerHTML='';
+    info.innerHTML='';hl();
     if(!on){return}
     var s=sizes[si],wk=curWork(),title=(wk&&wk.title)||'';
     var line=d.createElement('span');
@@ -1714,7 +1732,7 @@ if(vb&&img){
     sz.style.display=v?'flex':'none';rm.style.display=v?'flex':'none';info.style.display=v?'flex':'none';
     btn.firstChild.setAttribute('data-x',v?'wl_back':'wl_btn');
     btn.firstChild.setAttribute('data-xen',v?'Back to artwork':'See it on a wall');tr();
-    if(v){buildRooms();buildSizes();setRoom(ri);sync()}else info.innerHTML='';
+    if(v){buildRooms();buildSizes();setRoom(ri);sync()}else{info.innerHTML='';hl()}
   }
   btn.addEventListener('click',function(){set(!on)});
   rm.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;
@@ -1737,19 +1755,19 @@ try{
 var d=document,w=window,root=d.documentElement,C=w.C||{};
 var WA='https://wa.me/212651543275?text=';
 var Z={
-fr:{by_prints:"Tirages de cette œuvre",by_from:"Choisissez une taille",rv_n:"avis",mk_title:"Le making-of",mk_hint:"Glissez pour voir le dessin prendre vie",mk_play:"Lecture",mk_stop:"Pause",mk_step:"Étape",mk_final:"Terminé",rv_form_title:"Laissez votre avis",rv_name:"Votre nom",rv_stars:"Votre note",rv_text:"Vos mots",rv_send:"Envoyer mon avis",rv_thanks:"Merci ! Votre avis apparaîtra après ma vérification.",rv_bad:"Ce lien d’avis n’est pas valide ou a déjà été utilisé.",rv_close:"Fermer",wl_btn:"Prévenez-moi du retour",wl_email:"Votre email",wl_send:"Me prévenir",wl_ok:"C’est noté ! Je vous écrirai.",wl_bad:"Entrez un email valide.",wl_sold:"Cette œuvre est vendue. Laissez votre email pour être prévenu(e) si j’en fais une similaire.",cd_label:"Carte de l’espace",cd_title:"Créez votre carte spatiale",cd_intro:"Écrivez votre nom et recevez une carte à partager en story Instagram.",cd_name:"Votre nom",cd_moon:"Lune",cd_pluto:"Pluton",cd_make:"Créer ma carte",cd_dl:"Télécharger",cd_share:"Partager",cd_tag:"Une étoile d’Eternal Space",pc_label:"Calculateur de prix",pc_title:"Combien coûte mon dessin ?",pc_intro:"Choisissez vos options et voyez le prix tout de suite. Le prix final est confirmé par moi.",pc_size:"Taille",pc_style:"Style",pc_people:"Nombre de personnes",pc_rush:"Commande rapide",pc_total:"Prix estimé",pc_send:"Envoyer sur WhatsApp",pc_hello:"Bonjour ! Je voudrais un dessin.",pc_est:"Prix estimé",ins_link:"Installer l’appli",ins_help:"Sur iPhone : touchez Partager, puis « Sur l’écran d’accueil ». Sur Android : ouvrez le menu du navigateur et touchez « Installer l’application ».",bl_label:"Journal",bl_title:"Depuis mon carnet de croquis",bl_soon:"Mon premier article arrive bientôt.",bl_read:"Lire la suite",bl_less:"Fermer",fv_label:"Vos favoris",fv_title:"Les œuvres que vous aimez",fv_empty:"Touchez le cœur d’une œuvre pour l’enregistrer ici.",ch_label:"Défi",ch_prize:"Prix",ch_days:"jours restants",ch_ended:"Ce défi est terminé.",ch_name:"Votre nom",ch_contact:"Instagram ou WhatsApp",ch_link:"Lien de votre dessin (facultatif)",ch_join:"Participer",ch_ok:"C’est enregistré ! Bonne chance.",g_play:"Jouer à un jeu",sp_label:"Œuvre du mois",sp_btn:"Demander cette œuvre",
+fr:{by_tap:"Touchez une taille pour la voir sur un mur",by_prints:"Tirages de cette œuvre",by_from:"Choisissez une taille",rv_n:"avis",mk_title:"Le making-of",mk_hint:"Glissez pour voir le dessin prendre vie",mk_play:"Lecture",mk_stop:"Pause",mk_step:"Étape",mk_final:"Terminé",rv_form_title:"Laissez votre avis",rv_name:"Votre nom",rv_stars:"Votre note",rv_text:"Vos mots",rv_send:"Envoyer mon avis",rv_thanks:"Merci ! Votre avis apparaîtra après ma vérification.",rv_bad:"Ce lien d’avis n’est pas valide ou a déjà été utilisé.",rv_close:"Fermer",wl_btn:"Prévenez-moi du retour",wl_email:"Votre email",wl_send:"Me prévenir",wl_ok:"C’est noté ! Je vous écrirai.",wl_bad:"Entrez un email valide.",wl_sold:"Cette œuvre est vendue. Laissez votre email pour être prévenu(e) si j’en fais une similaire.",cd_label:"Carte de l’espace",cd_title:"Créez votre carte spatiale",cd_intro:"Écrivez votre nom et recevez une carte à partager en story Instagram.",cd_name:"Votre nom",cd_moon:"Lune",cd_pluto:"Pluton",cd_make:"Créer ma carte",cd_dl:"Télécharger",cd_share:"Partager",cd_tag:"Une étoile d’Eternal Space",pc_label:"Calculateur de prix",pc_title:"Combien coûte mon dessin ?",pc_intro:"Choisissez vos options et voyez le prix tout de suite. Le prix final est confirmé par moi.",pc_size:"Taille",pc_style:"Style",pc_people:"Nombre de personnes",pc_rush:"Commande rapide",pc_total:"Prix estimé",pc_send:"Envoyer sur WhatsApp",pc_hello:"Bonjour ! Je voudrais un dessin.",pc_est:"Prix estimé",ins_link:"Installer l’appli",ins_help:"Sur iPhone : touchez Partager, puis « Sur l’écran d’accueil ». Sur Android : ouvrez le menu du navigateur et touchez « Installer l’application ».",bl_label:"Journal",bl_title:"Depuis mon carnet de croquis",bl_soon:"Mon premier article arrive bientôt.",bl_read:"Lire la suite",bl_less:"Fermer",fv_label:"Vos favoris",fv_title:"Les œuvres que vous aimez",fv_empty:"Touchez le cœur d’une œuvre pour l’enregistrer ici.",ch_label:"Défi",ch_prize:"Prix",ch_days:"jours restants",ch_ended:"Ce défi est terminé.",ch_name:"Votre nom",ch_contact:"Instagram ou WhatsApp",ch_link:"Lien de votre dessin (facultatif)",ch_join:"Participer",ch_ok:"C’est enregistré ! Bonne chance.",g_play:"Jouer à un jeu",sp_label:"Œuvre du mois",sp_btn:"Demander cette œuvre",
 gf_label:"Cartes cadeaux",gf_title:"Offrez un dessin",gf_intro:"Choisissez un montant. La personne choisit ensuite l’œuvre.",gf_ask:"Demander une carte cadeau",gf_soon:"Montant bientôt",
 rq_label:"Demande de dessin",rq_title:"Racontez-moi votre idée",rq_intro:"Remplissez ce petit formulaire. Je vous réponds avec un prix et un délai.",
 rq_name:"Votre nom",rq_contact:"Email ou numéro WhatsApp",rq_kind:"Type de dessin",k1:"Portrait",k2:"Scène fantastique",k3:"Autre idée",rq_size:"Taille souhaitée",rq_budget:"Budget",rq_idea:"Votre idée",rq_ref:"Lien d’une photo de référence (facultatif)",rq_send:"Envoyer ma demande",rq_wa:"Envoyer sur WhatsApp",rq_ok:"Merci ! J’ai bien reçu votre demande et je vous réponds vite.",rq_err:"Un problème est survenu. Essayez WhatsApp.",
 sh_buy:"Acheter sur WhatsApp",sh_pay:"Payer en ligne",sh_soon:"Prix bientôt",sh_lim:"Édition limitée",sh_left:"restants",sh_out:"Épuisé",
 dl:"Télécharger",tr_nf:"Code introuvable. Écrivez-moi sur WhatsApp, je vérifie."},
-ar:{by_prints:"نسخ مطبوعة من هذه الرسمة",by_from:"اختر الحجم",rv_n:"تقييمات",mk_title:"كواليس الرسم",mk_hint:"حرّك الشريط لترى الرسمة تولد",mk_play:"تشغيل",mk_stop:"إيقاف",mk_step:"الخطوة",mk_final:"النتيجة النهائية",rv_form_title:"اترك تقييمك",rv_name:"اسمك",rv_stars:"تقييمك",rv_text:"كلماتك",rv_send:"أرسل تقييمي",rv_thanks:"شكراً! سيظهر تقييمك بعد أن أراجعه.",rv_bad:"رابط التقييم غير صالح أو استُخدم من قبل.",rv_close:"إغلاق",wl_btn:"أخبرني عند توفرها",wl_email:"بريدك الإلكتروني",wl_send:"أخبرني",wl_ok:"تم! سأراسلك.",wl_bad:"أدخل بريداً صحيحاً.",wl_sold:"هذه الرسمة بيعت. اترك بريدك لأخبرك إذا رسمت واحدة مشابهة.",cd_label:"بطاقة الفضاء",cd_title:"اصنع بطاقتك الفضائية",cd_intro:"اكتب اسمك واحصل على بطاقة لمشاركتها في ستوري إنستغرام.",cd_name:"اسمك",cd_moon:"القمر",cd_pluto:"بلوتو",cd_make:"أنشئ بطاقتي",cd_dl:"تحميل",cd_share:"مشاركة",cd_tag:"نجمة في Eternal Space",pc_label:"حاسبة الأسعار",pc_title:"كم سعر رسمتي؟",pc_intro:"اختر خياراتك وشاهد السعر فوراً. السعر النهائي أؤكده أنا.",pc_size:"الحجم",pc_style:"الأسلوب",pc_people:"عدد الأشخاص",pc_rush:"طلب مستعجل",pc_total:"السعر التقديري",pc_send:"أرسل عبر واتساب",pc_hello:"مرحباً! أريد رسمة.",pc_est:"السعر التقديري",ins_link:"ثبّت التطبيق",ins_help:"على الآيفون: اضغط مشاركة ثم «إضافة إلى الشاشة الرئيسية». على الأندرويد: افتح قائمة المتصفح واضغط «تثبيت التطبيق».",bl_label:"المدونة",bl_title:"من دفتر رسوماتي",bl_soon:"أول منشور قريباً.",bl_read:"اقرأ المزيد",bl_less:"إغلاق",fv_label:"مفضلتك",fv_title:"الأعمال التي تحبها",fv_empty:"اضغط على القلب في أي عمل لحفظه هنا.",ch_label:"تحدٍّ",ch_prize:"الجائزة",ch_days:"أيام متبقية",ch_ended:"انتهى هذا التحدي.",ch_name:"اسمك",ch_contact:"إنستغرام أو واتساب",ch_link:"رابط رسمتك (اختياري)",ch_join:"شارك",ch_ok:"تم تسجيلك! حظاً موفقاً.",g_play:"العب لعبة",sp_label:"عمل الشهر",sp_btn:"اسأل عن هذا العمل",
+ar:{by_tap:"المس حجماً لتراه على الجدار",by_prints:"نسخ مطبوعة من هذه الرسمة",by_from:"اختر الحجم",rv_n:"تقييمات",mk_title:"كواليس الرسم",mk_hint:"حرّك الشريط لترى الرسمة تولد",mk_play:"تشغيل",mk_stop:"إيقاف",mk_step:"الخطوة",mk_final:"النتيجة النهائية",rv_form_title:"اترك تقييمك",rv_name:"اسمك",rv_stars:"تقييمك",rv_text:"كلماتك",rv_send:"أرسل تقييمي",rv_thanks:"شكراً! سيظهر تقييمك بعد أن أراجعه.",rv_bad:"رابط التقييم غير صالح أو استُخدم من قبل.",rv_close:"إغلاق",wl_btn:"أخبرني عند توفرها",wl_email:"بريدك الإلكتروني",wl_send:"أخبرني",wl_ok:"تم! سأراسلك.",wl_bad:"أدخل بريداً صحيحاً.",wl_sold:"هذه الرسمة بيعت. اترك بريدك لأخبرك إذا رسمت واحدة مشابهة.",cd_label:"بطاقة الفضاء",cd_title:"اصنع بطاقتك الفضائية",cd_intro:"اكتب اسمك واحصل على بطاقة لمشاركتها في ستوري إنستغرام.",cd_name:"اسمك",cd_moon:"القمر",cd_pluto:"بلوتو",cd_make:"أنشئ بطاقتي",cd_dl:"تحميل",cd_share:"مشاركة",cd_tag:"نجمة في Eternal Space",pc_label:"حاسبة الأسعار",pc_title:"كم سعر رسمتي؟",pc_intro:"اختر خياراتك وشاهد السعر فوراً. السعر النهائي أؤكده أنا.",pc_size:"الحجم",pc_style:"الأسلوب",pc_people:"عدد الأشخاص",pc_rush:"طلب مستعجل",pc_total:"السعر التقديري",pc_send:"أرسل عبر واتساب",pc_hello:"مرحباً! أريد رسمة.",pc_est:"السعر التقديري",ins_link:"ثبّت التطبيق",ins_help:"على الآيفون: اضغط مشاركة ثم «إضافة إلى الشاشة الرئيسية». على الأندرويد: افتح قائمة المتصفح واضغط «تثبيت التطبيق».",bl_label:"المدونة",bl_title:"من دفتر رسوماتي",bl_soon:"أول منشور قريباً.",bl_read:"اقرأ المزيد",bl_less:"إغلاق",fv_label:"مفضلتك",fv_title:"الأعمال التي تحبها",fv_empty:"اضغط على القلب في أي عمل لحفظه هنا.",ch_label:"تحدٍّ",ch_prize:"الجائزة",ch_days:"أيام متبقية",ch_ended:"انتهى هذا التحدي.",ch_name:"اسمك",ch_contact:"إنستغرام أو واتساب",ch_link:"رابط رسمتك (اختياري)",ch_join:"شارك",ch_ok:"تم تسجيلك! حظاً موفقاً.",g_play:"العب لعبة",sp_label:"عمل الشهر",sp_btn:"اسأل عن هذا العمل",
 gf_label:"بطاقات الهدايا",gf_title:"أهدِ رسمة",gf_intro:"اختر مبلغاً، ثم يختار المُهدى إليه العمل.",gf_ask:"اسأل عن بطاقة هدية",gf_soon:"المبلغ قريباً",
 rq_label:"طلب رسمة",rq_title:"أخبرني بفكرتك",rq_intro:"املأ هذا النموذج الصغير وسأرد عليك بالسعر والمدة.",
 rq_name:"اسمك",rq_contact:"البريد أو رقم واتساب",rq_kind:"نوع الرسمة",k1:"بورتريه",k2:"مشهد فانتازي",k3:"فكرة أخرى",rq_size:"الحجم المطلوب",rq_budget:"الميزانية",rq_idea:"فكرتك",rq_ref:"رابط صورة مرجعية (اختياري)",rq_send:"أرسل طلبي",rq_wa:"أرسل عبر واتساب",rq_ok:"شكراً! وصلني طلبك وسأرد عليك قريباً.",rq_err:"حدثت مشكلة. جرّب واتساب.",
 sh_buy:"اشترِ عبر واتساب",sh_pay:"ادفع عبر الإنترنت",sh_soon:"السعر قريباً",sh_lim:"إصدار محدود",sh_left:"متبقية",sh_out:"نفدت",
 dl:"تحميل",tr_nf:"الرمز غير موجود. راسلني على واتساب وسأتحقق."}};
-var EN={by_prints:"Prints of this artwork",by_from:"Choose a size",rv_n:"reviews",mk_title:"Making of",mk_hint:"Drag the slider to watch it come to life",mk_play:"Play",mk_stop:"Pause",mk_step:"Step",mk_final:"Finished",rv_form_title:"Leave your review",rv_name:"Your name",rv_stars:"Your rating",rv_text:"Your words",rv_send:"Send my review",rv_thanks:"Thank you! Your review will appear after I check it.",rv_bad:"This review link is not valid or was already used.",rv_close:"Close",wl_btn:"Tell me when it is back",wl_email:"Your email",wl_send:"Notify me",wl_ok:"Done! I will write to you.",wl_bad:"Please enter a valid email.",wl_sold:"This artwork is sold. Leave your email and I will tell you if I make a similar one.",cd_label:"Space card",cd_title:"Make your space card",cd_intro:"Type your name and get a card to share on Instagram Stories.",cd_name:"Your name",cd_moon:"Moon",cd_pluto:"Pluto",cd_make:"Create my card",cd_dl:"Download",cd_share:"Share",cd_tag:"A star in Eternal Space",pc_label:"Price calculator",pc_title:"How much is my drawing?",pc_intro:"Choose your options and see the price straight away. I confirm the final price.",pc_size:"Size",pc_style:"Style",pc_people:"Number of people",pc_rush:"Rush order (faster)",pc_total:"Estimated price",pc_send:"Send to the artist on WhatsApp",pc_hello:"Hello! I would like a drawing.",pc_est:"Estimated price",ins_link:"Install the app",ins_help:"On iPhone: tap Share, then Add to Home Screen. On Android: open the browser menu and tap Install app.",bl_read:"Read more",bl_less:"Close",fv_empty:"Tap the heart on an artwork to save it here.",ch_prize:"Prize",ch_days:"days left",ch_ended:"This challenge has ended.",ch_ok:"You are in! Good luck.",ch_join:"Join",g_play:"Play a game",sp_label:"Art of the month",sp_btn:"Ask about this artwork",gf_ask:"Ask about a gift card",gf_soon:"Amount coming soon",rq_ok:"Thank you! I got your request and I will reply soon.",rq_err:"Something went wrong. Please try WhatsApp.",sh_buy:"Buy on WhatsApp",sh_pay:"Pay online",sh_soon:"Price coming soon",sh_lim:"Limited edition",sh_left:"left",sh_out:"Sold out",dl:"Download"};
+var EN={by_tap:"Tap a size to see it on a wall",by_prints:"Prints of this artwork",by_from:"Choose a size",rv_n:"reviews",mk_title:"Making of",mk_hint:"Drag the slider to watch it come to life",mk_play:"Play",mk_stop:"Pause",mk_step:"Step",mk_final:"Finished",rv_form_title:"Leave your review",rv_name:"Your name",rv_stars:"Your rating",rv_text:"Your words",rv_send:"Send my review",rv_thanks:"Thank you! Your review will appear after I check it.",rv_bad:"This review link is not valid or was already used.",rv_close:"Close",wl_btn:"Tell me when it is back",wl_email:"Your email",wl_send:"Notify me",wl_ok:"Done! I will write to you.",wl_bad:"Please enter a valid email.",wl_sold:"This artwork is sold. Leave your email and I will tell you if I make a similar one.",cd_label:"Space card",cd_title:"Make your space card",cd_intro:"Type your name and get a card to share on Instagram Stories.",cd_name:"Your name",cd_moon:"Moon",cd_pluto:"Pluto",cd_make:"Create my card",cd_dl:"Download",cd_share:"Share",cd_tag:"A star in Eternal Space",pc_label:"Price calculator",pc_title:"How much is my drawing?",pc_intro:"Choose your options and see the price straight away. I confirm the final price.",pc_size:"Size",pc_style:"Style",pc_people:"Number of people",pc_rush:"Rush order (faster)",pc_total:"Estimated price",pc_send:"Send to the artist on WhatsApp",pc_hello:"Hello! I would like a drawing.",pc_est:"Estimated price",ins_link:"Install the app",ins_help:"On iPhone: tap Share, then Add to Home Screen. On Android: open the browser menu and tap Install app.",bl_read:"Read more",bl_less:"Close",fv_empty:"Tap the heart on an artwork to save it here.",ch_prize:"Prize",ch_days:"days left",ch_ended:"This challenge has ended.",ch_ok:"You are in! Good luck.",ch_join:"Join",g_play:"Play a game",sp_label:"Art of the month",sp_btn:"Ask about this artwork",gf_ask:"Ask about a gift card",gf_soon:"Amount coming soon",rq_ok:"Thank you! I got your request and I will reply soon.",rq_err:"Something went wrong. Please try WhatsApp.",sh_buy:"Buy on WhatsApp",sh_pay:"Pay online",sh_soon:"Price coming soon",sh_lim:"Limited edition",sh_left:"left",sh_out:"Sold out",dl:"Download"};
 function L(){return root.getAttribute('lang')||'en'}
 function T(k){var x=Z[L()];return (x&&x[k])||EN[k]||''}
 function el(tag,attrs,kids){var e=d.createElement(tag);for(var k in (attrs||{})){if(k==='text')e.textContent=attrs[k];else if(k==='style')e.style.cssText=attrs[k];else e.setAttribute(k,attrs[k])}(kids||[]).forEach(function(c){if(c)e.appendChild(c)});return e}
@@ -2158,8 +2176,10 @@ function buyBlock(by,wk){
   var pr=(C.prints||[]).filter(function(x){return x&&x.name});
   if(pr.length){
     box.appendChild(el('div',{style:'margin-top:26px;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:#5cbcff','data-z':'by_prints',text:T('by_prints')}));
-    pr.forEach(function(x){
-      var r=el('div',{style:'display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;padding:12px;border:1px solid rgba(190,170,255,.3);border-radius:14px;background:rgba(20,26,66,.35)'});
+    box.appendChild(el('div',{style:'margin-top:6px;font-size:13px;color:#9fb0c8','data-z':'by_tap',text:T('by_tap')}));
+    pr.forEach(function(x,pi){
+      var r=el('div',{'data-pr':pi,title:T('by_tap'),style:'cursor:pointer;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;padding:12px;border:1px solid rgba(190,170,255,.3);border-radius:14px;background:rgba(20,26,66,.35)'});
+      r.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('a'))return;if(w.__wallPick)w.__wallPick(pi)});
       r.appendChild(el('div',{style:'flex:1 1 120px;font-size:15px',text:x.name+(x.price?'  ·  '+x.price:'')}));
       r.appendChild(btnA(waLink('Hi! I want a print of "'+(wk.title||'')+'" in size '+x.name+(x.price?' ('+x.price+')':'')+'.'),T('sh_buy')));
       var pp=safeHttps(x.pay)||def;if(pp&&x.price)r.appendChild(btnA(pp,lab||T('sh_pay'),'v'));
@@ -2355,6 +2375,46 @@ setTimeout(function(){var i=$('#intro');if(i&&i.parentNode)i.parentNode.removeCh
 }
 })();
 
+</script>
+<script id="meteor-js">
+(function(){
+try{
+var d=document,w=window;
+if(w.matchMedia&&w.matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+if(!Element.prototype.animate)return;
+var layer=d.createElement('div');layer.id='mx-met';
+layer.setAttribute('aria-hidden','true');
+layer.style.cssText='position:fixed;left:0;top:0;width:100%;height:100%;overflow:hidden;pointer-events:none;z-index:3';
+d.body.appendChild(layer);
+var N=8,small=w.innerWidth<700,maxN=small?2:4;
+function rnd(a,b){return a+Math.random()*(b-a)}
+function spawn(){
+  if(d.hidden||layer.children.length>=maxN)return;
+  var vw=w.innerWidth,vh=w.innerHeight;
+  var big=Math.random()<0.18;
+  var size=small?rnd(46,big?150:100):rnd(70,big?300:190);
+  var im=new Image();im.alt='';im.decoding='async';im.draggable=false;
+  im.src='assets/meteors/m'+(1+Math.floor(Math.random()*N))+'.webp';
+  var dir=Math.random()<0.5?-1:1;
+  var dy=vh+size*2.4,dx=dir*rnd(0.12,0.5)*dy;
+  var x0=rnd(0,vw)-(dx>0?0:0),y0=-size*1.4;
+  var th=Math.atan2(dx,dy)*180/Math.PI;
+  im.style.cssText='position:absolute;left:0;top:0;width:'+size+'px;height:auto;max-width:none;will-change:transform,opacity;filter:drop-shadow(0 0 '+Math.round(size/9)+'px rgba(255,120,30,.55));opacity:0';
+  layer.appendChild(im);
+  var rot=-th,spin=rnd(-12,12);
+  var a=im.animate([
+    {transform:'translate('+x0+'px,'+y0+'px) rotate('+rot+'deg)',opacity:0,offset:0},
+    {opacity:.95,offset:.08},
+    {opacity:.95,offset:.9},
+    {transform:'translate('+(x0+dx)+'px,'+(y0+dy)+'px) rotate('+(rot+spin)+'deg)',opacity:0,offset:1}
+  ],{duration:rnd(4200,9000)*(big?1.25:1),easing:'linear',fill:'forwards'});
+  a.onfinish=function(){im.remove()};
+  a.oncancel=function(){im.remove()};
+}
+function loop(){spawn();setTimeout(loop,rnd(900,2600))}
+setTimeout(loop,1500);
+}catch(err){try{console.warn('meteors off',err)}catch(_){}}
+})();
 </script>
 <script id="layout-js">
 (function(){
