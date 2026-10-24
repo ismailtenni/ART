@@ -937,7 +937,7 @@ function init(){
   }
   d.addEventListener('click',function(e){
     if(!d.body.classList.contains('ed-on'))return;
-    var t=e.target;if(t.tagName==='INPUT'||(t.closest&&(t.closest('#ed-bar')||t.closest('#ed-ba-bar')||t.closest('#ed-pop')||t.closest('#ed')||t.closest('#lang'))))return;
+    var t=e.target;if(t.tagName==='INPUT'||(t.closest&&(t.closest('.lay-ctl')||t.closest('#ed-bar')||t.closest('#ed-ba-bar')||t.closest('#ed-pop')||t.closest('#ed')||t.closest('#lang'))))return;
     e.preventDefault();e.stopPropagation();
     var stC=t.closest&&t.closest('#story .mx-card');
     if(stC&&!(t.closest('.t'))){var ix=[].indexOf.call(stC.parentNode.querySelectorAll('.mx-card'),stC)+1;
@@ -1608,7 +1608,7 @@ var vb=d.getElementById('vw-box'),img=d.getElementById('vw-img');
 if(vb&&img){
   var WCx=window.C||{};
   var BUILT=[
-    {k:'wl_r1',n:'Living room',img:'assets/rooms/living.jpg',x:52,y:28,z:[24,6,82,50],cm:260},
+    {k:'wl_r1',n:'Living room',img:'assets/rooms/living.jpg',x:86.8,y:35,z:[62,8,99,50],cm:250},
     {k:'wl_r2',n:'Bedroom',img:'assets/rooms/bedroom.jpg',x:48,y:24,z:[22,6,74,42],cm:220},
     {k:'wl_r3',n:'Office',img:'assets/rooms/office.jpg',x:47,y:24,z:[30,8,64,40],cm:190},
     {k:'wl_r4',n:'Café',img:'assets/rooms/cafe.jpg',x:50,y:36,z:[20,12,80,58],cm:250},
@@ -2392,7 +2392,7 @@ function apply(){
 function move(id,dir){
   var o=effective(),i=o.indexOf(id),j=i+dir;if(i<0||j<0||j>=o.length)return;
   var t=o[i];o[i]=o[j];o[j]=t;L.order=o;apply();
-  if(byId[id]&&byId[id].scrollIntoView)try{byId[id].scrollIntoView({block:'center'})}catch(e){}
+  var cb=byId[id]&&byId[id].querySelector(':scope>.lay-ctl');if(cb&&cb.scrollIntoView)try{cb.scrollIntoView({block:'center'})}catch(e){}
 }
 function toggle(id){var i=L.hidden.indexOf(id);if(i>=0)L.hidden.splice(i,1);else L.hidden.push(id);apply()}
 function build(){
