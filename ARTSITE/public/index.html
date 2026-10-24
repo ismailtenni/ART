@@ -48,16 +48,6 @@ a:hover{color:#ffffff}
 #mx-wroom{display:none;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:#b7c4dc}
 #mx-wroom button{padding:7px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(10,14,40,.7);color:#fff;cursor:pointer;font-family:inherit}
 #mx-wroom button.on{border-color:#b79cff;background:rgba(120,90,230,.5)}
-#mx-wall[data-room=bed]{background:linear-gradient(#b9c3d9 0,#a3aec8 70%,#8b97b3 100%)}
-#mx-wall[data-room=bed] .fl{background:linear-gradient(#8a6a52,#6b4f3b)}
-#mx-wall[data-room=bed] .sofa{left:8%;width:84%;height:22%;bottom:9%;border-radius:12px;background:linear-gradient(#efe9e1,#d6cec3)}
-#mx-wall[data-room=bed] .sofa::before{left:0;right:0;height:42%;border-radius:10px;background:#5d5170}
-#mx-wall[data-room=bed] .sofa::after{left:6%;right:auto;width:26%;top:-16%;height:46%;border-radius:12px;background:#fff;opacity:.9}
-#mx-wall[data-room=off]{background:linear-gradient(#2e3a3a 0,#26302f 70%,#1e2625 100%)}
-#mx-wall[data-room=off] .fl{background:linear-gradient(#3b2e26,#2a201a)}
-#mx-wall[data-room=off] .sofa{left:20%;width:60%;height:7%;bottom:22%;border-radius:6px;background:linear-gradient(#a9784c,#7c5334);box-shadow:0 14px 24px rgba(0,0,0,.45)}
-#mx-wall[data-room=off] .sofa::before{left:8%;right:8%;top:100%;bottom:auto;height:260%;border-radius:0;background:linear-gradient(90deg,#4a3526 0 6%,transparent 6% 94%,#4a3526 94%)}
-#mx-wall[data-room=off] .sofa::after{left:38%;right:38%;top:-300%;height:300%;border-radius:6px;background:linear-gradient(#10151c,#1b2330);border:3px solid #0a0d12}
 
 @keyframes moonDrift{from{transform:translate(-3%,-2%) rotate(-5deg)}to{transform:translate(3%,2%) rotate(5deg)}}@keyframes glowPulse{from{box-shadow:0 0 60px rgba(110,140,255,.42),0 0 150px rgba(150,70,255,.28)}to{box-shadow:0 0 90px rgba(120,160,255,.7),0 0 210px rgba(160,80,255,.5)}}
 @media (max-width:480px){#top h1{font-size:clamp(26px,8.2vw,34px)!important;letter-spacing:.09em!important;white-space:nowrap}}
@@ -193,18 +183,16 @@ header nav>a:not([style]):hover::after{transform:scaleX(1)}
 
 /* wall preview */
 #mx-wallbtn{margin-top:14px}
-#mx-wall{display:none;position:relative;width:100%;aspect-ratio:4/3;max-height:78vh;border-radius:14px;overflow:hidden;border:1px solid rgba(190,170,255,.35);background:linear-gradient(#cfc7bd 0,#bdb4a8 70%,#a89d90 100%)}
-#mx-wall .fl{position:absolute;left:0;right:0;bottom:0;height:16%;background:linear-gradient(#6b4a33,#4a3121)}
-#mx-wall .lamp{position:absolute;right:6%;top:0;bottom:16%;width:30%;background:radial-gradient(ellipse at 70% 30%,rgba(255,235,190,.55),transparent 65%)}
-#mx-wall .sofa{position:absolute;left:14%;width:72%;bottom:9%;height:24%;border-radius:22px 22px 10px 10px;background:linear-gradient(#3d4a6b,#2a3452);box-shadow:0 18px 30px rgba(0,0,0,.35)}
-#mx-wall .sofa::before{content:"";position:absolute;left:-5%;right:-5%;bottom:0;height:60%;border-radius:14px;background:#2f3a5c}
-#mx-wall .sofa::after{content:"";position:absolute;left:8%;right:8%;top:14%;height:36%;border-radius:12px;background:rgba(255,255,255,.07)}
-#mx-wall .fr{position:absolute;left:50%;top:7%;translate:-50% 0;width:34%;padding:2.2%;box-sizing:border-box;background:#17120f;box-shadow:0 14px 34px rgba(0,0,0,.45),inset 0 0 0 2px #3a2f26;transition:width .45s cubic-bezier(.2,.8,.2,1)}
-#mx-wall .fr div{background:#f6f2ea;padding:7%}
-#mx-wall .fr img{display:block;width:100%;height:auto;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
-#mx-wall.s1 .fr{width:24%}#mx-wall.s3 .fr{width:46%}
-#mx-wsz{display:none;gap:8px;margin-top:12px;align-items:center;font-size:13px;color:#b7c4dc}
-#mx-wsz button{width:40px;height:34px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(10,14,40,.7);color:#fff;cursor:pointer;font-family:inherit}
+#mx-wall{display:none;position:relative;width:min(100%,calc(78vh*var(--ar,1.3333)));margin:0 auto;aspect-ratio:4/3;border-radius:14px;overflow:hidden;border:1px solid rgba(190,170,255,.35);background:#1a1d2b}
+#mx-wall .bg{position:absolute;left:0;top:0;width:100%;height:100%;display:block;object-fit:fill}
+#mx-wall .fr{position:absolute;background:linear-gradient(135deg,#33281f,#120e0b);box-shadow:0 12px 26px rgba(0,0,0,.42),0 0 0 1px rgba(0,0,0,.4);transition:left .35s,top .35s,width .35s,height .35s}
+#mx-wall .mt{position:absolute;background:#f5f1e9;box-shadow:inset 0 0 0 1px rgba(0,0,0,.14)}
+#mx-wall img{max-width:none!important;max-height:none!important;margin:0!important;border:0}#mx-wall .pic{position:absolute;display:block;object-fit:fill;box-shadow:0 0 0 1px rgba(0,0,0,.3)}
+#mx-winfo{display:none;margin-top:12px;gap:10px 14px;align-items:center;flex-wrap:wrap;font-size:15px;color:#e8eefc}
+#mx-winfo .pr{font-size:20px;color:#ffd98a}
+#mx-winfo .nt{flex:1 1 100%;font-size:12px;color:#9fb0c8}
+#mx-wsz{display:none;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap;font-size:13px;color:#b7c4dc}
+#mx-wsz button{min-width:44px;padding:6px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.35);background:rgba(10,14,40,.7);color:#fff;cursor:pointer;font-family:inherit;line-height:1.25}#mx-wsz button small{display:block;font-size:11px;color:#ffd98a}
 #mx-wsz button.on{border-color:#b79cff;background:rgba(120,90,230,.5)}
 
 /* sound button */
@@ -822,7 +810,7 @@ function init(){
   var textsInfo=null;
   ['shop','gifts','reviews','behind','wallpapers','timelapse','prints'].forEach(function(k){data[k]=clone(w.C&&w.C[k])});
   data.pricing=JSON.parse(JSON.stringify((w.C&&w.C.pricing)||{}));data.pricing.sizes=data.pricing.sizes||[];data.pricing.styles=data.pricing.styles||[];
-  data.imgs=JSON.parse(JSON.stringify((w.C&&w.C.imgs)||{}));
+  data.imgs=JSON.parse(JSON.stringify((w.C&&w.C.imgs)||{}));data.rooms=JSON.parse(JSON.stringify((w.C&&w.C.rooms)||[]));if(w.C){w.C.layout=(w.C.layout&&typeof w.C.layout==='object')?w.C.layout:{};w.C.layout.order=w.C.layout.order||[];w.C.layout.hidden=w.C.layout.hidden||[];data.layout=w.C.layout}else data.layout={order:[],hidden:[]};
   data.posts=JSON.parse(JSON.stringify((w.C&&w.C.posts)||[]));
   ['spotlight','ba','about','settings','challenge'].forEach(function(k){data[k]=JSON.parse(JSON.stringify((w.C&&w.C[k])||{}))});
   data.orders=[];var ordersLoaded=false,reqList=null;
@@ -1080,11 +1068,11 @@ function init(){
     box.appendChild(h('div',{id:'ed-msg',style:'margin-top:12px;min-height:20px;color:#a8d6ff;font-size:14px',text:msg}));
     if(cur){box.appendChild(workForm(cur.o,cur.n));return}
     var tabs=h('div',{style:'display:flex;gap:10px;margin:18px 0;flex-wrap:wrap'});
-    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['page','Page parts'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
+    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
       tabs.appendChild(h('button',{type:'button',style:(tab===t[0]?BTN2:BTN),text:t[1],on:{click:function(){tab=t[0];render()}}}));
     });
     box.appendChild(tabs);
-    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
+    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
   }
   function renderWorks(){
     box.appendChild(h('button',{type:'button',style:BTN2,text:'+ Add new artwork',on:{click:function(){editing='new';cur={n:true,o:{id:'',title:'',meta:'',series:'',status:'',ratio:'3 / 4',desc:'',cover:'',shots:[],process:[]}};render()}}}));
@@ -1208,6 +1196,51 @@ function init(){
     });
     wrap.appendChild(h('button',{type:'button',style:BTN2,text:addLabel,on:{click:function(){arr.push(makeNew?makeNew():{});render()}}}));
     return wrap;
+  }
+
+  function renderLayTab(){
+    box.appendChild(note1('Here you choose which parts of your page people see, and in what order. Press Up or Down to move a part. Press Hide to take a part off your site (nothing is deleted, you can press Show to bring it back). To show your Shop on the first page, move "Shop" to the top. At the end press "Save and publish".'));
+    var lay=w.__lay;
+    if(!lay){box.appendChild(note1('The page is still loading. Close this window and open it again.'));return}
+    var ids=lay.ids();
+    ids.forEach(function(id,i){
+      var off=lay.hidden(id);
+      var row=h('div',{style:'display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0;padding:10px 14px;border:1px solid rgba(190,170,255,.3);border-radius:14px;background:rgba(20,26,66,.4);max-width:640px;'+(off?'opacity:.55':'')},[
+        h('span',{style:'flex:1 1 160px;font-size:16px',text:(i+1)+'.  '+lay.label(id)+(off?'  (hidden)':'')}),
+        h('button',{type:'button',style:BTN,text:'↑ Up',on:{click:function(){lay.move(id,-1);render()}}}),
+        h('button',{type:'button',style:BTN,text:'↓ Down',on:{click:function(){lay.move(id,1);render()}}}),
+        h('button',{type:'button',style:off?BTN2:BTNR,text:off?'Show':'Hide',on:{click:function(){lay.toggle(id);render()}}})]);
+      box.appendChild(row);
+    });
+    box.appendChild(note1('Tip: you can also press "Click to edit" and use the green bar at the top of every part.'));
+  }
+  function renderRoomsTab(){
+    box.appendChild(note1('The "See it on a wall" button shows your artwork inside a room. Here you can add your own real room photos (living room, bedroom, office, a shop, a cafe ... any photo with an empty wall). For each photo: 1) add the photo, 2) touch the photo where the middle of the frame should hang, 3) write how wide the wall in the photo really is (in cm). The frame then always stays on that wall, even for the biggest size.'));
+    var on=h('input',{type:'checkbox'});on.checked=String(data.settings.noRooms||'').toLowerCase().indexOf('y')===0;
+    on.addEventListener('change',function(){data.settings.noRooms=on.checked?'yes':''});
+    box.appendChild(h('label',{style:'display:flex;gap:10px;align-items:center;margin:12px 0;color:#d6ccff'},[on,h('span',{text:'Show only my own room photos (hide the built-in rooms)'})]));
+    data.rooms.forEach(function(r,i){
+      var card=h('div',{style:'margin:14px 0;padding:14px;border:1px solid rgba(190,170,255,.3);border-radius:14px;background:rgba(20,26,66,.4);max-width:780px'});
+      card.appendChild(field1(r,'name','Room name','My studio'));
+      card.appendChild(img1(r,'img','room photo',1800));
+      if(r.img){
+        if(r.x==null)r.x=50;if(r.y==null)r.y=30;
+        card.appendChild(note1('Touch the photo where the frame should hang:'));
+        var st=h('div',{style:'position:relative;max-width:560px;cursor:crosshair;border-radius:10px;overflow:hidden;border:1px solid rgba(190,170,255,.4)'});
+        var im=h('img',{src:r.img,alt:'',style:'display:block;width:100%;height:auto'});
+        var mk=h('div',{style:'position:absolute;width:16%;aspect-ratio:3/4;border:3px solid #ffd98a;background:rgba(255,217,138,.25);transform:translate(-50%,-50%);pointer-events:none;left:'+r.x+'%;top:'+r.y+'%'});
+        st.appendChild(im);st.appendChild(mk);
+        st.addEventListener('click',function(e){var b=st.getBoundingClientRect();r.x=Math.round((e.clientX-b.left)/b.width*100);r.y=Math.round((e.clientY-b.top)/b.height*100);mk.style.left=r.x+'%';mk.style.top=r.y+'%'});
+        card.appendChild(st);
+        card.appendChild(field1(r,'cm','How wide is the wall in the photo? (centimeters, for example 300)','300'));
+      }
+      card.appendChild(h('div',{style:'display:flex;gap:8px;margin-top:14px;flex-wrap:wrap'},[
+        h('button',{type:'button',style:BTN,text:'↑',on:{click:function(){mv(data.rooms,i,-1)}}}),
+        h('button',{type:'button',style:BTN,text:'↓',on:{click:function(){mv(data.rooms,i,1)}}}),
+        h('button',{type:'button',style:BTNR,text:'Delete',on:{click:function(){data.rooms.splice(i,1);render()}}})]));
+      box.appendChild(card);
+    });
+    box.appendChild(h('button',{type:'button',style:BTN2,text:'+ Add a room photo',on:{click:function(){data.rooms.push({name:'',x:50,y:30,cm:300});render()}}}));
   }
   function renderShopTab(){
     box.appendChild(sub('Online payments'));
@@ -1530,12 +1563,12 @@ fr:{nav_shop:"Boutique",col_label:"Collections",col_title:"Explorer par univers"
 tl_label:"Time-lapse",tl_title:"Regardez le dessin se faire",tl_intro:"Chaque œuvre en accéléré, du premier trait à la touche finale.",tl_soon:"Vidéo bientôt",
 sh_label:"Boutique",sh_title:"Tirages et plus",sh_intro:"Choisissez un article et touchez Acheter : on termine la commande sur WhatsApp.",pr1:"Tirage d’art",pr2:"Affiche",pr3:"Pack d’autocollants",pr4:"Coque de téléphone",sh_price:"Prix bientôt",sh_buy:"Acheter sur WhatsApp",sh_img:"Photo du produit",
 ba_hint:"Faites glisser la ligne pour comparer l’esquisse et l’œuvre finie.",ba_s:"Esquisse",ba_f:"Œuvre finie",
-wl_btn:"Voir sur un mur",wl_back:"Retour à l’œuvre",wl_size:"Taille",wl_room:"Pièce",wl_r1:"Salon",wl_r2:"Chambre",wl_r3:"Bureau"},
+wl_btn:"Voir sur un mur",wl_back:"Retour à l’œuvre",wl_size:"Taille",wl_room:"Pièce",wl_r1:"Salon",wl_r2:"Chambre",wl_r3:"Bureau",wl_r4:"Café",wl_r5:"Galerie",wl_r6:"Couloir",wl_r7:"Salle à manger",wl_r8:"Chambre d’enfant",wl_ask:"Prix : demandez-moi",wl_orig:"Original",wl_fit:"Ce tirage est affiché à la taille maximale qui rentre sur ce mur.",wl_buy:"Acheter sur WhatsApp"},
 ar:{nav_shop:"المتجر",col_label:"المجموعات",col_title:"تصفح حسب العالم",col_p:"وجوه ومشاعر مرسومة باليد.",col_f:"عوالم ومخلوقات من الخيال.",col_s:"كواكب وسدم ومجهول.",col_open:"افتح المجموعة",n_p:"بورتريه",n_f:"فانتازيا",n_s:"الفضاء",
 tl_label:"تسريع الزمن",tl_title:"شاهد الرسم وهو يولد",tl_intro:"كل عمل بالتسريع، من أول خط إلى اللمسة الأخيرة.",tl_soon:"الفيديو قريباً",
 sh_label:"المتجر",sh_title:"مطبوعات وأكثر",sh_intro:"اختر منتجاً واضغط شراء، ونُكمل الطلب عبر واتساب.",pr1:"مطبوعة فنية",pr2:"ملصق كبير",pr3:"حزمة ستيكرات",pr4:"غطاء هاتف",sh_price:"السعر قريباً",sh_buy:"اشترِ عبر واتساب",sh_img:"صورة المنتج",
 ba_hint:"اسحب الخط للمقارنة بين الرسم الأولي والعمل النهائي.",ba_s:"الرسم الأولي",ba_f:"العمل النهائي",
-wl_btn:"شاهدها على الجدار",wl_back:"العودة للعمل",wl_size:"الحجم",wl_room:"الغرفة",wl_r1:"الصالة",wl_r2:"غرفة النوم",wl_r3:"المكتب"}};
+wl_btn:"شاهدها على الجدار",wl_back:"العودة للعمل",wl_size:"الحجم",wl_room:"الغرفة",wl_r1:"الصالة",wl_r2:"غرفة النوم",wl_r3:"المكتب",wl_r4:"المقهى",wl_r5:"المعرض",wl_r6:"الممر",wl_r7:"غرفة الطعام",wl_r8:"غرفة الأطفال",wl_ask:"السعر: اسألني",wl_orig:"الأصلية",wl_fit:"عُرضت بأكبر حجم يناسب هذا الجدار.",wl_buy:"اشترِ عبر واتساب"}};
 function tr(){
   var l=root.getAttribute('lang')||'en',dd=X[l]||{};
   d.querySelectorAll('[data-x]').forEach(function(el){
@@ -1570,42 +1603,130 @@ if(ba){
   if(a)ba.querySelector('.L2').style.backgroundImage='url("'+a+'")';
 }
 
-/* see it on a wall (inside the artwork viewer) */
+/* see it on a wall (inside the artwork viewer) - real room pictures, frame can never leave the wall */
 var vb=d.getElementById('vw-box'),img=d.getElementById('vw-img');
 if(vb&&img){
+  var WCx=window.C||{};
+  var BUILT=[
+    {k:'wl_r1',n:'Living room',img:'assets/rooms/living.jpg',x:52,y:28,z:[24,6,82,50],cm:260},
+    {k:'wl_r2',n:'Bedroom',img:'assets/rooms/bedroom.jpg',x:48,y:24,z:[22,6,74,42],cm:220},
+    {k:'wl_r3',n:'Office',img:'assets/rooms/office.jpg',x:47,y:24,z:[30,8,64,40],cm:190},
+    {k:'wl_r4',n:'Café',img:'assets/rooms/cafe.jpg',x:50,y:36,z:[20,12,80,58],cm:250},
+    {k:'wl_r5',n:'Gallery',img:'assets/rooms/gallery.jpg',x:50,y:34,z:[16,6,84,64],cm:340},
+    {k:'wl_r6',n:'Hallway',img:'assets/rooms/hall.jpg',x:54,y:28,z:[36,8,72,50],cm:190},
+    {k:'wl_r7',n:'Dining room',img:'assets/rooms/dining.jpg',x:46,y:30,z:[20,10,78,50],cm:230},
+    {k:'wl_r8',n:'Kids room',img:'assets/rooms/kids.jpg',x:50,y:28,z:[22,8,78,50],cm:210}
+  ];
+  var rooms=[];
+  if(!(WCx.settings&&String(WCx.settings.noRooms||'').toLowerCase().indexOf('y')===0))rooms=BUILT.slice();
+  (WCx.rooms||[]).forEach(function(r){
+    if(!r||!r.img)return;
+    var x=+r.x||50,y=+r.y||30;
+    rooms.push({n:r.name||'Room',img:r.img,x:x,y:y,z:[Math.max(2,x-24),Math.max(2,y-24),Math.min(98,x+24),Math.min(98,y+24)],cm:+r.cm||300});
+  });
+  if(!rooms.length)rooms=BUILT.slice();
+  function t2(k,en){var dd=X[root.getAttribute('lang')||'en'];return (dd&&dd[k])||en}
+  function cmOf(name){
+    var s=String(name||''),m=s.match(/\bA\s?([0-6])\b/i),inch=/\binch|\bin\b|"|”/i.test(s);
+    if(m)return [118.9,84.1,59.4,42,29.7,21,14.8][+m[1]];
+    m=s.match(/(\d+(?:[.,]\d+)?)\s*[x×*]\s*(\d+(?:[.,]\d+)?)/i);
+    if(m)return Math.max(parseFloat(m[1].replace(',','.')),parseFloat(m[2].replace(',','.')))*(inch?2.54:1);
+    m=s.match(/(\d+(?:[.,]\d+)?)\s*(cm|in|inch)/i);
+    if(m)return parseFloat(m[1].replace(',','.'))*(/cm/i.test(m[2])?1:2.54);
+    return null;
+  }
+  var sizes=[],fb=[30,50,70,90],nfb=0;
+  (WCx.prints||[]).forEach(function(p){if(p&&p.name){var c=cmOf(p.name);if(!c){c=fb[Math.min(nfb,3)];nfb++}sizes.push({n:p.name,p:p.price||'',cm:Math.min(Math.max(c,8),150)})}});
+  if(!sizes.length)sizes=[{n:'S',p:'',cm:30},{n:'M',p:'',cm:50},{n:'L',p:'',cm:70}];
+  var ri=0,si=Math.floor((sizes.length-1)/2),R=4/3,on=false;
+
   var wall=d.createElement('div');wall.id='mx-wall';
-  wall.innerHTML='<div class="lamp"></div><div class="fl"></div><div class="sofa"></div><div class="fr"><div><img alt=""></div></div>';
+  wall.innerHTML='<img class="bg" alt=""><div class="fr"><div class="mt"><img class="pic" alt=""></div></div>';
+  var bg=wall.querySelector('.bg'),fr=wall.querySelector('.fr'),mt=wall.querySelector('.mt'),pic=wall.querySelector('.pic');
   var sz=d.createElement('div');sz.id='mx-wsz';
-  sz.innerHTML='<span data-x="wl_size">Size</span><button data-s="1">S</button><button data-s="2" class="on">M</button><button data-s="3">L</button>';
   var rm=d.createElement('div');rm.id='mx-wroom';
-  rm.innerHTML='<span data-x="wl_room">Room</span><button data-r="" class="on"><span data-x="wl_r1">Living room</span></button><button data-r="bed"><span data-x="wl_r2">Bedroom</span></button><button data-r="off"><span data-x="wl_r3">Office</span></button>';
+  var info=d.createElement('div');info.id='mx-winfo';
   var btn=d.createElement('button');btn.id='mx-wallbtn';btn.className='mx-btn v';btn.type='button';
   btn.innerHTML='<span data-x="wl_btn">See it on a wall</span>';
   vb.parentNode.insertBefore(wall,vb.nextSibling);
-  var anchor=vb.parentNode.lastElementChild;
-  vb.parentNode.appendChild(btn);vb.parentNode.appendChild(sz);vb.parentNode.appendChild(rm);
-  var on=false;
-  function sync(){wall.querySelector('img').src=img.src}
+  vb.parentNode.appendChild(btn);vb.parentNode.appendChild(sz);vb.parentNode.appendChild(rm);vb.parentNode.appendChild(info);
+
+  function buildRooms(){
+    rm.innerHTML='<span data-x="wl_room">Room</span>';
+    rooms.forEach(function(r,i){
+      var b=d.createElement('button');b.type='button';b.setAttribute('data-i',i);if(i===ri)b.className='on';
+      var sp=d.createElement('span');if(r.k){sp.setAttribute('data-x',r.k);sp.textContent=r.n}else sp.textContent=r.n;
+      b.appendChild(sp);rm.appendChild(b);
+    });
+  }
+  function buildSizes(){
+    sz.innerHTML='<span data-x="wl_size">Size</span>';
+    sizes.forEach(function(s,i){
+      var b=d.createElement('button');b.type='button';b.setAttribute('data-s',i);if(i===si)b.className='on';
+      b.appendChild(d.createTextNode(s.n));
+      if(s.p){var sm=d.createElement('small');sm.textContent=s.p;b.appendChild(sm)}
+      sz.appendChild(b);
+    });
+  }
+  function place(){
+    var room=rooms[ri],sc=sizes[si].cm,ar=(pic.naturalWidth&&pic.naturalHeight)?pic.naturalWidth/pic.naturalHeight:0.75;
+    var pw,ph;if(ar>=1){pw=sc;ph=sc/ar}else{ph=sc;pw=sc*ar}
+    var m=Math.min(pw,ph),f=0.035*m,t=0.06*m,W=pw+2*(f+t),H=ph+2*(f+t);
+    var wp=W/room.cm*100,hp=H/room.cm*100*R;
+    var z=room.z,k=Math.min(1,(z[2]-z[0])/wp,(z[3]-z[1])/hp);
+    wp*=k;hp*=k;
+    var cx=Math.min(Math.max(room.x,z[0]+wp/2),z[2]-wp/2),cy=Math.min(Math.max(room.y,z[1]+hp/2),z[3]-hp/2);
+    fr.style.left=(cx-wp/2)+'%';fr.style.top=(cy-hp/2)+'%';fr.style.width=wp+'%';fr.style.height=hp+'%';
+    mt.style.left=(f/W*100)+'%';mt.style.right=(f/W*100)+'%';mt.style.top=(f/H*100)+'%';mt.style.bottom=(f/H*100)+'%';
+    var mw=W-2*f,mh=H-2*f;
+    pic.style.left=(t/mw*100)+'%';pic.style.top=(t/mh*100)+'%';pic.style.width=(100-2*t/mw*100)+'%';pic.style.height=(100-2*t/mh*100)+'%';
+    wall.setAttribute('data-fit',k<0.999?'1':'0');
+    upd();
+  }
+  function curWork(){
+    var soc=d.getElementById('soc'),id=soc&&soc.getAttribute('data-id');
+    var l=WCx.works||[];for(var i=0;i<l.length;i++)if(l[i]&&l[i].id===id)return l[i];return null;
+  }
+  function upd(){
+    info.innerHTML='';
+    if(!on){return}
+    var s=sizes[si],wk=curWork(),title=(wk&&wk.title)||'';
+    var line=d.createElement('span');
+    var a1=d.createElement('span');a1.textContent=s.n+'  ';line.appendChild(a1);
+    var a2=d.createElement('span');a2.className='pr';
+    if(s.p)a2.textContent=s.p;else{a2.className='';a2.textContent=t2('wl_ask','Price: ask me')}
+    line.appendChild(a2);info.appendChild(line);
+    var a=d.createElement('a');a.className='mx-btn';a.target='_blank';a.rel='noopener noreferrer';
+    a.href='https://wa.me/212651543275?text='+encodeURIComponent('Hi! I want a print'+(title?' of "'+title+'"':'')+' in size '+s.n+(s.p?' ('+s.p+')':'')+'.');
+    a.textContent=t2('wl_buy','Buy on WhatsApp');info.appendChild(a);
+    if(wk&&wk.price){var o=d.createElement('span');o.style.cssText='color:#b7c4dc;font-size:14px';o.textContent=t2('wl_orig','Original')+': '+wk.price;info.appendChild(o)}
+    if(wall.getAttribute('data-fit')==='1'){var n=d.createElement('div');n.className='nt';n.textContent=t2('wl_fit','Shown at the largest size that fits this wall.');info.appendChild(n)}
+  }
+  function setRoom(i){
+    ri=i;var r=rooms[i];
+    bg.onload=function(){if(bg.naturalWidth&&bg.naturalHeight){R=bg.naturalWidth/bg.naturalHeight;wall.style.setProperty('--ar',R);wall.style.aspectRatio=R}place()};
+    bg.src=r.img;if(bg.complete&&bg.naturalWidth)bg.onload();
+  }
+  function sync(){pic.onload=place;pic.src=img.src;if(pic.complete&&pic.naturalWidth)place()}
   function set(v){
-    on=v;wall.style.display=v?'block':'none';vb.style.display=v?'none':'';sz.style.display=v?'flex':'none';rm.style.display=v?'flex':'none';
+    on=v;wall.style.display=v?'block':'none';vb.style.display=v?'none':'';
+    sz.style.display=v?'flex':'none';rm.style.display=v?'flex':'none';info.style.display=v?'flex':'none';
     btn.firstChild.setAttribute('data-x',v?'wl_back':'wl_btn');
     btn.firstChild.setAttribute('data-xen',v?'Back to artwork':'See it on a wall');tr();
-    if(v)sync();
+    if(v){buildRooms();buildSizes();setRoom(ri);sync()}else info.innerHTML='';
   }
   btn.addEventListener('click',function(){set(!on)});
   rm.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;
-    var r=b.getAttribute('data-r');if(r)wall.setAttribute('data-room',r);else wall.removeAttribute('data-room');
-    Array.prototype.forEach.call(rm.querySelectorAll('button'),function(x){x.classList.toggle('on',x===b)})});
-  sz.addEventListener('click',function(e){
-    var s=e.target.getAttribute&&e.target.getAttribute('data-s');if(!s)return;
-    wall.className=s==='2'?'':'s'+s;
-    Array.prototype.forEach.call(sz.querySelectorAll('button'),function(x){x.classList.toggle('on',x===e.target)});
-  });
+    var i=+b.getAttribute('data-i');Array.prototype.forEach.call(rm.querySelectorAll('button'),function(x){x.classList.toggle('on',x===b)});setRoom(i)});
+  sz.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;
+    si=+b.getAttribute('data-s');Array.prototype.forEach.call(sz.querySelectorAll('button'),function(x){x.classList.toggle('on',x===b)});place()});
   /* keep the framed picture in step with Prev/Next, and reset when the viewer closes or reopens */
   new MutationObserver(function(){if(on)sync()}).observe(img,{attributes:true,attributeFilter:['src']});
+  new MutationObserver(function(){if(on)upd()}).observe(d.documentElement,{attributes:true,attributeFilter:['lang']});
   var vw=d.getElementById('vw');
   if(vw)new MutationObserver(function(){if(on&&vw.style.display==='none')set(false)}).observe(vw,{attributes:true,attributeFilter:['style']});
 }
+
 }catch(err){try{console.warn('more off',err)}catch(_){}}
 })();
 </script>
@@ -2025,7 +2146,8 @@ function renderCard(){
 function buyBlock(by,wk){
   var def=safeHttps(C.settings&&C.settings.payDefault),lab=(C.settings&&C.settings.payLabel)||'';
   var st=String(wk.status||''),box=el('div',{style:'margin-top:22px'});
-  if(wk.price)box.appendChild(el('div',{style:'font-size:26px;margin-bottom:10px',text:wk.price}));
+  if(wk.price)box.appendChild(el('div',{style:'font-size:26px;margin-bottom:10px;color:#ffd98a',text:wk.price}));
+  else if(st!=='Sold'&&st!=='Not for sale')box.appendChild(el('div',{style:'font-size:16px;margin-bottom:10px;color:#b7c4dc','data-z':'wl_ask',text:T('wl_ask')||'Price: ask me on WhatsApp'}));
   if(st!=='Sold'&&st!=='Not for sale'){
     var row=el('div',{style:'display:flex;gap:10px;flex-wrap:wrap'});
     row.appendChild(btnA(waLink('Hi! I want to buy the artwork: '+(wk.title||'')+(wk.price?' ('+wk.price+')':'')+'.'),T('sh_buy')));
@@ -2232,5 +2354,62 @@ setTimeout(function(){var i=$('#intro');if(i&&i.parentNode)i.parentNode.removeCh
 }
 })();
 
+</script>
+<script id="layout-js">
+(function(){
+try{
+var d=document,w=window;
+w.C=w.C||{};
+var LAB={spotlight:'Art of the month',gallery:'Gallery',favorites:'Favorites',collections:'Collections',photography:'Photography',film:'Film',timelapse:'Time-lapse',commission:'Commissions',request:'Request a drawing',prices:'Prices',calc:'Price calculator',shop:'Shop',gifts:'Gift cards',challenge:'Challenge',tracker:'Order tracker',beforeafter:'Before and after',behind:'Behind the art',blog:'Blog',wallpapers:'Free wallpapers',instagram:'Instagram',reviews:'Reviews',card:'Space card',news:'Newsletter',about:'About'};
+var L=w.C.layout=(w.C.layout&&typeof w.C.layout==='object')?w.C.layout:{};
+L.order=Array.isArray(L.order)?L.order:[];L.hidden=Array.isArray(L.hidden)?L.hidden:[];
+var secs=Array.prototype.filter.call(d.querySelectorAll('body section[id]'),function(s){return LAB[s.id]});
+var base=secs.map(function(s){return s.id});           /* original page order */
+var intr={};secs.forEach(function(s){if(s.style.display==='none')intr[s.id]=1});
+var holes=secs.map(function(s){var c=d.createComment('s');s.parentNode.insertBefore(c,s);return c}); /* fixed slots */
+var byId={};secs.forEach(function(s){byId[s.id]=s});
+var st=d.createElement('style');st.id='lay-css';d.head.appendChild(st);
+function effective(){
+  var o=L.order.filter(function(x,i){return byId[x]&&L.order.indexOf(x)===i});
+  base.forEach(function(x){if(o.indexOf(x)<0)o.push(x)});
+  return o;
+}
+function apply(){
+  var o=effective();
+  o.forEach(function(id,i){var h=holes[i];if(h.nextSibling!==byId[id])h.parentNode.insertBefore(byId[id],h.nextSibling)});
+  var css='';
+  base.forEach(function(id){
+    var off=L.hidden.indexOf(id)>=0,s=byId[id];
+    s.classList.toggle('lay-off',off);
+    if(intr[id])s.setAttribute('data-intr','1');
+    if(off)css+='a[href="#'+id+'"]{display:none!important}';
+  });
+  st.textContent='.lay-off{display:none!important}body.ed-on .lay-off:not([data-intr]){display:block!important;opacity:.38}.lay-ctl{display:none}body.ed-on .lay-ctl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;max-width:1440px;margin:10px auto 0;padding:8px 14px;border:1px dashed #7be0a6;border-radius:12px;background:rgba(10,30,24,.85);color:#d8ffe8;font:13px Inter,system-ui,sans-serif;position:relative;z-index:5;box-sizing:border-box}.lay-ctl b{flex:1 1 140px;font-weight:600}.lay-ctl button{padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(20,26,66,.9);color:#fff;cursor:pointer;font:inherit}'+css;
+  o.forEach(function(id,i){var s=byId[id],c=s.querySelector(':scope>.lay-ctl');if(!c)return;
+    c.querySelector('.up').disabled=i===0;c.querySelector('.dn').disabled=i===o.length-1;
+    c.querySelector('.hd').textContent=L.hidden.indexOf(id)>=0?'Show':'Hide'});
+}
+function move(id,dir){
+  var o=effective(),i=o.indexOf(id),j=i+dir;if(i<0||j<0||j>=o.length)return;
+  var t=o[i];o[i]=o[j];o[j]=t;L.order=o;apply();
+  if(byId[id]&&byId[id].scrollIntoView)try{byId[id].scrollIntoView({block:'center'})}catch(e){}
+}
+function toggle(id){var i=L.hidden.indexOf(id);if(i>=0)L.hidden.splice(i,1);else L.hidden.push(id);apply()}
+function build(){
+  secs.forEach(function(s){
+    if(intr[s.id]||s.querySelector(':scope>.lay-ctl'))return;
+    var id=s.id,c=d.createElement('div');c.className='lay-ctl';
+    var b=d.createElement('b');b.textContent='Section: '+LAB[id];c.appendChild(b);
+    [['up','↑ Move up',-1],['dn','↓ Move down',1]].forEach(function(a){var x=d.createElement('button');x.type='button';x.className=a[0];x.textContent=a[1];x.addEventListener('click',function(e){e.stopPropagation();move(id,a[2])});c.appendChild(x)});
+    var h=d.createElement('button');h.type='button';h.className='hd';h.addEventListener('click',function(e){e.stopPropagation();toggle(id)});c.appendChild(h);
+    s.insertBefore(c,s.firstChild);
+  });
+  apply();
+}
+w.__lay={ids:effective,label:function(id){return LAB[id]},hidden:function(id){return L.hidden.indexOf(id)>=0},move:move,toggle:toggle,apply:apply};
+apply();
+new MutationObserver(function(){if(d.body.classList.contains('ed-on'))build()}).observe(d.body,{attributes:true,attributeFilter:['class']});
+}catch(err){try{console.warn('layout off',err)}catch(_){}}
+})();
 </script>
 </body></html>

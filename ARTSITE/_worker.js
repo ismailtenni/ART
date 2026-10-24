@@ -99,7 +99,8 @@ const SCH = {
   spotlight: { on: 's3', title: 's100', text: 's800', image: 'img', price: 's40', pay: 'url' },
   ba: { before: 'img', after: 'img', caption: 's100' },
   about: { portrait: 'img', t1: 's700', t2: 's700', t3: 's700', p1: 'img', p2: 'img', p3: 'img', poster: 'img', vurl: 's300' },
-  settings: { payDefault: 'url', payLabel: 's30' },
+  settings: { payDefault: 'url', payLabel: 's30', noRooms: 's3' },
+  rooms: { name: 's40', img: 'img', x: 'n', y: 'n', cm: 'n' },
   posts: { title: 's100', text: 's6000', image: 'img', date: 's10' },
   challenge: { on: 's3', title: 's100', text: 's800', prize: 's100', deadline: 's10' },
 };
@@ -165,6 +166,8 @@ function cleanContent(b) {
     settings: cleanRow(b.settings, SCH.settings),
     posts: cleanList(b.posts, SCH.posts, 80, ['title']),
     challenge: cleanRow(b.challenge, SCH.challenge),
+    rooms: cleanList(b.rooms, SCH.rooms, 12, ['img']).map((r) => ({ ...r, x: Math.min(r.x ?? 50, 100), y: Math.min(r.y ?? 30, 100), cm: Math.min(Math.max(r.cm || 300, 30), 2000) })),
+    layout: (() => { const l = b.layout && typeof b.layout === 'object' ? b.layout : {}; const ok = (a) => [...new Set((Array.isArray(a) ? a : []).filter((x) => typeof x === 'string' && /^[a-z]{2,20}$/.test(x)))].slice(0, 40); return { order: ok(l.order), hidden: ok(l.hidden) }; })(),
   };
   return { works, photos, films, texts, ...extra };
 }
