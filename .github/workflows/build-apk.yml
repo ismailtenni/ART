@@ -40,7 +40,12 @@ jobs:
 
       - name: Build the APK
         working-directory: ANDROID-APP
-        run: gradle assembleRelease --no-daemon --stacktrace
+        run: |
+          gradle assembleRelease --no-daemon --console=plain > build.log 2>&1 || {
+            echo "=========== THE REAL ERROR IS BELOW ==========="
+            grep -v "^\s*at " build.log | grep -v "^\s*\.\.\." | tail -45
+            exit 1
+          }
 
       - name: Name the file ART-ISMAILTENNI.apk
         run: |
