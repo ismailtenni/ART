@@ -40,7 +40,78 @@ async function tooMany(env, key) {
   const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM attempts WHERE key = ? AND at > ?').bind(key, since).first();
   return r && r.n >= 8;
 }
-function isAdmin(env, me) { return !!(me && env.ADMIN_EMAIL && String(env.ADMIN_EMAIL).trim().toLowerCase() === me.email); }
+function isAdmin(env, me) { const a = ADM || env.ADMIN_EMAIL; return !!(me && a && String(a).trim().toLowerCase() === me.email); }
+
+let ADM = null;
+const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+function b32enc(bytes) { let bits = '', out = ''; for (const b of bytes) bits += b.toString(2).padStart(8, '0'); for (let i = 0; i < bits.length; i += 5) out += B32[parseInt(bits.slice(i, i + 5).padEnd(5, '0'), 2)]; return out; }
+function b32dec(s) { let bits = ''; for (const c of String(s).replace(/=+$/, '').toUpperCase()) { const v = B32.indexOf(c); if (v < 0) continue; bits += v.toString(2).padStart(5, '0'); } const out = []; for (let i = 0; i + 8 <= bits.length; i += 8) out.push(parseInt(bits.slice(i, i + 8), 2)); return new Uint8Array(out); }
+async function hotp(sb, counter, digits = 6) {
+  const key = await crypto.subtle.importKey('raw', sb, { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+  const buf = new ArrayBuffer(8); const dv = new DataView(buf);
+  dv.setUint32(0, Math.floor(counter / 4294967296)); dv.setUint32(4, counter >>> 0);
+  const h = new Uint8Array(await crypto.subtle.sign('HMAC', key, buf)); const o = h[19] & 15;
+  const n = (((h[o] & 127) << 24) | (h[o + 1] << 16) | (h[o + 2] << 8) | h[o + 3]) % Math.pow(10, digits);
+  return String(n).padStart(digits, '0');
+}
+async function totpOk(secret, code) {
+  code = String(code || '').replace(/\s/g, '');
+  if (!/^\d{6}$/.test(code)) return false;
+  const t = Math.floor(Date.now() / 30000), sb = b32dec(secret);
+  for (const d of [-1, 0, 1]) { if ((await hotp(sb, t + d)) === code) return true; }
+  return false;
+}
+async function secondOk(env, uid, code) {
+  const r = await env.DB.prepare('SELECT secret, enabled, recovery FROM user_2fa WHERE user_id = ?').bind(uid).first();
+  if (!r || !r.enabled) return true;
+  const c = String(code || '').trim();
+  if (await totpOk(r.secret, c)) return true;
+  const plain = c.replace(/[\s-]/g, '').toLowerCase();
+  if (/^[0-9a-f]{10}$/.test(plain)) {
+    let list = []; try { list = JSON.parse(r.recovery || '[]'); } catch (e) {}
+    const h = await sha256(plain);
+    if (list.includes(h)) { await env.DB.prepare('UPDATE user_2fa SET recovery = ? WHERE user_id = ?').bind(JSON.stringify(list.filter((x) => x !== h)), uid).run(); return true; }
+  }
+  return false;
+}
+async function ticketSig(env, p) {
+  const sig = await crypto.subtle.sign('HMAC', await secretKey(env), enc.encode('tfa:' + p));
+  return [...new Uint8Array(sig)].slice(0, 20).map((x) => x.toString(16).padStart(2, '0')).join('');
+}
+async function mkTicket(env, uid) { const p = uid + '.' + (Date.now() + 5 * 60000); return p + '.' + (await ticketSig(env, p)); }
+async function checkTicket(env, t) {
+  const m = String(t || '').match(/^(\d+)\.(\d+)\.([0-9a-f]+)$/);
+  if (!m || Number(m[2]) < Date.now()) return 0;
+  return (await ticketSig(env, m[1] + '.' + m[2])) === m[3] ? Number(m[1]) : 0;
+}
+
+// ---- email sending: Brevo (preferred) or Resend. Needs MAIL_FROM plus BREVO_API_KEY or RESEND_API_KEY ----
+function mailReady(env) { return !!((env.BREVO_API_KEY || env.RESEND_API_KEY) && env.MAIL_FROM); }
+function parseFrom(f) {
+  const m = String(f || '').match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
+  return m ? { name: m[1].replace(/^"|"$/g, '') || 'ISMAILTENNI ART', email: m[2].trim() } : { name: 'ISMAILTENNI ART', email: String(f || '').trim() };
+}
+async function sendMails(env, mails) {
+  // mails: [{ to, subject, html, text, headers }]  ->  true if the provider accepted them
+  if (!mails.length) return true;
+  try {
+    if (env.BREVO_API_KEY) {
+      const sender = parseFrom(env.MAIL_FROM);
+      const base = { sender, subject: mails[0].subject, htmlContent: mails[0].html, textContent: mails[0].text };
+      const body = mails.length === 1
+        ? { ...base, to: [{ email: mails[0].to }], headers: mails[0].headers }
+        : { ...base, to: [{ email: mails[0].to }], messageVersions: mails.map((m) => ({ to: [{ email: m.to }], subject: m.subject, htmlContent: m.html, textContent: m.text })) };
+      if (mails.length > 1) delete body.to;
+      const r = await fetch('https://api.brevo.com/v3/smtp/email', { method: 'POST', headers: { 'api-key': env.BREVO_API_KEY, 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(body) });
+      return r.ok;
+    }
+    const rs = await fetch(mails.length === 1 ? 'https://api.resend.com/emails' : 'https://api.resend.com/emails/batch', { method: 'POST', headers: { authorization: 'Bearer ' + env.RESEND_API_KEY, 'content-type': 'application/json' },
+      body: JSON.stringify(mails.length === 1 ? { from: env.MAIL_FROM, to: [mails[0].to], subject: mails[0].subject, html: mails[0].html, text: mails[0].text, headers: mails[0].headers }
+        : mails.map((m) => ({ from: env.MAIL_FROM, to: [m.to], subject: m.subject, html: m.html, text: m.text, headers: m.headers }))) });
+    return rs.ok;
+  } catch (e) { return false; }
+}
+
 async function note(env, key) {
   await env.DB.prepare('INSERT INTO attempts (key, at) VALUES (?, ?)').bind(key, Date.now()).run();
 }
@@ -49,6 +120,8 @@ async function note(env, key) {
 const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, salt TEXT NOT NULL, hash TEXT NOT NULL, created_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS sessions (token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires_at INTEGER NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS user_2fa (user_id INTEGER PRIMARY KEY, secret TEXT NOT NULL, enabled INTEGER NOT NULL DEFAULT 0, recovery TEXT NOT NULL DEFAULT \'[]\')',
+  'CREATE TABLE IF NOT EXISTS reset_tokens (token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS attempts (key TEXT NOT NULL, at INTEGER NOT NULL)',
   'CREATE INDEX IF NOT EXISTS attempts_key ON attempts (key, at)',
   'CREATE TABLE IF NOT EXISTS likes (work_id TEXT NOT NULL, user_id INTEGER NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (work_id, user_id))',
@@ -257,9 +330,11 @@ export default {
     if (!env.DB) return json({ error: 'The database is not connected yet.' }, 503);
     try {
       await ensureSchema(env);
+      try { const ar = await env.DB.prepare("SELECT v FROM content WHERE k = 'adminEmail'").first(); ADM = ar && ar.v ? String(ar.v) : null; } catch (e) {}
       if (url.pathname === '/api/me' && req.method === 'GET') {
         const u = await currentUser(env, req);
-        return json({ user: u ? { name: u.name, email: u.email } : null, admin: isAdmin(env, u) });
+        const t2 = u ? await env.DB.prepare('SELECT enabled FROM user_2fa WHERE user_id = ?').bind(u.id).first() : null;
+        return json({ user: u ? { name: u.name, email: u.email } : null, admin: isAdmin(env, u), twofa: !!(t2 && t2.enabled), canReset: mailReady(env) });
       }
       if (url.pathname === '/api/counts' && req.method === 'GET') {
         const l = await env.DB.prepare('SELECT work_id AS id, COUNT(*) AS n FROM likes GROUP BY work_id').all();
@@ -319,7 +394,7 @@ export default {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
         const r = await env.DB.prepare('SELECT email, created_at FROM subscribers ORDER BY created_at DESC LIMIT 5000').all();
-        return json({ subscribers: r.results || [], canSend: !!(env.RESEND_API_KEY && env.MAIL_FROM) });
+        return json({ subscribers: r.results || [], canSend: mailReady(env) });
       }
       if (url.pathname === '/api/mylikes' && req.method === 'GET') {
         const me = await currentUser(env, req);
@@ -396,8 +471,127 @@ export default {
         const u = await env.DB.prepare('SELECT id, name, email, salt, hash FROM users WHERE email = ?').bind(email).first();
         const ok = u && (await hashPassword(password, unb64(u.salt))) === u.hash;
         if (!ok) { await note(env, key); return json({ error: 'Wrong email or password.' }, 401); }
+        const t2 = await env.DB.prepare('SELECT enabled FROM user_2fa WHERE user_id = ?').bind(u.id).first();
+        if (t2 && t2.enabled) return json({ need2fa: true, ticket: await mkTicket(env, u.id) });
         const cookie = await startSession(env, u.id);
         return json({ user: { name: u.name, email: u.email } }, 200, { 'set-cookie': cookie });
+      }
+
+      if (url.pathname === '/api/login2fa') {
+        const uid = await checkTicket(env, body.ticket);
+        if (!uid) return json({ error: 'That step expired. Please log in again.' }, 401);
+        if (await tooMany(env, 'tfa:' + uid)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
+        if (!(await secondOk(env, uid, body.code))) { await note(env, 'tfa:' + uid); return json({ error: 'That code is not right. Try again.' }, 401); }
+        const u = await env.DB.prepare('SELECT name, email FROM users WHERE id = ?').bind(uid).first();
+        if (!u) return json({ error: 'Account not found.' }, 404);
+        return json({ user: { name: u.name, email: u.email } }, 200, { 'set-cookie': await startSession(env, uid) });
+      }
+
+      if (url.pathname === '/api/forgot') {
+        const email = String(body.email || '').trim().toLowerCase().slice(0, 120);
+        const ip = req.headers.get('cf-connecting-ip') || 'x';
+        if (await tooMany(env, 'forgot:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
+        await note(env, 'forgot:' + ip);
+        if (!mailReady(env)) return json({ error: 'Password reset by email is not set up yet. Please message the artist on WhatsApp.' }, 400);
+        const u = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) ? await env.DB.prepare('SELECT id, name FROM users WHERE email = ?').bind(email).first() : null;
+        if (u) {
+          const raw = crypto.getRandomValues(new Uint8Array(32));
+          const token = Array.from(raw, (b) => b.toString(16).padStart(2, '0')).join('');
+          await env.DB.batch([
+            env.DB.prepare('DELETE FROM reset_tokens WHERE user_id = ?').bind(u.id),
+            env.DB.prepare('INSERT INTO reset_tokens (token_hash, user_id, expires_at) VALUES (?, ?, ?)').bind(await sha256(token), u.id, Date.now() + 30 * 60000),
+          ]);
+          const link = url.origin + '/#reset=' + token;
+          await sendMails(env, [{ to: email, subject: 'Reset your ISMAILTENNI ART password',
+            html: '<p>Hi ' + escH(u.name) + ',</p><p>Press the button to choose a new password. The link works for 30 minutes.</p><p><a href="' + link + '" style="display:inline-block;padding:12px 22px;background:#5a46d8;color:#fff;border-radius:999px;text-decoration:none">Choose a new password</a></p><p>If you did not ask for this, ignore this email. Your password stays the same.</p>' }]);
+        }
+        return json({ ok: true });
+      }
+
+      if (url.pathname === '/api/reset') {
+        const token = String(body.token || '').slice(0, 80);
+        const password = String(body.password || '');
+        const ip = req.headers.get('cf-connecting-ip') || 'x';
+        if (await tooMany(env, 'reset:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
+        await note(env, 'reset:' + ip);
+        if (password.length < 8 || password.length > 200) return json({ error: 'Password must be at least 8 characters.' }, 400);
+        const t = await env.DB.prepare('SELECT user_id FROM reset_tokens WHERE token_hash = ? AND expires_at > ?').bind(await sha256(token), Date.now()).first();
+        if (!t) return json({ error: 'This link is old or already used. Ask for a new one.' }, 400);
+        if (!(await secondOk(env, t.user_id, body.code))) return json({ error: 'Enter the 6-digit code from your authenticator app (or a recovery code).' }, 401);
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+        const hash = await hashPassword(password, salt);
+        await env.DB.batch([
+          env.DB.prepare('UPDATE users SET salt = ?, hash = ? WHERE id = ?').bind(b64(salt), hash, t.user_id),
+          env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(t.user_id),
+          env.DB.prepare('DELETE FROM reset_tokens WHERE user_id = ?').bind(t.user_id),
+        ]);
+        return json({ ok: true });
+      }
+
+      if (url.pathname.startsWith('/api/account/')) {
+        const me0 = await currentUser(env, req);
+        if (!me0) return json({ error: 'Please log in first.' }, 401);
+        const A = url.pathname.slice(13);
+        const row = await env.DB.prepare('SELECT salt, hash FROM users WHERE id = ?').bind(me0.id).first();
+        const pwOk = async (p) => !!row && (await hashPassword(String(p || ''), unb64(row.salt))) === row.hash;
+        const tf = await env.DB.prepare('SELECT secret, enabled FROM user_2fa WHERE user_id = ?').bind(me0.id).first();
+        const on2 = !!(tf && tf.enabled);
+        const guard = async (b) => {
+          if (await tooMany(env, 'acct:' + me0.id)) return 'Too many tries. Please wait a few minutes.';
+          if (!(await pwOk(b.password))) { await note(env, 'acct:' + me0.id); return 'Your current password is not right.'; }
+          if (on2 && !(await secondOk(env, me0.id, b.code))) { await note(env, 'acct:' + me0.id); return 'Enter the 6-digit code from your authenticator app.'; }
+          return '';
+        };
+        if (A === 'name') {
+          const name = String(body.name || '').trim().slice(0, 60);
+          if (!name) return json({ error: 'Please enter a name.' }, 400);
+          await env.DB.prepare('UPDATE users SET name = ? WHERE id = ?').bind(name, me0.id).run();
+          return json({ user: { name, email: me0.email } });
+        }
+        if (A === 'email') {
+          const email = String(body.email || '').trim().toLowerCase().slice(0, 120);
+          if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: 'Please enter a valid email.' }, 400);
+          const bad = await guard(body); if (bad) return json({ error: bad }, 401);
+          if (email === me0.email) return json({ user: { name: me0.name, email } });
+          const ex = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
+          if (ex) return json({ error: 'That email already has an account.' }, 409);
+          const wasAdmin = isAdmin(env, me0);
+          await env.DB.prepare('UPDATE users SET email = ? WHERE id = ?').bind(email, me0.id).run();
+          if (wasAdmin) { await env.DB.prepare("INSERT OR REPLACE INTO content (k, v, updated_at) VALUES ('adminEmail', ?, ?)").bind(email, Date.now()).run(); ADM = email; }
+          return json({ user: { name: me0.name, email } });
+        }
+        if (A === 'password') {
+          const next = String(body.next || '');
+          if (next.length < 8 || next.length > 200) return json({ error: 'The new password must be at least 8 characters.' }, 400);
+          const bad = await guard(body); if (bad) return json({ error: bad }, 401);
+          const salt = crypto.getRandomValues(new Uint8Array(16));
+          const hash = await hashPassword(next, salt);
+          await env.DB.batch([env.DB.prepare('UPDATE users SET salt = ?, hash = ? WHERE id = ?').bind(b64(salt), hash, me0.id), env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(me0.id)]);
+          return json({ ok: true }, 200, { 'set-cookie': await startSession(env, me0.id) });
+        }
+        if (A === '2fa/begin') {
+          if (on2) return json({ error: 'Two-step login is already on.' }, 400);
+          if (!(await pwOk(body.password))) return json({ error: 'Your current password is not right.' }, 401);
+          const secret = b32enc(crypto.getRandomValues(new Uint8Array(20)));
+          await env.DB.prepare("INSERT OR REPLACE INTO user_2fa (user_id, secret, enabled, recovery) VALUES (?, ?, 0, '[]')").bind(me0.id, secret).run();
+          return json({ secret, uri: 'otpauth://totp/' + encodeURIComponent('ISMAILTENNI ART:' + me0.email) + '?secret=' + secret + '&issuer=' + encodeURIComponent('ISMAILTENNI ART') });
+        }
+        if (A === '2fa/enable') {
+          if (!tf || on2) return json({ error: 'Start again.' }, 400);
+          if (await tooMany(env, 'acct:' + me0.id)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
+          if (!(await totpOk(tf.secret, body.code))) { await note(env, 'acct:' + me0.id); return json({ error: 'That code is not right. Check your phone clock and try again.' }, 401); }
+          const codes = [], hashes = [];
+          for (let i = 0; i < 8; i++) { const r = crypto.getRandomValues(new Uint8Array(5)); const c = Array.from(r, (b) => b.toString(16).padStart(2, '0')).join(''); codes.push(c.slice(0, 5) + '-' + c.slice(5)); hashes.push(await sha256(c)); }
+          await env.DB.prepare('UPDATE user_2fa SET enabled = 1, recovery = ? WHERE user_id = ?').bind(JSON.stringify(hashes), me0.id).run();
+          return json({ ok: true, recovery: codes });
+        }
+        if (A === '2fa/disable') {
+          if (!on2) return json({ ok: true });
+          const bad = await guard(body); if (bad) return json({ error: bad }, 401);
+          await env.DB.prepare('DELETE FROM user_2fa WHERE user_id = ?').bind(me0.id).run();
+          return json({ ok: true });
+        }
+        return json({ error: 'Not found' }, 404);
       }
 
       if (url.pathname === '/api/like') {
@@ -546,11 +740,11 @@ export default {
       if (url.pathname === '/api/admin/newsletter') {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
-        if (!(env.RESEND_API_KEY && env.MAIL_FROM)) return json({ error: 'Sending is not set up yet. Use the copy buttons instead.' }, 400);
+        if (!mailReady(env)) return json({ error: 'Sending is not set up yet. Use the copy buttons instead.' }, 400);
         const subject = str(body.subject, 150).trim(), text = str(body.body, 5000).trim();
         if (!subject || !text) return json({ error: 'Please write a subject and a message.' }, 400);
         const test = body.test === true;
-        let list = test ? [{ email: String(env.ADMIN_EMAIL).trim().toLowerCase() }] : ((await env.DB.prepare('SELECT email FROM subscribers LIMIT 1000').all()).results || []);
+        let list = test ? [{ email: String(ADM || env.ADMIN_EMAIL).trim().toLowerCase() }] : ((await env.DB.prepare('SELECT email FROM subscribers LIMIT 1000').all()).results || []);
         if (!list.length) return json({ error: 'No subscribers yet.' }, 400);
         const origin = url.origin;
         const paras = text.split(/\n{2,}/).map((p) => '<p style="margin:0 0 16px;line-height:1.6">' + escH(p).replace(/\n/g, '<br>') + '</p>').join('');
@@ -560,15 +754,12 @@ export default {
           const mails = [];
           for (const r of chunk) {
             const un = origin + '/api/unsubscribe?e=' + encodeURIComponent(r.email) + '&t=' + (await unsubToken(env, r.email));
-            mails.push({ from: env.MAIL_FROM, to: [r.email], subject,
+            mails.push({ to: r.email, subject,
               html: '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#111">' + paras + '<p><a href="' + origin + '" style="display:inline-block;padding:12px 22px;background:#5b46d6;color:#fff;border-radius:999px;text-decoration:none">Visit my site</a></p><p style="font-size:12px;color:#777;margin-top:30px">ISMAILTENNI ART &middot; <a href="' + un + '" style="color:#777">Unsubscribe</a></p></div>',
               text: text + '\n\n' + origin + '\n\nUnsubscribe: ' + un,
               headers: { 'List-Unsubscribe': '<' + un + '>' } });
           }
-          try {
-            const rs = await fetch('https://api.resend.com/emails/batch', { method: 'POST', headers: { authorization: 'Bearer ' + env.RESEND_API_KEY, 'content-type': 'application/json' }, body: JSON.stringify(mails) });
-            if (rs.ok) sent += chunk.length; else failed += chunk.length;
-          } catch (e) { failed += chunk.length; }
+          if (await sendMails(env, mails)) sent += chunk.length; else failed += chunk.length;
         }
         return json({ sent, failed });
       }

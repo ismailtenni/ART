@@ -577,13 +577,15 @@ document.getElementById('vw-img').onclick=function(){zoom=!zoom;this.style.cssTe
 </div>
 </div>
 
-<div id="am" role="dialog" aria-modal="true" aria-label="Account" style="display:none;position:fixed;inset:0;z-index:1200;background:rgba(3,4,14,0.9);align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
+<div id="am" role="dialog" aria-modal="true" aria-label="Account" style="display:none;position:fixed;inset:0;z-index:1400;background:rgba(3,4,14,0.9);align-items:center;justify-content:center;padding:16px;box-sizing:border-box">
 <form id="af" style="font-family:Sora,Inter,system-ui,sans-serif;position:relative;width:100%;max-width:400px;max-height:92vh;overflow:auto;box-sizing:border-box;padding:28px 24px;border-radius:18px;border:1px solid rgba(190,170,255,0.45);background:rgba(10,14,40,0.98);color:#e8eefc;box-shadow:0 0 60px rgba(110,90,255,0.35)">
 <button type="button" id="ax" aria-label="Close" style="position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,0.4);background:rgba(8,10,30,0.85);color:#fff;cursor:pointer;font-size:15px">&#10005;</button>
 <h3 id="at" style="margin:0;font-weight:400;font-size:26px;color:#fff">Log in</h3>
 <div id="an" style="display:none"><label style="display:block;margin-top:16px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9fb0c8" for="a-name">Your name</label><input id="a-name" autocomplete="name" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(190,170,255,0.4);background:rgba(8,12,34,0.9);color:#fff;font-size:15px;font-family:inherit;margin-top:6px"></div>
 <label style="display:block;margin-top:16px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9fb0c8" for="a-email">Email</label><input id="a-email" type="email" autocomplete="email" required style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(190,170,255,0.4);background:rgba(8,12,34,0.9);color:#fff;font-size:15px;font-family:inherit;margin-top:6px">
 <label style="display:block;margin-top:16px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9fb0c8" for="a-pw">Password</label><input id="a-pw" type="password" autocomplete="current-password" required style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(190,170,255,0.4);background:rgba(8,12,34,0.9);color:#fff;font-size:15px;font-family:inherit;margin-top:6px">
+<div id="ac2" style="display:none"><label style="display:block;margin-top:16px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9fb0c8" for="a-code">6-digit code</label><input id="a-code" inputmode="numeric" autocomplete="one-time-code" placeholder="From your authenticator app" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(190,170,255,0.4);background:rgba(8,12,34,0.9);color:#fff;font-size:15px;font-family:inherit;margin-top:6px"><div style="margin-top:6px;font-size:12px;color:#9fb0c8">Lost your phone? Type one of your recovery codes instead.</div></div>
+<button type="button" id="afg" style="display:block;margin:12px 0 0;padding:0;border:0;background:none;color:#a8d6ff;font-size:13px;font-family:inherit;cursor:pointer;text-decoration:underline">Forgot password?</button>
 <div id="ae" role="alert" style="margin-top:14px;min-height:20px;color:#ffb0b8;font-size:14px"></div>
 <button id="ab" type="submit" style="width:100%;margin-top:10px;padding:14px;border-radius:999px;border:1px solid rgba(255,255,255,0.4);background:linear-gradient(90deg,rgba(42,120,170,0.9),rgba(100,70,200,0.9));color:#fff;font-size:16px;font-family:inherit;cursor:pointer">Log in</button>
 <button type="button" id="as" style="width:100%;margin-top:12px;padding:8px;border:0;background:none;color:#c4a0ff;font-size:14px;font-family:inherit;cursor:pointer">No account yet? Sign up</button>
@@ -594,7 +596,8 @@ var mode='login',box=document.getElementById('acct'),m=document.getElementById('
 var pill='padding:9px 18px;border-radius:999px;border:1px solid rgba(255,255,255,0.45);background:rgba(10,18,40,0.6);color:#fff;font-size:14px;font-family:inherit;cursor:pointer';
 function E(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function paint(u){
- if(u){box.innerHTML='<span style="font-size:14px;color:#c4d0e6">Hi, '+E(u.name)+'</span><button id="lo" style="'+pill+'">Log out</button>';
+ if(u){box.innerHTML='<span style="font-size:14px;color:#c4d0e6">Hi, '+E(u.name)+'</span><button id="ac" style="'+pill+'">Account</button><button id="lo" style="'+pill+'">Log out</button>';
+  document.getElementById('ac').onclick=function(){if(window.__acct)window.__acct()};
   document.getElementById('lo').onclick=function(){fetch('/api/logout',{method:'POST'}).then(function(){paint(null);var sc=document.getElementById('soc');if(sc&&window.__social)window.__social(sc.getAttribute('data-id'))})};}
  else{box.innerHTML='<button id="li" style="'+pill+'">Log in</button><button id="su" style="'+pill+';background:linear-gradient(90deg,rgba(42,120,170,0.8),rgba(100,70,200,0.8))">Sign up</button>';
   document.getElementById('li').onclick=function(){openM('login')};document.getElementById('su').onclick=function(){openM('signup')};}
@@ -602,15 +605,29 @@ function paint(u){
 function openM(md){mode=md;var s=md==='signup';document.getElementById('at').textContent=s?'Create your account':'Log in';
  document.getElementById('an').style.display=s?'block':'none';document.getElementById('ab').textContent=s?'Sign up':'Log in';
  document.getElementById('as').textContent=s?'Already have an account? Log in':'No account yet? Sign up';
- document.getElementById('a-pw').autocomplete=s?'new-password':'current-password';document.getElementById('ae').textContent='';m.style.display='flex';}
+ document.getElementById('a-pw').autocomplete=s?'new-password':'current-password';document.getElementById('ae').textContent='';tfaT='';resetT='';document.getElementById('ac2').style.display='none';document.getElementById('a-email').parentNode.style.display='';rowsShow(true);document.getElementById('afg').style.display=s?'none':'block';m.style.display='flex';}
+var tfaT='',resetT='';
+function rowsShow(v){var f=document.getElementById('af');f.querySelectorAll('label[for=a-email],#a-email,label[for=a-pw],#a-pw').forEach(function(e){e.style.display=v?'':'none'});document.getElementById('as').style.display=v?'':'none'}
 function closeM(){m.style.display='none';}
 document.getElementById('ax').onclick=closeM;
 m.onclick=function(e){if(e.target===m)closeM()};
 document.getElementById('as').onclick=function(){openM(mode==='login'?'signup':'login')};
-document.getElementById('af').onsubmit=function(e){e.preventDefault();var er=document.getElementById('ae'),b=document.getElementById('ab');er.textContent='';b.disabled=true;
- fetch('/api/'+mode,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:document.getElementById('a-name').value,email:document.getElementById('a-email').value,password:document.getElementById('a-pw').value})})
+document.getElementById('afg').onclick=function(){var er=document.getElementById('ae'),em=document.getElementById('a-email').value;if(!em){er.style.color='#ffb0b8';er.textContent='Type your email above first, then press this again.';return}
+ fetch('/api/forgot',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:em})}).then(function(r){return r.json().then(function(j){return {ok:r.ok,d:j}})}).then(function(x){er.style.color=x.ok?'#9ff0c0':'#ffb0b8';er.textContent=x.ok?'If that email has an account, we sent a link to choose a new password. Check your inbox and spam.':(x.d.error||'Could not send.')}).catch(function(){er.textContent='Could not send.'})};
+function openReset(t){openM('login');resetT=t;document.getElementById('at').textContent='Choose a new password';document.getElementById('ab').textContent='Save new password';document.getElementById('a-pw').autocomplete='new-password';
+ document.getElementById('a-email').style.display='none';document.querySelector('label[for=a-email]').style.display='none';document.getElementById('as').style.display='none';document.getElementById('afg').style.display='none';document.getElementById('ac2').style.display='block';document.querySelector('#ac2 label').textContent='2-step code (only if you turned it on)'}
+function chkReset(){var mm=(location.hash||'').match(/^#reset=([0-9a-f]{20,80})$/);if(mm){history.replaceState(null,'',location.pathname+location.search);openReset(mm[1])}}chkReset();window.addEventListener('hashchange',chkReset);
+document.getElementById('af').onsubmit=function(e){e.preventDefault();var er=document.getElementById('ae'),b=document.getElementById('ab');er.style.color='#ffb0b8';er.textContent='';b.disabled=true;
+ var url,body;
+ if(resetT){url='/api/reset';body={token:resetT,password:document.getElementById('a-pw').value,code:document.getElementById('a-code').value}}
+ else if(tfaT){url='/api/login2fa';body={ticket:tfaT,code:document.getElementById('a-code').value}}
+ else{url='/api/'+mode;body={name:document.getElementById('a-name').value,email:document.getElementById('a-email').value,password:document.getElementById('a-pw').value}}
+ fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})
  .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d}})})
- .then(function(x){b.disabled=false;if(x.ok&&x.d.user){document.getElementById('a-pw').value='';closeM();paint(x.d.user);var sc=document.getElementById('soc');if(sc&&window.__social)window.__social(sc.getAttribute('data-id'))}else er.textContent=x.d.error||'Accounts are not available yet.'})
+ .then(function(x){b.disabled=false;
+  if(x.ok&&x.d.need2fa){tfaT=x.d.ticket;rowsShow(false);document.getElementById('ac2').style.display='block';document.getElementById('at').textContent='Two-step check';b.textContent='Verify';document.getElementById('afg').style.display='none';document.getElementById('a-code').focus();return}
+  if(x.ok&&resetT){resetT='';openM('login');er.style.color='#9ff0c0';er.textContent='Password changed. Now log in with your new password.';return}
+  if(x.ok&&x.d.user){document.getElementById('a-pw').value='';document.getElementById('a-code').value='';tfaT='';closeM();paint(x.d.user);var sc=document.getElementById('soc');if(sc&&window.__social)window.__social(sc.getAttribute('data-id'))}else er.textContent=x.d.error||'Accounts are not available yet.'})
  .catch(function(){b.disabled=false;er.textContent='Accounts are not available yet.'});};
 
 var css=document.createElement('style');css.textContent='@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.45)}100%{transform:scale(1)}}@keyframes floatUp{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(-46px) scale(1.4)}}.heart-on{animation:pop .45s ease}.cmt{animation:fadeUp .4s ease both}';document.head.appendChild(css);
@@ -1447,7 +1464,7 @@ function init(){
         h('button',{type:'button',style:BTN,text:'Send a test to myself',on:{click:function(){run(true)}}}),
         h('button',{type:'button',style:BTNG,text:'Send to everyone',on:{click:function(){run(false)}}})]));
     }else{
-      box.appendChild(note1('Automatic sending is not switched on yet (it needs a free Resend account and your own web address). Until then you can send it yourself in 2 taps with the buttons below.'));
+      box.appendChild(note1('Automatic sending is not switched on yet (it needs a free Brevo account, see the steps below). Until then you can send it yourself in 2 taps with the buttons below.'));
       var chunks=[];for(var i=0;i<list.length;i+=40)chunks.push(list.slice(i,i+40));
       var row=h('div',{style:'display:flex;gap:10px;flex-wrap:wrap'});
       row.appendChild(h('button',{type:'button',style:BTN,text:'Copy all emails',on:{click:function(){
@@ -1457,7 +1474,7 @@ function init(){
     }
     box.appendChild(out);
     box.appendChild(sub('Setup for automatic sending (optional)'));
-    box.appendChild(note1('1) Make a free account at resend.com and add your own web address (domain). 2) Create an API key. 3) In Cloudflare open your Worker, then Settings, then Variables and Secrets. Add RESEND_API_KEY (your key) and MAIL_FROM (for example: Ismail <news@yourdomain.com>). 4) Reload this page. The Send buttons appear. Free plan: 100 emails per day.'));
+    box.appendChild(note1('1) Make a free account at brevo.com. 2) In Brevo open Senders, Domains and Dedicated IPs, then Senders, and add your own Gmail (ismailtenni6@gmail.com) as a sender. Brevo emails you a code to confirm it. 3) In Brevo open SMTP and API, then API Keys, and create a key. 4) In Cloudflare open your Worker, then Settings, then Variables and Secrets. Add a secret named BREVO_API_KEY (your key) and a variable named MAIL_FROM with your confirmed sender, for example: Ismail <ismailtenni6@gmail.com>. 5) Reload this page. Password reset emails and the Send buttons now work. Free plan: 300 emails per day.'));
     box.appendChild(h('div',{style:'margin-top:16px'},[h('button',{type:'button',style:BTN,text:'Download the list (CSV)',on:{click:function(){
       var b=new Blob(['email,joined\n'+(subs.subscribers||[]).map(function(x){return x.email+','+new Date(x.created_at).toISOString().slice(0,10)}).join('\n')],{type:'text/csv'});
       var a=h('a',{href:URL.createObjectURL(b),download:'subscribers.csv'});d.body.appendChild(a);a.click();a.remove()}}}),h('button',{type:'button',style:BTN+';margin-left:10px',text:'Refresh',on:{click:function(){subs=null;render()}}})]));
@@ -2420,6 +2437,67 @@ setTimeout(function(){var i=$('#intro');if(i&&i.parentNode)i.parentNode.removeCh
 }
 })();
 
+</script>
+<script id="acct-js">
+(function(){
+try{
+var d=document,root=d.documentElement;
+var inp='width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(190,170,255,0.4);background:rgba(8,12,34,0.9);color:#fff;font-size:15px;font-family:inherit;margin-top:6px';
+var lab='display:block;margin-top:14px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9fb0c8';
+var btn='width:100%;margin-top:12px;padding:12px;border-radius:999px;border:1px solid rgba(255,255,255,0.4);background:linear-gradient(90deg,rgba(42,120,170,0.9),rgba(100,70,200,0.9));color:#fff;font-size:15px;font-family:inherit;cursor:pointer';
+var btn2='width:100%;margin-top:12px;padding:12px;border-radius:999px;border:1px solid rgba(255,140,160,0.6);background:rgba(120,20,50,0.35);color:#ffd0d8;font-size:15px;font-family:inherit;cursor:pointer';
+var card='margin-top:18px;padding:16px;border-radius:14px;border:1px solid rgba(190,170,255,0.25);background:rgba(255,255,255,0.04)';
+var ov=d.createElement('div');ov.id='acc';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');
+ov.style.cssText='display:none;position:fixed;inset:0;z-index:1300;background:rgba(3,4,14,0.92);align-items:flex-start;justify-content:center;padding:16px;box-sizing:border-box;overflow-y:auto';
+d.body.appendChild(ov);
+var me=null,info={};
+function E(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function post(u,b){return fetch(u,{method:'POST',headers:{'content-type':'application/json'},credentials:'same-origin',body:JSON.stringify(b||{})}).then(function(r){return r.json().then(function(j){return {ok:r.ok,d:j}})})}
+function q(id){return d.getElementById(id)}
+function msg(id,t,good){var e=q(id);if(e){e.textContent=t;e.style.color=good?'#9ff0c0':'#ffb0b8'}}
+function load(cb){fetch('/api/me',{credentials:'same-origin'}).then(function(r){return r.json()}).then(function(j){me=j.user;info=j;cb()}).catch(cb)}
+function draw(extra){
+ if(!me){ov.style.display='none';return}
+ var on=info.twofa;
+ ov.innerHTML='<div style="font-family:Sora,Inter,system-ui,sans-serif;position:relative;width:100%;max-width:460px;margin:auto;box-sizing:border-box;padding:26px 22px;border-radius:18px;border:1px solid rgba(190,170,255,0.45);background:rgba(10,14,40,0.99);color:#e8eefc;box-shadow:0 0 60px rgba(110,90,255,0.35)">'
+ +'<button id="ac-x" aria-label="Close" style="position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,0.4);background:rgba(8,10,30,0.85);color:#fff;cursor:pointer;font-size:15px">&#10005;</button>'
+ +'<h3 style="margin:0;font-weight:400;font-size:26px;color:#fff">My account</h3><div style="margin-top:6px;color:#9fb0c8;font-size:14px">'+E(me.email)+'</div>'
+ +'<div style="'+card+'"><b>Your name</b><input id="ac-name" value="'+E(me.name)+'" maxlength="60" style="'+inp+'"><button id="ac-name-b" style="'+btn+'">Save name</button><div id="ac-name-m" style="min-height:18px;margin-top:8px;font-size:14px"></div></div>'
+ +'<div style="'+card+'"><b>Change email</b><label style="'+lab+'">New email</label><input id="ac-em" type="email" autocomplete="email" style="'+inp+'"><label style="'+lab+'">Current password</label><input id="ac-em-pw" type="password" autocomplete="current-password" style="'+inp+'">'
+ +(on?'<label style="'+lab+'">2-step code</label><input id="ac-em-cd" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code" style="'+inp+'">':'')
+ +'<button id="ac-em-b" style="'+btn+'">Change email</button><div id="ac-em-m" style="min-height:18px;margin-top:8px;font-size:14px"></div></div>'
+ +'<div style="'+card+'"><b>Change password</b><label style="'+lab+'">Current password</label><input id="ac-pw0" type="password" autocomplete="current-password" style="'+inp+'"><label style="'+lab+'">New password (8+ letters)</label><input id="ac-pw1" type="password" autocomplete="new-password" style="'+inp+'">'
+ +(on?'<label style="'+lab+'">2-step code</label><input id="ac-pw-cd" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code" style="'+inp+'">':'')
+ +'<button id="ac-pw-b" style="'+btn+'">Change password</button><div id="ac-pw-m" style="min-height:18px;margin-top:8px;font-size:14px"></div></div>'
+ +'<div style="'+card+'"><b>2-step login '+(on?'<span style="color:#7be0a6">(ON)</span>':'<span style="color:#ffb0b8">(OFF)</span>')+'</b>'
+ +'<div style="margin-top:8px;color:#b7c4dc;font-size:14px;line-height:1.5">'+(on?'When you log in you also type a 6-digit code from your authenticator app (Google Authenticator, Microsoft Authenticator, Authy...). Even if someone learns your password they cannot get in.':'Add a second lock. After your password, the site asks for a 6-digit code from an app on your phone. Strongly recommended for the owner account.')+'</div>'
+ +'<div id="ac-2">'+(on?'<label style="'+lab+'">Current password</label><input id="ac-d-pw" type="password" autocomplete="current-password" style="'+inp+'"><label style="'+lab+'">6-digit code (or a recovery code)</label><input id="ac-d-cd" style="'+inp+'"><button id="ac-d-b" style="'+btn2+'">Turn 2-step login off</button>'
+   :'<label style="'+lab+'">Current password</label><input id="ac-b-pw" type="password" autocomplete="current-password" style="'+inp+'"><button id="ac-b-b" style="'+btn+'">Turn on 2-step login</button>')+'</div>'
+ +'<div id="ac-2m" style="min-height:18px;margin-top:8px;font-size:14px"></div></div>'
+ +'<button id="ac-out" style="'+btn2+'">Log out</button></div>';
+ ov.style.display='flex';d.body.style.overflow='hidden';
+ q('ac-x').onclick=close;
+ q('ac-name-b').onclick=function(){post('/api/account/name',{name:q('ac-name').value}).then(function(x){if(x.ok){me=x.d.user;msg('ac-name-m','Saved.',1);refreshBar()}else msg('ac-name-m',x.d.error||'Error')})};
+ q('ac-em-b').onclick=function(){post('/api/account/email',{email:q('ac-em').value,password:q('ac-em-pw').value,code:(q('ac-em-cd')||{}).value}).then(function(x){if(x.ok){me=x.d.user;msg('ac-em-m','Email changed.',1);refreshBar()}else msg('ac-em-m',x.d.error||'Error')})};
+ q('ac-pw-b').onclick=function(){post('/api/account/password',{password:q('ac-pw0').value,next:q('ac-pw1').value,code:(q('ac-pw-cd')||{}).value}).then(function(x){if(x.ok){q('ac-pw0').value='';q('ac-pw1').value='';msg('ac-pw-m','Password changed. Other devices were logged out.',1)}else msg('ac-pw-m',x.d.error||'Error')})};
+ q('ac-out').onclick=function(){fetch('/api/logout',{method:'POST'}).then(function(){location.reload()})};
+ if(q('ac-b-b'))q('ac-b-b').onclick=function(){post('/api/account/2fa/begin',{password:q('ac-b-pw').value}).then(function(x){
+   if(!x.ok){msg('ac-2m',x.d.error||'Error');return}
+   q('ac-2').innerHTML='<ol style="margin:12px 0 0;padding-left:20px;color:#d6e0f5;font-size:14px;line-height:1.7"><li>Open your authenticator app on your phone and choose <b>Add account</b> then <b>Enter a setup key</b>.</li><li>Type this key:<div style="margin:8px 0;padding:12px;border-radius:10px;background:rgba(255,255,255,0.08);font-family:monospace;font-size:17px;letter-spacing:.1em;word-break:break-all;user-select:all">'+E(x.d.secret)+'</div>On a phone you can also <a href="'+E(x.d.uri)+'" style="color:#a8d6ff">tap here to add it automatically</a>.</li><li>Type the 6-digit number the app shows:</li></ol><input id="ac-e-cd" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code" style="'+inp+'"><button id="ac-e-b" style="'+btn+'">Confirm and turn on</button>';
+   q('ac-e-b').onclick=function(){post('/api/account/2fa/enable',{code:q('ac-e-cd').value}).then(function(y){
+     if(!y.ok){msg('ac-2m',y.d.error||'Error');return}
+     info.twofa=true;
+     q('ac-2').innerHTML='<div style="margin-top:12px;padding:14px;border-radius:12px;border:1px solid rgba(123,224,166,0.6);background:rgba(30,120,80,0.2);font-size:14px;line-height:1.6"><b>2-step login is ON.</b><br>Save these 8 recovery codes now (photo or paper). Each works once if you lose your phone. They are never shown again.<div style="margin-top:10px;font-family:monospace;font-size:16px;letter-spacing:.06em;user-select:all;line-height:1.9">'+y.d.recovery.map(E).join('<br>')+'</div></div><button id="ac-done" style="'+btn+'">I saved them</button>';
+     msg('ac-2m','');q('ac-done').onclick=function(){load(function(){draw()})}})}})};
+ if(q('ac-d-b'))q('ac-d-b').onclick=function(){post('/api/account/2fa/disable',{password:q('ac-d-pw').value,code:q('ac-d-cd').value}).then(function(x){if(x.ok){info.twofa=false;draw()}else msg('ac-2m',x.d.error||'Error')})};
+}
+function refreshBar(){var s=d.querySelector('#acct span');if(s&&me)s.textContent='Hi, '+me.name}
+function close(){ov.style.display='none';d.body.style.overflow=''}
+ov.addEventListener('click',function(e){if(e.target===ov)close()});
+d.addEventListener('keydown',function(e){if(e.key==='Escape'&&ov.style.display==='flex')close()});
+window.__acct=function(){load(function(){draw()})};
+}catch(err){try{console.warn('acct off',err)}catch(_){}}
+})();
 </script>
 <script id="app-js">
 (function(){
