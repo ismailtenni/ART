@@ -1141,11 +1141,11 @@ function init(){
     box.appendChild(h('div',{id:'ed-msg',style:'margin-top:12px;min-height:20px;color:#a8d6ff;font-size:14px',text:msg}));
     if(cur){box.appendChild(workForm(cur.o,cur.n));return}
     var tabs=h('div',{style:'display:flex;gap:10px;margin:18px 0;flex-wrap:wrap'});
-    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
+    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['sec','Security checklist'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
       tabs.appendChild(h('button',{type:'button',style:(tab===t[0]?BTN2:BTN),text:t[1],on:{click:function(){tab=t[0];render()}}}));
     });
     box.appendChild(tabs);
-    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
+    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='sec')renderSecTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
   }
   function renderWorks(){
     box.appendChild(h('button',{type:'button',style:BTN2,text:'+ Add new artwork',on:{click:function(){editing='new';cur={n:true,o:{id:'',title:'',meta:'',series:'',status:'',ratio:'3 / 4',desc:'',cover:'',shots:[],process:[]}};render()}}}));
@@ -1286,6 +1286,43 @@ function init(){
       box.appendChild(row);
     });
     box.appendChild(note1('Tip: you can also press "Click to edit" and use the green bar at the top of every part.'));
+  }
+  var secAuto=null;
+  function renderSecTab(){
+    var S=data.settings;
+    if(!secAuto){box.appendChild(h('p',{style:'color:#9fb0c8',text:'Checking your site ...'}));
+      Promise.all([get('/api/me'),get('/api/admin/ts').catch(function(){return {}}),get('/api/admin/mail').catch(function(){return {}})]).then(function(a){secAuto={twofa:!!a[0].twofa,bot:!!a[1].ready,mail:!!a[2].ready};render()});return}
+    var chk=String(S.secChk||'').split(',').filter(Boolean);
+    var items=[
+      {id:'a1',auto:secAuto.twofa,t:'2-step login on your owner account',d:'Open Account (top of the site) and press Turn on 2-step login.',go:'Open my account',fn:function(){if(window.__acct)window.__acct()}},
+      {id:'a2',auto:secAuto.bot,t:'Robot box on Log in, Sign up and Forgot password',d:'Newsletter tab, Robot protection box. Paste your two Turnstile keys.',go:'Open Turnstile',href:'https://dash.cloudflare.com/?to=/:account/turnstile'},
+      {id:'a3',auto:secAuto.mail,t:'Email for password reset works',d:'Newsletter tab, Email setup box. Paste your Brevo key, then press Send a test email.'},
+      {id:'a4',auto:true,t:'Safety headers on every page',d:'Automatic. Nothing to do.'},
+      {id:'m1',t:'2-step login on your Gmail',d:'Whoever owns this email can reset your site password.',go:'Open Google security',href:'https://myaccount.google.com/security'},
+      {id:'m2',t:'2-step login on GitHub',d:'Settings, Password and authentication.',go:'Open GitHub security',href:'https://github.com/settings/security'},
+      {id:'m3',t:'2-step login on Cloudflare',d:'My Profile, Authentication.',go:'Open Cloudflare',href:'https://dash.cloudflare.com/profile/authentication'},
+      {id:'m4',t:'Bot Fight Mode is ON in Cloudflare',d:'Open your site in Cloudflare, then Security, then Bots, then switch on Bot Fight Mode.',go:'Open Cloudflare',href:'https://dash.cloudflare.com/'},
+      {id:'m5',t:'A different long password on Gmail, GitHub, Cloudflare and this site',d:'Never reuse a password. A password manager helps.'},
+      {id:'m6',t:'Backup downloaded this month',d:'Use the backup button in this panel and keep the file somewhere safe.'}
+    ];
+    var done=items.filter(function(x){return x.auto===undefined?chk.indexOf(x.id)>-1:x.auto}).length;
+    box.appendChild(note1('Tick each step when you finish it. The first four tick themselves. Then press Save at the top.'));
+    var bar=h('div',{style:'max-width:760px;margin:6px 0 18px'});
+    bar.appendChild(h('div',{style:'font-size:30px',text:done+' of '+items.length+' done'}));
+    var tr=h('div',{style:'height:10px;border-radius:99px;background:rgba(255,255,255,0.12);margin-top:8px;overflow:hidden'});
+    tr.appendChild(h('div',{style:'height:100%;width:'+Math.round(done/items.length*100)+'%;background:linear-gradient(90deg,#2fbf7a,#5cbcff)'}));
+    bar.appendChild(tr);box.appendChild(bar);
+    items.forEach(function(x){
+      var on=x.auto===undefined?chk.indexOf(x.id)>-1:x.auto;
+      var row=h('div',{style:'max-width:760px;display:flex;gap:14px;align-items:flex-start;padding:14px;margin-bottom:10px;border-radius:14px;border:1px solid '+(on?'rgba(123,224,166,0.55)':'rgba(190,170,255,0.3)')+';background:'+(on?'rgba(30,120,80,0.15)':'rgba(255,255,255,0.04)')});
+      var cb=h('button',{style:'flex:none;width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,0.5);background:'+(on?'#2fbf7a':'transparent')+';color:#04140c;font-size:18px;cursor:'+(x.auto===undefined?'pointer':'default'),text:on?'✓':'','aria-label':x.t});
+      if(x.auto===undefined)cb.onclick=function(){var l=String(S.secChk||'').split(',').filter(Boolean),i=l.indexOf(x.id);if(i>-1)l.splice(i,1);else l.push(x.id);S.secChk=l.join(',');render()};
+      var body=h('div',{style:'flex:1;min-width:0'});
+      body.appendChild(h('div',{style:'color:#fff;font-size:16px',text:x.t}));
+      body.appendChild(h('div',{style:'color:#b7c4dc;font-size:14px;margin-top:4px;line-height:1.5',text:x.d}));
+      if(x.go&&!on){var g=h(x.href?'a':'button',x.href?{href:x.href,target:'_blank',rel:'noopener noreferrer',style:BTN+';display:inline-block;margin-top:10px;text-decoration:none',text:x.go}:{style:BTN+';margin-top:10px',text:x.go});if(x.fn)g.onclick=x.fn;body.appendChild(g)}
+      row.appendChild(cb);row.appendChild(body);box.appendChild(row);
+    });
   }
   function renderAppsTab(){
     var S=data.settings;

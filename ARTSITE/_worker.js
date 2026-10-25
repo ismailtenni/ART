@@ -190,7 +190,7 @@ const SCH = {
   spotlight: { on: 's3', title: 's100', text: 's800', image: 'img', price: 's40', pay: 'url' },
   ba: { before: 'img', after: 'img', caption: 's100' },
   about: { portrait: 'img', t1: 's700', t2: 's700', t3: 's700', p1: 'img', p2: 'img', p3: 'img', poster: 'img', vurl: 's300' },
-  settings: { payDefault: 'url', payLabel: 's30', noRooms: 's3', ghUser: 's40', ghRepo: 's60', apkUrl: 'url', exeUrl: 'url' },
+  settings: { payDefault: 'url', payLabel: 's30', noRooms: 's3', ghUser: 's40', ghRepo: 's60', apkUrl: 'url', exeUrl: 'url', secChk: 's40' },
   rooms: { name: 's40', img: 'img', x: 'n', y: 'n', cm: 'n' },
   posts: { title: 's100', text: 's6000', image: 'img', date: 's10' },
   challenge: { on: 's3', title: 's100', text: 's800', prize: 's100', deadline: 's10' },
@@ -336,7 +336,7 @@ function ensureSchema(env) {
   return schemaReady;
 }
 
-export default {
+const app = {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (!url.pathname.startsWith('/api/')) {
@@ -911,5 +911,25 @@ export default {
     } catch (e) {
       return json({ error: 'Something went wrong. Please try again.' }, 500);
     }
+  },
+};
+
+// Safety headers on every answer (stops clickjacking, content sniffing and leaking page addresses)
+const SAFE = {
+  'x-content-type-options': 'nosniff',
+  'x-frame-options': 'SAMEORIGIN',
+  'referrer-policy': 'strict-origin-when-cross-origin',
+  'strict-transport-security': 'max-age=31536000; includeSubDomains',
+  'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+  'cross-origin-opener-policy': 'same-origin-allow-popups',
+};
+export default {
+  async fetch(req, env, ctx) {
+    const r = await app.fetch(req, env, ctx);
+    try {
+      const h = new Headers(r.headers);
+      for (const k in SAFE) h.set(k, SAFE[k]);
+      return new Response(r.body, { status: r.status, statusText: r.statusText, headers: h });
+    } catch (e) { return r; }
   },
 };
