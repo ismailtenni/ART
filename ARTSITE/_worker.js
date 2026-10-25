@@ -99,7 +99,7 @@ const SCH = {
   spotlight: { on: 's3', title: 's100', text: 's800', image: 'img', price: 's40', pay: 'url' },
   ba: { before: 'img', after: 'img', caption: 's100' },
   about: { portrait: 'img', t1: 's700', t2: 's700', t3: 's700', p1: 'img', p2: 'img', p3: 'img', poster: 'img', vurl: 's300' },
-  settings: { payDefault: 'url', payLabel: 's30', noRooms: 's3' },
+  settings: { payDefault: 'url', payLabel: 's30', noRooms: 's3', ghUser: 's40', ghRepo: 's60', apkUrl: 'url', exeUrl: 'url' },
   rooms: { name: 's40', img: 'img', x: 'n', y: 'n', cm: 'n' },
   posts: { title: 's100', text: 's6000', image: 'img', date: 's10' },
   challenge: { on: 's3', title: 's100', text: 's800', prize: 's100', deadline: 's10' },

@@ -363,6 +363,7 @@ header nav>a:not([style]):hover::after{transform:scaleX(1)}
 <a href="https://wa.me/212651543275" target="_blank" rel="noopener noreferrer">WhatsApp</a>
 <span id="lang" style="display:inline-flex;gap:4px;align-items:center"></span>
 <span id="acct" style="display:inline-flex;gap:10px;align-items:center"></span>
+<button id="app-btn" type="button" aria-haspopup="dialog"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg><span>Get the app</span></button>
 <a href="https://www.instagram.com/ismailtenni_art/" style="display: inline-block; padding: 11px 22px; border: 1px solid rgba(255,255,255,0.45); border-radius: 999px; background: rgba(10,18,40,0.6); color: #ffffff"><span data-t="follow">Follow on Instagram</span></a>
 </nav>
 </header>
@@ -1070,11 +1071,11 @@ function init(){
     box.appendChild(h('div',{id:'ed-msg',style:'margin-top:12px;min-height:20px;color:#a8d6ff;font-size:14px',text:msg}));
     if(cur){box.appendChild(workForm(cur.o,cur.n));return}
     var tabs=h('div',{style:'display:flex;gap:10px;margin:18px 0;flex-wrap:wrap'});
-    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
+    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
       tabs.appendChild(h('button',{type:'button',style:(tab===t[0]?BTN2:BTN),text:t[1],on:{click:function(){tab=t[0];render()}}}));
     });
     box.appendChild(tabs);
-    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
+    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
   }
   function renderWorks(){
     box.appendChild(h('button',{type:'button',style:BTN2,text:'+ Add new artwork',on:{click:function(){editing='new';cur={n:true,o:{id:'',title:'',meta:'',series:'',status:'',ratio:'3 / 4',desc:'',cover:'',shots:[],process:[]}};render()}}}));
@@ -1215,6 +1216,18 @@ function init(){
       box.appendChild(row);
     });
     box.appendChild(note1('Tip: you can also press "Click to edit" and use the green bar at the top of every part.'));
+  }
+  function renderAppsTab(){
+    var S=data.settings;
+    box.appendChild(note1('A "Get the app" button shows at the top of your site. It lets visitors download your Android app (APK) and your Windows program (EXE). The files are made by GitHub (see the build-apk and build-exe files), and this page only tells your site where to find them.'));
+    box.appendChild(sub('Easy way'));
+    box.appendChild(note1('Type your GitHub username below. Your site then builds the download links by itself. The files must be built first (GitHub → Actions → Run workflow).'));
+    box.appendChild(field1(S,'ghUser','Your GitHub username','ismailtenni'));
+    box.appendChild(field1(S,'ghRepo','Repository name (leave empty if it is ART)','ART'));
+    box.appendChild(sub('Or paste the links yourself (optional)'));
+    box.appendChild(note1('On your GitHub Releases page, press and hold (or right-click) the file name and choose "Copy link address", then paste it here.'));
+    box.appendChild(field1(S,'apkUrl','Android APK link (https://...)','https://github.com/.../ART-ISMAILTENNI.apk'));
+    box.appendChild(field1(S,'exeUrl','Windows EXE link (https://...)','https://github.com/.../ART-ISMAILTENNI.exe'));
   }
   function renderRoomsTab(){
     box.appendChild(note1('The "See it on a wall" button shows your artwork inside a room. Here you can add your own real room photos (living room, bedroom, office, a shop, a cafe ... any photo with an empty wall). For each photo: 1) add the photo, 2) touch the photo where the middle of the frame should hang, 3) write how wide the wall in the photo really is (in cm). The frame then always stays on that wall, even for the biggest size.'));
@@ -2407,6 +2420,112 @@ setTimeout(function(){var i=$('#intro');if(i&&i.parentNode)i.parentNode.removeCh
 }
 })();
 
+</script>
+<script id="app-js">
+(function(){
+try{
+var d=document,w=window,root=d.documentElement,C=w.C||{};
+var S=C.settings||{};
+var D={
+en:{btn:'Get the app',title:'Get the ART-ISMAILTENNI app',sub:'Free. Install it on your phone or computer and open my art in one tap.',
+ and:'Android phone',andd:'Download the APK file, open it and press Install. If Android asks, allow installs from this source.',andb:'Download APK',
+ win:'Windows PC',wind:'Download the program. Open it directly, or use the installer to get a desktop icon.',winb:'Download EXE',wins:'Installer with desktop icon',
+ ios:'iPhone and iPad',iosd:'Open this site in Safari, tap the Share button, then “Add to Home Screen”.',iosb:'Show me how',
+ pwa:'Install from the browser',pwad:'Works on Chrome and Edge, on any computer or Android phone. No file needed.',pwab:'Install now',
+ soon:'Coming soon',you:'Your device',close:'Close',ioshelp:'Safari → Share (square with arrow) → Add to Home Screen → Add'},
+fr:{btn:'Télécharger l’app',title:'Téléchargez l’app ART-ISMAILTENNI',sub:'Gratuit. Installez-la sur votre téléphone ou ordinateur et ouvrez mon art en un geste.',
+ and:'Téléphone Android',andd:'Téléchargez le fichier APK, ouvrez-le et appuyez sur Installer. Si Android demande, autorisez cette source.',andb:'Télécharger l’APK',
+ win:'PC Windows',wind:'Téléchargez le programme. Ouvrez-le directement, ou utilisez l’installateur pour avoir une icône sur le bureau.',winb:'Télécharger l’EXE',wins:'Installateur avec icône de bureau',
+ ios:'iPhone et iPad',iosd:'Ouvrez ce site dans Safari, touchez Partager, puis « Sur l’écran d’accueil ».',iosb:'Voir comment',
+ pwa:'Installer depuis le navigateur',pwad:'Fonctionne sur Chrome et Edge, sur ordinateur ou Android. Aucun fichier.',pwab:'Installer',
+ soon:'Bientôt',you:'Votre appareil',close:'Fermer',ioshelp:'Safari → Partager (carré avec flèche) → Sur l’écran d’accueil → Ajouter'},
+ar:{btn:'حمّل التطبيق',title:'حمّل تطبيق ART-ISMAILTENNI',sub:'مجاني. ثبّته على هاتفك أو حاسوبك وافتح رسوماتي بلمسة واحدة.',
+ and:'هاتف أندرويد',andd:'حمّل ملف APK وافتحه ثم اضغط تثبيت. إذا طلب أندرويد، اسمح بالتثبيت من هذا المصدر.',andb:'تحميل APK',
+ win:'حاسوب ويندوز',wind:'حمّل البرنامج. افتحه مباشرة، أو استعمل المثبّت للحصول على أيقونة على سطح المكتب.',winb:'تحميل EXE',wins:'مثبّت مع أيقونة سطح المكتب',
+ ios:'آيفون وآيباد',iosd:'افتح الموقع في Safari ثم اضغط مشاركة ثم «إضافة إلى الشاشة الرئيسية».',iosb:'أرني الطريقة',
+ pwa:'التثبيت من المتصفح',pwad:'يعمل على Chrome و Edge في أي حاسوب أو هاتف أندرويد. بدون ملف.',pwab:'ثبّت الآن',
+ soon:'قريباً',you:'جهازك',close:'إغلاق',ioshelp:'Safari ← مشاركة ← إضافة إلى الشاشة الرئيسية ← إضافة'}
+};
+function L(){var l=root.getAttribute('lang')||'en';return D[l]?l:'en'}
+function T(k){return D[L()][k]||D.en[k]||''}
+var gh=String(S.ghUser||'').replace(/[^A-Za-z0-9-]/g,''),repo=String(S.ghRepo||'ART').replace(/[^A-Za-z0-9._-]/g,'')||'ART';
+var base=gh?'https://github.com/'+gh+'/'+repo+'/releases/download/':'';
+function https(u){return typeof u==='string'&&/^https:\/\/[^\s"'<>]+$/i.test(u)?u:''}
+var apk=https(S.apkUrl)||(base?base+'apk-latest/ART-ISMAILTENNI.apk':'');
+var exe=https(S.exeUrl)||(base?base+'exe-latest/ART-ISMAILTENNI.exe':'');
+var setup=base?base+'exe-latest/ART-ISMAILTENNI-Setup.exe':'';
+var ua=navigator.userAgent||'',me=/android/i.test(ua)?'and':(/iphone|ipad|ipod/i.test(ua)||(/mac/i.test(ua)&&navigator.maxTouchPoints>1))?'ios':/windows/i.test(ua)?'win':'';
+var dip=null;w.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dip=e});
+
+var st=d.createElement('style');
+st.textContent='#app-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;border:1px solid rgba(255,255,255,.55);background:linear-gradient(90deg,rgba(42,120,170,.95),rgba(110,80,220,.95));color:#fff;font:600 13px/1 inherit;font-family:inherit;letter-spacing:.04em;cursor:pointer;box-shadow:0 0 22px rgba(120,100,255,.55);animation:apPulse 2.6s ease-in-out infinite}'
++'#app-btn:hover{filter:brightness(1.15)}@keyframes apPulse{0%,100%{box-shadow:0 0 14px rgba(120,100,255,.45)}50%{box-shadow:0 0 30px rgba(90,200,255,.75)}}'
++'#app-dl{position:fixed;inset:0;z-index:1500;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(3,4,14,.86);backdrop-filter:blur(6px);overflow-y:auto}'
++'#app-dl .box{position:relative;width:100%;max-width:880px;margin:auto;padding:clamp(20px,3vw,34px);border-radius:22px;border:1px solid rgba(190,170,255,.45);background:linear-gradient(160deg,rgba(24,18,70,.97),rgba(6,10,34,.97));box-shadow:0 30px 90px rgba(70,50,200,.45);color:#fff}'
++'#app-dl h3{margin:0;font-weight:500;font-size:clamp(22px,3vw,30px);letter-spacing:.02em}#app-dl .sub{margin:8px 0 20px;color:#b7c4dc;font-size:15px;line-height:1.5}'
++'#app-dl .x{position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.4);background:rgba(10,14,40,.8);color:#fff;font-size:20px;cursor:pointer}'
++'#app-dl .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}'
++'#app-dl .c{position:relative;display:flex;flex-direction:column;gap:10px;padding:18px;border-radius:18px;border:1px solid rgba(190,170,255,.3);background:rgba(20,26,66,.5)}'
++'#app-dl .c.me{border-color:#7be0a6;box-shadow:0 0 26px rgba(123,224,166,.28)}#app-dl .c .tag{position:absolute;top:-10px;left:14px;padding:3px 10px;border-radius:999px;background:#2fbf7a;color:#04140c;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}'
++'#app-dl .ic{width:44px;height:44px}#app-dl .c h4{margin:0;font-size:18px;font-weight:600}#app-dl .c p{margin:0;color:#b7c4dc;font-size:14px;line-height:1.5;flex:1}'
++'#app-dl .b{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.45);background:linear-gradient(90deg,rgba(30,140,90,.85),rgba(20,90,70,.85));color:#fff;font:600 14px/1.2 inherit;font-family:inherit;text-decoration:none;cursor:pointer}'
++'#app-dl .b.v{background:linear-gradient(90deg,rgba(42,120,170,.9),rgba(90,70,190,.9))}#app-dl .b.off{opacity:.5;pointer-events:none}#app-dl .l{font-size:13px;color:#a8d6ff;text-align:center;text-decoration:underline}'
++'#app-dl .help{display:none;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07);color:#e8eefc;font-size:13px;line-height:1.5}';
+d.head.appendChild(st);
+
+var ICON={
+ and:'<svg class="ic" viewBox="0 0 48 48"><path d="M10 30a14 14 0 0 1 28 0z" fill="#7be0a6"/><circle cx="19" cy="24" r="1.7" fill="#06140e"/><circle cx="29" cy="24" r="1.7" fill="#06140e"/><path d="M15 15l-3-4M33 15l3-4" stroke="#7be0a6" stroke-width="2.4" stroke-linecap="round"/><rect x="10" y="32" width="28" height="9" rx="3" fill="#7be0a6" opacity=".35"/></svg>',
+ win:'<svg class="ic" viewBox="0 0 48 48"><path d="M6 10l15-2v16H6zM23 8l19-3v19H23zM6 26h15v15L6 39zM23 26h19v19l-19-3z" fill="#5cbcff"/></svg>',
+ ios:'<svg class="ic" viewBox="0 0 48 48"><path d="M30 8c0 3-2 6-5 7-.3-3 2-6 5-7zM37 33c-1 3-3 6-5 7-2 1-3-1-5-1s-3 2-5 1c-3-1-8-8-8-14 0-5 3-8 6-8 2 0 4 1 5 1s3-1 6-1c1 0 4 0 6 3-5 3-4 9 0 12z" fill="#d6ccff"/></svg>',
+ pwa:'<svg class="ic" viewBox="0 0 48 48"><rect x="7" y="9" width="34" height="24" rx="3" fill="none" stroke="#ffd98a" stroke-width="3"/><path d="M17 41h14M24 33v8" stroke="#ffd98a" stroke-width="3" stroke-linecap="round"/><path d="M24 14v12m0 0l-5-5m5 5l5-5" stroke="#ffd98a" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+};
+function card(id,title,desc,btns){
+  var c=d.createElement('div');c.className='c'+(me===id?' me':'');
+  if(me===id){var tg=d.createElement('span');tg.className='tag';tg.textContent=T('you');c.appendChild(tg)}
+  c.insertAdjacentHTML('beforeend',ICON[id]);
+  var h=d.createElement('h4');h.textContent=title;c.appendChild(h);
+  var p=d.createElement('p');p.textContent=desc;c.appendChild(p);
+  btns.forEach(function(b){c.appendChild(b)});
+  return c;
+}
+function link(href,text,cls){
+  var a=d.createElement(href?'a':'span');a.className='b '+(cls||'')+(href?'':' off');
+  if(href){a.href=href;a.target='_blank';a.rel='noopener noreferrer';a.setAttribute('download','')}
+  a.textContent=href?'⬇  '+text:T('soon');return a;
+}
+var ov=d.createElement('div');ov.id='app-dl';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');
+d.body.appendChild(ov);
+function build(){
+  ov.innerHTML='';
+  var box=d.createElement('div');box.className='box';
+  var x=d.createElement('button');x.type='button';x.className='x';x.setAttribute('aria-label',T('close'));x.textContent='✕';x.addEventListener('click',close);box.appendChild(x);
+  var h=d.createElement('h3');h.textContent=T('title');box.appendChild(h);
+  var sub=d.createElement('div');sub.className='sub';sub.textContent=T('sub');box.appendChild(sub);
+  var g=d.createElement('div');g.className='g';
+  var order=me==='ios'?['ios','and','win','pwa']:me==='and'?['and','pwa','win','ios']:['win','and','ios','pwa'];
+  var cards={
+    and:card('and',T('and'),T('andd'),[link(apk,T('andb'))]),
+    win:(function(){var b=[link(exe,T('winb'))];if(setup){var s2=d.createElement('a');s2.className='l';s2.href=setup;s2.target='_blank';s2.rel='noopener noreferrer';s2.textContent=T('wins');b.push(s2)}return card('win',T('win'),T('wind'),b)})(),
+    ios:(function(){var hp=d.createElement('div');hp.className='help';hp.textContent=T('ioshelp');
+      var b=d.createElement('button');b.type='button';b.className='b v';b.textContent=T('iosb');b.addEventListener('click',function(){hp.style.display=hp.style.display==='block'?'none':'block'});
+      if(me==='ios')hp.style.display='block';return card('ios',T('ios'),T('iosd'),[b,hp])})(),
+    pwa:(function(){var b=d.createElement('button');b.type='button';b.className='b v';b.textContent=T('pwab');
+      b.addEventListener('click',function(){if(dip){dip.prompt();dip=null}else{alert(T('ioshelp'))}});return card('pwa',T('pwa'),T('pwad'),[b])})()
+  };
+  order.forEach(function(k){g.appendChild(cards[k])});
+  box.appendChild(g);ov.appendChild(box);
+}
+function open(){build();ov.style.display='flex';d.body.style.overflow='hidden'}
+function close(){ov.style.display='none';d.body.style.overflow=''}
+ov.addEventListener('click',function(e){if(e.target===ov)close()});
+d.addEventListener('keydown',function(e){if(e.key==='Escape'&&ov.style.display==='flex')close()});
+function label(){var b=d.getElementById('app-btn');if(b)b.querySelector('span').textContent=T('btn')}
+var btn=d.getElementById('app-btn');
+if(btn){btn.addEventListener('click',open);label()}
+d.addEventListener('click',function(e){var t=e.target.closest&&e.target.closest('#ins');if(t){e.preventDefault();e.stopImmediatePropagation();open()}},true);
+new MutationObserver(function(){label();if(ov.style.display==='flex')build()}).observe(root,{attributes:true,attributeFilter:['lang']});
+}catch(err){try{console.warn('app off',err)}catch(_){}}
+})();
 </script>
 <script id="meteor-js">
 (function(){
