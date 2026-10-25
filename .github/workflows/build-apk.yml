@@ -25,8 +25,13 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Install Android tools
-        uses: android-actions/setup-android@v3
+      - name: Prepare Android tools
+        run: |
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          [ -x "$SDKM" ] || SDKM="$(command -v sdkmanager)"
+          yes | "$SDKM" --licenses > /dev/null || true
+          "$SDKM" "platforms;android-34" "build-tools;34.0.0"
+          echo "sdk.dir=$ANDROID_HOME" > ANDROID-APP/local.properties
 
       - name: Install Gradle
         uses: gradle/actions/setup-gradle@v4
