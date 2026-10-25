@@ -190,7 +190,8 @@ const SCH = {
   spotlight: { on: 's3', title: 's100', text: 's800', image: 'img', price: 's40', pay: 'url' },
   ba: { before: 'img', after: 'img', caption: 's100' },
   about: { portrait: 'img', t1: 's700', t2: 's700', t3: 's700', p1: 'img', p2: 'img', p3: 'img', poster: 'img', vurl: 's300' },
-  settings: { payDefault: 'url', payLabel: 's30', noRooms: 's3', ghUser: 's40', ghRepo: 's60', apkUrl: 'url', exeUrl: 'url', secChk: 's40' },
+  settings: { payDefault: 'url', payLabel: 's30', noRooms: 's3', ghUser: 's40', ghRepo: 's60', apkUrl: 'url', exeUrl: 'url', secChk: 's40', giftOn: 's3', giftTitle: 's60', giftText: 's200', giftImg: 'img', giftCode: 's30' },
+  buyers: { photo: 'img', name: 's40', place: 's40', size: 's30', text: 's200', toast: 's3' },
   rooms: { name: 's40', img: 'img', x: 'n', y: 'n', cm: 'n' },
   posts: { title: 's100', text: 's6000', image: 'img', date: 's10' },
   challenge: { on: 's3', title: 's100', text: 's800', prize: 's100', deadline: 's10' },
@@ -217,7 +218,7 @@ function cleanContent(b) {
     let id = str(w.id, 40);
     if (!WORK.test(id)) id = 'w' + Date.now().toString(36) + i;
     return { id, series: str(w.series, 40), title: str(w.title, 100), meta: str(w.meta, 100), desc: str(w.desc, 2000),
-      ratio: RATIOS.includes(w.ratio) ? w.ratio : '3 / 4', status: str(w.status, 24), cover: w.cover,
+      ratio: RATIOS.includes(w.ratio) ? w.ratio : '3 / 4', status: str(w.status, 40), cover: w.cover,
       price: str(w.price, 40).trim(), pay: (() => { const u = str(w.pay, 300).trim(); return /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : ''; })(),
       shots: cleanShots(w.shots, 30), process: cleanShots(w.process, 30) };
   }).filter(Boolean);
@@ -254,6 +255,7 @@ function cleanContent(b) {
     spotlight: cleanRow(b.spotlight, SCH.spotlight),
     ba: cleanRow(b.ba, SCH.ba),
     bamore: cleanList(b.bamore, SCH.ba, 6, ['before', 'after']),
+    buyers: cleanList(b.buyers, SCH.buyers, 12, ['photo']),
     about: (() => { const a = cleanRow(b.about, SCH.about); const v = cleanFilm({ url: a.vurl }); if (v) a.video = v; return a; })(),
     settings: cleanRow(b.settings, SCH.settings),
     posts: cleanList(b.posts, SCH.posts, 80, ['title']),
@@ -451,7 +453,7 @@ const app = {
         let list = []; try { list = JSON.parse((row && row.v) || '[]'); } catch (e) {}
         const o = code && list.find((x) => String(x.code || '').toUpperCase() === code);
         if (!o) return json({ error: 'Not found' }, 404);
-        return json({ name: o.name || '', stage: Math.min(5, Math.max(1, +o.stage || 1)), note: o.note || '' });
+        return json({ name: o.name || '', stage: Math.min(5, Math.max(1, +o.stage || 1)), note: o.note || '', photos: Array.isArray(o.photos) ? o.photos.slice(0, 6) : [] });
       }
       if (url.pathname === '/api/admin/orders' && req.method === 'GET') {
         const me = await currentUser(env, req);
@@ -861,6 +863,7 @@ const app = {
         const list = (Array.isArray(body.orders) ? body.orders : []).slice(0, 300).map((o) => ({
           code: str(o && o.code, 30).trim().toUpperCase(), name: str(o && o.name, 60).trim(),
           stage: Math.min(5, Math.max(1, parseInt(o && o.stage, 10) || 1)), note: str(o && o.note, 300).trim(),
+          photos: cleanShots(o && o.photos, 6),
         })).filter((o) => o.code);
         await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('orders', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at")
           .bind(JSON.stringify(list), Date.now()).run();

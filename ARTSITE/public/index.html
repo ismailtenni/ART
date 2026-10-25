@@ -210,6 +210,11 @@ header nav>a:not([style]):hover::after{transform:scaleX(1)}
 
 </style>
 <style id="perf-css">
+#mx-wall-x{}.mx-badge.hot{background:rgba(255,90,90,.22)!important;border-color:#ff9a9a!important;color:#ffd6d6!important}
+#mx-wroom button.own{border-style:dashed;color:#d6ccff}
+#mx-wown{max-width:520px;margin:10px 0 0;padding:12px 14px;border-radius:14px;border:1px solid rgba(190,170,255,.35);background:rgba(20,26,66,.45);font-size:14px;color:#c4d0e6;line-height:1.5}
+#mx-wown label{display:block;margin-top:8px}#mx-wown input{display:block;width:100%;margin-top:6px}
+#mx-wall.own .fr{cursor:grab;touch-action:none}#mx-wall .fr.drag{transition:none!important;cursor:grabbing}
 /* speed: move star drifting from repainting (background-position) to GPU moves (transform) */
 @keyframes starDrift{to{transform:translate3d(-600px,600px,0)}}
 @keyframes starDrift2{to{transform:translate3d(900px,-900px,0)}}
@@ -446,7 +451,11 @@ html.lite *{backdrop-filter:none!important;-webkit-backdrop-filter:none!importan
 <h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff"><span data-t="f_title">Process and motion</span></h2>
 <div id="g-films" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; margin-top: 40px; max-width: 1200px"></div>
 </section>
-<script>function CHIP(w){return w.status?'<span style="position:absolute;top:12px;left:12px;padding:5px 12px;border-radius:999px;background:rgba(10,14,40,0.82);border:1px solid rgba(190,170,255,0.6);color:#fff;font-size:11px;letter-spacing:0.14em;text-transform:uppercase">'+String(w.status).replace(/[&<>"]/g,'')+'</span>':''}</script>
+<script>
+var STL={fr:{'Available':'Disponible','Sold':'Vendu','Commission':'Sur commande','Not for sale':'Pas à vendre','Original · not for sale':'Original · pas à vendre','Original · for sale':'Original · à vendre','Print · copy, not original':'Tirage · copie, pas l’original','Limited print · copy':'Tirage limité · copie'},
+ ar:{'Available':'متوفر','Sold':'مباع','Commission':'بالطلب','Not for sale':'غير معروض للبيع','Original · not for sale':'أصلية · غير معروضة للبيع','Original · for sale':'أصلية · للبيع','Print · copy, not original':'نسخة مطبوعة · ليست الأصلية','Limited print · copy':'نسخة مطبوعة محدودة'}};
+function STT(v){var l=document.documentElement.getAttribute('lang')||'en';return (STL[l]&&STL[l][v])||v}
+function CHIP(w){return w.status?'<span style="position:absolute;top:12px;left:12px;padding:5px 12px;border-radius:999px;background:rgba(10,14,40,0.82);border:1px solid rgba(190,170,255,0.6);color:#fff;font-size:11px;letter-spacing:0.14em;text-transform:uppercase">'+String(STT(w.status)).replace(/[&<>"]/g,'')+'</span>':''}</script>
 <div id="vw" role="dialog" aria-modal="true" aria-label="Details" style="display: none; position: fixed; inset: 0; z-index: 1000; overflow-y: auto; background: rgba(3,4,14,0.93); padding: 24px clamp(14px, 3vw, 40px); box-sizing: border-box">
 <div id="vw-in" style="position: relative; width: 100%; max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 32px">
 <button id="vw-x" aria-label="Close" style="position: absolute; top: -4px; right: 0; z-index: 3; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.4); background: rgba(10,14,40,0.8); color: #fff; font-size: 22px; cursor: pointer">&#10005;</button>
@@ -539,6 +548,7 @@ document.getElementById('vw-img').onclick=function(){zoom=!zoom;this.style.cssTe
 <section id="blog" class="mx-sec"><div class="mx-lab"><span data-z="bl_label">Blog</span></div><h2><span data-z="bl_title">From my sketchbook</span></h2><div class="bl-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:40px;max-width:1100px"></div></section>
 <section id="wallpapers" class="mx-sec"><div class="mx-lab"><span data-y="wp_label">Free wallpapers</span></div><h2><span data-y="wp_title">Take my art with you</span></h2><p class="mx-p"><span data-y="wp_intro">A free phone wallpaper from each artwork.</span></p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:20px;margin-top:40px;max-width:900px"><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:9/16;font-size:13px"><span data-y="wp_soon">Coming soon</span></div><span class="mx-btn v" aria-disabled="true"><span data-y="wp_dl">Download</span></span></div><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:9/16;font-size:13px"><span data-y="wp_soon">Coming soon</span></div><span class="mx-btn v" aria-disabled="true"><span data-y="wp_dl">Download</span></span></div><div class="mx-card art-card"><div class="mx-ph bob" style="aspect-ratio:9/16;font-size:13px"><span data-y="wp_soon">Coming soon</span></div><span class="mx-btn v" aria-disabled="true"><span data-y="wp_dl">Download</span></span></div></div></section>
 <section id="instagram" class="mx-sec"><div class="mx-lab"><span data-y="ig_label">Instagram</span></div><h2><span data-y="ig_title">Latest from @ismailtenni_art</span></h2><div id="ig-wrap" class="ig-wrap"><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a><a class="mx-ph bob" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer" style="aspect-ratio:1/1;text-decoration:none;color:#9fb0c8;font-size:13px"><span data-y="ig_post">Post</span></a></div><a class="mx-btn v" style="margin-top:28px" href="https://www.instagram.com/ismailtenni_art/" target="_blank" rel="noopener noreferrer"><span data-y="ig_btn">See more on Instagram</span></a></section>
+<section id="buyers" class="mx-sec" style="display:none"><div class="mx-lab"><span data-sell="rw_l">Real walls</span></div><h2><span data-sell="rw_t">My art in your homes</span></h2><p class="mx-p"><span data-sell="rw_p">Photos from people who hung my art on their walls.</span></p><div id="buyers-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-top:28px;max-width:1100px"></div></section>
 <section id="reviews" style="max-width: 1440px; margin: 0 auto; box-sizing: border-box; padding: clamp(72px, 10vw, 140px) clamp(20px, 4vw, 48px) 0">
 <div style="font-size: 13px; letter-spacing: 0.3em; text-transform: uppercase; color: #c4a0ff"><span data-t="r_label">Reviews</span></div>
 <h2 style="margin: 16px 0 0; font-weight: 400; font-size: clamp(32px, 4vw, 52px); line-height: 1.15; color: #ffffff"><span data-t="r_title">What my clients say</span></h2>
@@ -715,7 +725,7 @@ if(ser.length>0){var bar=document.createElement('div');bar.style.cssText='displa
 var nf=document.getElementById('nf');
 if(nf)nf.onsubmit=function(e){e.preventDefault();var m=document.getElementById('nm');m.textContent='';
  fetch('/api/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:document.getElementById('ne').value})})
- .then(function(r){return r.json().then(function(d){return{ok:r.ok,d:d}})}).then(function(x){if(x.ok){m.textContent='Thank you! You are on the list.';nf.reset()}else m.textContent=x.d.error||'Not available yet.'})
+ .then(function(r){return r.json().then(function(d){return{ok:r.ok,d:d}})}).then(function(x){if(x.ok){m.textContent='Thank you! You are on the list.';nf.reset();if(window.__gift)window.__gift(m)}else m.textContent=x.d.error||'Not available yet.'})
  .catch(function(){m.textContent='Not available yet.'})};
 var saved=null;try{saved=localStorage.getItem('lang')}catch(e){}
 if(saved&&DICT[saved])apply(saved);else apply('en');
@@ -789,9 +799,10 @@ function show(o){
   if(!o){box.innerHTML='<div class="nf"></div>';box.firstChild.textContent=T('tr_nf','');return}
   var h='<div class="who"></div><div class="mx-steps">';
   for(var i=1;i<=5;i++)h+='<div class="'+(i<=o.stage?'on':'')+(i===o.stage?' now':'')+'">'+T('s'+i,'')+'</div>';
-  h+='</div>'+(o.note?'<div class="note"></div>':'');
+  h+='</div>'+(o.note?'<div class="note"></div>':'')+((o.photos&&o.photos.length)?'<div class="trp" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:18px;max-width:760px"></div>':'');
   box.innerHTML=h;box.querySelector('.who').textContent=o.name||'';
   var n=box.querySelector('.note');if(n)n.textContent=o.note;
+  var tp=box.querySelector('.trp');if(tp)(o.photos||[]).forEach(function(q){if(!q||!/^\/api\/media\/[a-f0-9]{8,32}$/.test(q.src))return;var f=d.createElement('figure');f.style.cssText='margin:0';var a=d.createElement('a');a.href=q.src;a.target='_blank';a.rel='noopener noreferrer';var im=d.createElement('img');im.src=q.src;im.alt=q.label||'';im.loading='lazy';im.style.cssText='display:block;width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;border:1px solid rgba(190,170,255,.35)';a.appendChild(im);f.appendChild(a);if(q.label){var c=d.createElement('figcaption');c.textContent=q.label;c.style.cssText='margin-top:6px;font-size:13px;color:#b7c4dc';f.appendChild(c)}tp.appendChild(f)});
 }
 function lookup(v){
   return fetch('/api/order?code='+encodeURIComponent(v),{credentials:'same-origin'}).then(function(r){
@@ -880,7 +891,7 @@ fetch('/api/me',{credentials:'same-origin'}).then(function(r){return r.json()}).
 function init(){
   var data={works:clone(w.C&&w.C.works),photos:clone(w.C&&w.C.photos),films:clone(w.C&&w.C.films),texts:JSON.parse(JSON.stringify((w.C&&w.C.texts)||{}))};
   var textsInfo=null;
-  ['shop','gifts','reviews','behind','wallpapers','timelapse','prints','bamore'].forEach(function(k){data[k]=clone(w.C&&w.C[k])});
+  ['shop','gifts','reviews','behind','wallpapers','timelapse','prints','bamore','buyers'].forEach(function(k){data[k]=clone(w.C&&w.C[k])});
   data.pricing=JSON.parse(JSON.stringify((w.C&&w.C.pricing)||{}));data.pricing.sizes=data.pricing.sizes||[];data.pricing.styles=data.pricing.styles||[];
   data.imgs=JSON.parse(JSON.stringify((w.C&&w.C.imgs)||{}));data.rooms=JSON.parse(JSON.stringify((w.C&&w.C.rooms)||[]));if(w.C){w.C.layout=(w.C.layout&&typeof w.C.layout==='object')?w.C.layout:{};w.C.layout.order=w.C.layout.order||[];w.C.layout.hidden=w.C.layout.hidden||[];data.layout=w.C.layout}else data.layout={order:[],hidden:[]};
   data.posts=JSON.parse(JSON.stringify((w.C&&w.C.posts)||[]));
@@ -1106,7 +1117,7 @@ function init(){
     field('Collection (Portraits, Fantasy, Space ...)','series','Portraits');
     field('Price (optional, shown with a Buy button)','price','$120');
     field('Payment link for this artwork (optional)','pay','https://paypal.me/...');
-    var st=h('select',{style:INP});['','Available','Sold','Commission','Not for sale'].forEach(function(v){var op=h('option',{value:v,text:v||'No label'});if(o.status===v)op.selected=true;st.appendChild(op)});
+    var st=h('select',{style:INP});['','Available','Sold','Commission','Not for sale','Original · not for sale','Original · for sale','Print · copy, not original','Limited print · copy'].forEach(function(v){var op=h('option',{value:v,text:v||'No label'});if(o.status===v)op.selected=true;st.appendChild(op)});
     st.addEventListener('change',function(){o.status=st.value});f.appendChild(h('label',{style:LAB,text:'Label on the picture'}));f.appendChild(st);
     var ra=h('select',{style:INP});[['3 / 4','Tall (3:4)'],['4 / 5','Tall (4:5)'],['2 / 3','Very tall (2:3)'],['1 / 1','Square'],['4 / 3','Wide (4:3)'],['16 / 9','Very wide (16:9)']].forEach(function(p){var op=h('option',{value:p[0],text:p[1]});if((o.ratio||'3 / 4')===p[0])op.selected=true;ra.appendChild(op)});
     ra.addEventListener('change',function(){o.ratio=ra.value});f.appendChild(h('label',{style:LAB,text:'Shape of the card'}));f.appendChild(ra);
@@ -1141,11 +1152,11 @@ function init(){
     box.appendChild(h('div',{id:'ed-msg',style:'margin-top:12px;min-height:20px;color:#a8d6ff;font-size:14px',text:msg}));
     if(cur){box.appendChild(workForm(cur.o,cur.n));return}
     var tabs=h('div',{style:'display:flex;gap:10px;margin:18px 0;flex-wrap:wrap'});
-    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['sec','Security checklist'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
+    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['buyers','Real walls'],['gift','Free gift'],['sec','Security checklist'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
       tabs.appendChild(h('button',{type:'button',style:(tab===t[0]?BTN2:BTN),text:t[1],on:{click:function(){tab=t[0];render()}}}));
     });
     box.appendChild(tabs);
-    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='sec')renderSecTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
+    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='buyers')renderBuyersTab();else if(tab==='gift')renderGiftTab();else if(tab==='sec')renderSecTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
   }
   function renderWorks(){
     box.appendChild(h('button',{type:'button',style:BTN2,text:'+ Add new artwork',on:{click:function(){editing='new';cur={n:true,o:{id:'',title:'',meta:'',series:'',status:'',ratio:'3 / 4',desc:'',cover:'',shots:[],process:[]}};render()}}}));
@@ -1286,6 +1297,21 @@ function init(){
       box.appendChild(row);
     });
     box.appendChild(note1('Tip: you can also press "Click to edit" and use the green bar at the top of every part.'));
+  }
+  function renderBuyersTab(){
+    box.appendChild(note1('Show photos of real people with your art on their wall. A new section called "My art in your homes" appears on your site as soon as you add one. Only add REAL buyers and real photos. Tip: ask the buyer on WhatsApp for a photo and their OK to show it.'));
+    box.appendChild(note1('To also show a small "just bought" pop-up for a buyer, write a size in "What they bought" and type yes in the pop-up box. It shows their first name, city and size, so use only what they allowed.'));
+    box.appendChild(listEd(data.buyers,[{k:'photo',l:'Photo of the art on their wall',t:'img',max:1400},{k:'name',l:'First name (optional)',p:'Sara'},{k:'place',l:'City or country (optional)',p:'Paris'},{k:'size',l:'What they bought',p:'A3 print'},{k:'text',l:'What they said (optional)',p:'It looks amazing in my living room.',t:'area'},{k:'toast',l:'Show in the "just bought" pop-up? (type yes)',p:'yes'}],'+ Add a buyer photo'));
+  }
+  function renderGiftTab(){
+    var S=data.settings;
+    box.appendChild(note1('A free gift for people who join your newsletter. It shows above the sign-up box, and after they join they get the download and/or a code. Type yes below to turn it on. Everyone can see the gift file link, so use a wallpaper or a small printable, not something you sell.'));
+    box.appendChild(field1(S,'giftOn','Turn on? (type yes)','yes'));
+    box.appendChild(field1(S,'giftTitle','Gift name','Free space wallpaper pack'));
+    box.appendChild(field1(S,'giftText','Short sentence (optional)','Plus 10% off your first print.',true));
+    box.appendChild(img1(S,'giftImg','Gift picture to download (optional)',2000));
+    box.appendChild(field1(S,'giftCode','Discount code (optional)','ART10'));
+    box.appendChild(note1('Press Save and publish at the top. Then try the sign-up box on your site with an email to see what members get.'));
   }
   var secAuto=null;
   function renderSecTab(){
@@ -1438,6 +1464,7 @@ function init(){
       st.addEventListener('change',function(){o.stage=+st.value});
       card.appendChild(h('div',{style:'max-width:760px'},[h('label',{style:LAB,text:'Stage'}),st]));
       card.appendChild(field1(o,'note','Note for the client (optional)','',true));
+      o.photos=o.photos||[];card.appendChild(h('div',{style:'margin-top:10px;color:#9fb0c8;font-size:13px',text:'Progress photos (the client sees them under the steps):'}));card.appendChild(listEd(o.photos,[{k:'src',l:'Progress photo',t:'img',max:1400},{k:'label',l:'Caption (optional)',p:'Sketch is done'}],'+ Add a progress photo'));
       card.appendChild(h('div',{style:'margin-top:14px'},[h('button',{type:'button',style:BTNR,text:'Delete',on:{click:function(){data.orders.splice(i,1);render()}}})]));
       box.appendChild(card);
     });
@@ -1830,7 +1857,42 @@ if(vb&&img){
       var sp=d.createElement('span');if(r.k){sp.setAttribute('data-x',r.k);sp.textContent=r.n}else sp.textContent=r.n;
       b.appendChild(sp);rm.appendChild(b);
     });
+    var ob=d.createElement('button');ob.type='button';ob.className='own';ob.textContent=ownT('up');
+    var fi=d.createElement('input');fi.type='file';fi.accept='image/*';fi.style.display='none';
+    ob.addEventListener('click',function(){fi.click()});
+    fi.addEventListener('change',function(){if(fi.files&&fi.files[0])loadOwn(fi.files[0]);fi.value=''});
+    rm.appendChild(ob);rm.appendChild(fi);
   }
+  var ownRoom=null,drag=false;
+  var OWN={en:{up:'+ Use my own wall',mine:'My wall',hint:'Your photo stays on your device, it is not uploaded. Drag the frame to move it.',wid:'Width of my wall (cm)'},
+   fr:{up:'+ Mon propre mur',mine:'Mon mur',hint:'Votre photo reste sur votre appareil, elle n’est pas envoyée. Glissez le cadre pour le déplacer.',wid:'Largeur de mon mur (cm)'},
+   ar:{up:'+ جداري أنا',mine:'جداري',hint:'صورتك تبقى على جهازك ولا يتم رفعها. اسحب الإطار لتحريكه.',wid:'عرض الجدار (سم)'}};
+  function ownT(k){return (OWN[root.getAttribute('lang')||'en']||OWN.en)[k]||OWN.en[k]}
+  var ownCtl=d.createElement('div');ownCtl.id='mx-wown';ownCtl.style.display='none';
+  ownCtl.innerHTML='<div class="h"></div><label><span class="w"></span> <b class="v">300</b><input type="range" min="100" max="700" step="10" value="300"></label>';
+  rm.parentNode.insertBefore(ownCtl,rm.nextSibling);
+  var ownRg=ownCtl.querySelector('input'),ownV=ownCtl.querySelector('.v');
+  function ownUi(){var r=rooms[ri];var show=!!(on&&r&&r.own);ownCtl.style.display=show?'block':'none';wall.classList.toggle('own',show);
+    if(show){ownCtl.querySelector('.h').textContent=ownT('hint');ownCtl.querySelector('.w').textContent=ownT('wid');ownRg.value=r.cm;ownV.textContent=Math.round(r.cm)}}
+  ownRg.addEventListener('input',function(){var r=rooms[ri];if(r&&r.own){r.cm=+ownRg.value;ownV.textContent=ownRg.value;place()}});
+  function loadOwn(file){
+    if(!file||!/^image\//.test(file.type))return;
+    var url=URL.createObjectURL(file),im=new Image();
+    im.onload=function(){
+      var k=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight)),c=d.createElement('canvas');
+      c.width=Math.max(1,Math.round(im.naturalWidth*k));c.height=Math.max(1,Math.round(im.naturalHeight*k));
+      c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(url);
+      var src=c.toDataURL('image/jpeg',0.9);
+      if(!ownRoom){ownRoom={n:ownT('mine'),own:true,x:50,y:38,z:[3,3,97,97],cm:300};rooms.push(ownRoom)}
+      ownRoom.img=src;ownRoom.x=50;ownRoom.y=38;ownRoom.cm=300;
+      ri=rooms.indexOf(ownRoom);buildRooms();setRoom(ri);
+    };
+    im.onerror=function(){URL.revokeObjectURL(url)};im.src=url;
+  }
+  fr.addEventListener('pointerdown',function(e){var r=rooms[ri];if(!(r&&r.own))return;e.preventDefault();drag=true;fr.classList.add('drag');try{fr.setPointerCapture(e.pointerId)}catch(x){}});
+  fr.addEventListener('pointermove',function(e){if(!drag)return;var r=rooms[ri],b=wall.getBoundingClientRect();if(!(r&&r.own&&b.width))return;r.x=(e.clientX-b.left)/b.width*100;r.y=(e.clientY-b.top)/b.height*100;place()});
+  function endDrag(){drag=false;fr.classList.remove('drag')}
+  fr.addEventListener('pointerup',endDrag);fr.addEventListener('pointercancel',endDrag);
   function buildSizes(){
     sz.innerHTML='<span data-x="wl_size">Size</span>';
     sizes.forEach(function(s,i){
@@ -1897,7 +1959,7 @@ if(vb&&img){
   function setRoom(i){
     ri=i;var r=rooms[i];
     bg.onload=function(){if(bg.naturalWidth&&bg.naturalHeight){R=bg.naturalWidth/bg.naturalHeight;wall.style.setProperty('--ar',R);wall.style.aspectRatio=R}place()};
-    bg.src=r.img;if(bg.complete&&bg.naturalWidth)bg.onload();
+    bg.src=r.img;if(bg.complete&&bg.naturalWidth)bg.onload();ownUi();
   }
   function sync(){pic.onload=place;pic.src=img.src;if(pic.complete&&pic.naturalWidth)place()}
   function set(v){
@@ -1905,10 +1967,10 @@ if(vb&&img){
     sz.style.display=v?'flex':'none';rm.style.display=v?'flex':'none';info.style.display=v?'flex':'none';
     btn.firstChild.setAttribute('data-x',v?'wl_back':'wl_btn');
     btn.firstChild.setAttribute('data-xen',v?'Back to artwork':'See it on a wall');tr();
-    if(v){buildRooms();buildSizes();setRoom(ri);sync()}else{info.innerHTML='';hl()}
+    if(v){buildRooms();buildSizes();setRoom(ri);sync()}else{info.innerHTML='';hl();ownUi()}
   }
   btn.addEventListener('click',function(){set(!on)});
-  rm.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;
+  rm.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b||!b.hasAttribute('data-i'))return;
     var i=+b.getAttribute('data-i');Array.prototype.forEach.call(rm.querySelectorAll('button'),function(x){x.classList.toggle('on',x===b)});setRoom(i)});
   sz.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button');if(!b)return;
     si=+b.getAttribute('data-s');Array.prototype.forEach.call(sz.querySelectorAll('button'),function(x){x.classList.toggle('on',x===b)});place()});
@@ -1971,10 +2033,10 @@ function renderShop(){
     card.appendChild(p.photo&&ok(p.photo)?el('div',{style:'aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:#07091a'},[img(p.photo,p.name)]):ph(p.name||'',"aspect-ratio:1/1"));
     card.appendChild(el('div',{'class':'t',text:p.name||''}));
     var edition=+p.edition>0,left=(p.left==null?null:+p.left);
-    if(edition){var out=left===0;card.appendChild(el('div',{},[el('span',{'class':'mx-badge'+(out?' out':''),text:out?T('sh_out'):T('sh_lim')+(left!=null?' · '+left+' '+T('sh_left'):' · '+p.edition)})]))}
+    if(edition){var out=left===0;card.appendChild(el('div',{},[el('span',{'class':'mx-badge'+(out?' out':'')+((left!=null&&left>0&&left<=3)?' hot':''),text:out?T('sh_out'):T('sh_lim')+(left!=null?' · '+left+' '+T('sh_left'):' · '+p.edition)})]))}
     card.appendChild(el('div',{'class':'d',text:p.price||T('sh_soon')}));
     var ends=(p.ends&&/^\d{4}-\d{2}-\d{2}$/.test(p.ends))?Date.parse(p.ends+'T23:59:59'):0,closed=ends&&Date.now()>ends;
-    if(ends&&!closed){var dl=Math.max(1,Math.ceil((ends-Date.now())/864e5));card.appendChild(el('div',{},[el('span',{'class':'mx-badge',text:'⏳ '+dl+' '+T('ch_days')})]))}
+    if(ends&&!closed){var cdb=el('span',{'class':'mx-badge cd','data-end':String(ends)});cdb.textContent=cdText(ends,T);card.appendChild(el('div',{},[cdb]))}
     if(closed&&!(edition&&left===0))card.appendChild(el('div',{},[el('span',{'class':'mx-badge out',text:T('sh_out')})]));
     var sold=(edition&&left===0)||closed;
     if(sold)card.appendChild(waitForm(p.name||'Product'));
@@ -1985,6 +2047,14 @@ function renderShop(){
     g.appendChild(card);
   });
 }
+var CDL={en:'Closes in',fr:'Se termine dans',ar:'ينتهي خلال'};
+function cdText(ends,T){
+  var ms=ends-Date.now();if(ms<=0)return '';
+  var dd=Math.floor(ms/864e5),hh=Math.floor(ms%864e5/36e5),mm=Math.floor(ms%36e5/6e4);
+  if(dd>=3)return '⏳ '+dd+' '+T('ch_days');
+  return '⏳ '+(CDL[root.getAttribute('lang')||'en']||CDL.en)+' '+(dd?dd+'d ':'')+hh+'h '+mm+'m';
+}
+if(!window.__cdTick){window.__cdTick=setInterval(function(){document.querySelectorAll('.mx-badge.cd').forEach(function(b){var e=+b.getAttribute('data-end');if(e-Date.now()<2.99*864e5){var t=cdText(e,function(){return ''});if(t)b.textContent=t}b.classList.toggle('hot',e-Date.now()<864e5)})},30000)}
 function renderGifts(){
   var g=grid('gifts');if(!g)return;g.innerHTML='';
   var items=(C.gifts&&C.gifts.length)?C.gifts:null,def=safeHttps(C.settings&&C.settings.payDefault),lab=(C.settings&&C.settings.payLabel)||'';
@@ -2351,9 +2421,15 @@ function renderCard(){
 function buyBlock(by,wk){
   var def=safeHttps(C.settings&&C.settings.payDefault),lab=(C.settings&&C.settings.payLabel)||'';
   var st=String(wk.status||''),box=el('div',{style:'margin-top:22px'});
+  var NSALE=(st==='Sold'||st==='Not for sale'||st==='Original · not for sale');
+  var NOTE={'Original · not for sale':{en:'This is the ORIGINAL artwork. It is not for sale. You can buy a print (a copy) of it below.',fr:'Ceci est l’œuvre ORIGINALE. Elle n’est pas à vendre. Vous pouvez en acheter un tirage (une copie) ci-dessous.',ar:'هذه هي اللوحة الأصلية وهي غير معروضة للبيع. يمكنك شراء نسخة مطبوعة منها بالأسفل.'},
+   'Original · for sale':{en:'This is the ORIGINAL artwork, one of a kind. Prints (copies) are also available below.',fr:'Ceci est l’œuvre ORIGINALE, un exemplaire unique. Des tirages (copies) sont aussi disponibles ci-dessous.',ar:'هذه هي اللوحة الأصلية وهي نسخة واحدة فقط. تتوفر أيضاً نسخ مطبوعة بالأسفل.'},
+   'Print · copy, not original':{en:'This is a PRINT (a copy), not the original artwork. The original stays with me.',fr:'Ceci est un TIRAGE (une copie), pas l’œuvre originale. L’original reste chez moi.',ar:'هذه نسخة مطبوعة وليست اللوحة الأصلية. اللوحة الأصلية تبقى عندي.'},
+   'Limited print · copy':{en:'This is a LIMITED PRINT (a copy), not the original artwork.',fr:'Ceci est un TIRAGE LIMITÉ (une copie), pas l’œuvre originale.',ar:'هذه نسخة مطبوعة محدودة وليست اللوحة الأصلية.'}}[st];
+  if(NOTE)box.appendChild(el('div',{style:'margin-bottom:14px;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,217,138,.6);background:rgba(255,217,138,.1);color:#ffe9b8;font-size:15px;line-height:1.5',text:NOTE[document.documentElement.getAttribute('lang')||'en']||NOTE.en}));
   if(wk.price)box.appendChild(el('div',{style:'font-size:26px;margin-bottom:10px;color:#ffd98a',text:wk.price}));
-  else if(st!=='Sold'&&st!=='Not for sale')box.appendChild(el('div',{style:'font-size:16px;margin-bottom:10px;color:#b7c4dc','data-z':'wl_ask',text:T('wl_ask')||'Price: ask me on WhatsApp'}));
-  if(st!=='Sold'&&st!=='Not for sale'){
+  else if(!NSALE)box.appendChild(el('div',{style:'font-size:16px;margin-bottom:10px;color:#b7c4dc','data-z':'wl_ask',text:T('wl_ask')||'Price: ask me on WhatsApp'}));
+  if(!NSALE){
     var row=el('div',{style:'display:flex;gap:10px;flex-wrap:wrap'});
     row.appendChild(btnA(waLink('Hi! I want to buy the artwork: '+(wk.title||'')+(wk.price?' ('+wk.price+')':'')+'.'),T('sh_buy')));
     var pay=safeHttps(wk.pay)||def;if(pay&&wk.price)row.appendChild(btnA(pay,lab||T('sh_pay'),'v'));
@@ -2771,12 +2847,90 @@ setTimeout(loop,1500);
 }catch(err){try{console.warn('meteors off',err)}catch(_){}}
 })();
 </script>
+<script id="sell-js">
+(function(){
+try{
+var d=document,w=window,root=d.documentElement,C=w.C||{},S=C.settings||{};
+var D={
+en:{rw_l:'Real walls',rw_t:'My art in your homes',rw_p:'Photos from people who hung my art on their walls.',bought:'bought',someone:'Someone',from:'from',
+ gift_h:'Join and get a free gift',thanks:'Thank you! You are on the list.',dl:'Download your gift',code:'Your code',codeh:'Send this code to me on WhatsApp when you order.',close:'Close'},
+fr:{rw_l:'Vrais murs',rw_t:'Mon art chez vous',rw_p:'Photos de personnes qui ont accroché mon art chez elles.',bought:'a acheté',someone:'Quelqu’un',from:'de',
+ gift_h:'Inscrivez-vous et recevez un cadeau',thanks:'Merci ! Vous êtes sur la liste.',dl:'Télécharger votre cadeau',code:'Votre code',codeh:'Envoyez-moi ce code sur WhatsApp quand vous commandez.',close:'Fermer'},
+ar:{rw_l:'جدران حقيقية',rw_t:'فني في بيوتكم',rw_p:'صور من أشخاص علّقوا أعمالي على جدرانهم.',bought:'اشترى',someone:'شخص ما',from:'من',
+ gift_h:'اشترك واحصل على هدية مجانية',thanks:'شكراً! أنت الآن في القائمة.',dl:'حمّل هديتك',code:'رمزك',codeh:'أرسل لي هذا الرمز على واتساب عند الطلب.',close:'إغلاق'}};
+function T(k){var l=root.getAttribute('lang')||'en';return (D[l]&&D[l][k])||D.en[k]||''}
+function okimg(u){return typeof u==='string'&&/^(\/api\/media\/[a-f0-9]{8,32}|assets\/[A-Za-z0-9._-]+)$/.test(u)}
+function el(t,a,k){var e=d.createElement(t);for(var x in (a||{})){if(x==='text')e.textContent=a[x];else if(x==='style')e.style.cssText=a[x];else e.setAttribute(x,a[x])}(k||[]).forEach(function(c){e.appendChild(c)});return e}
+var yes=function(v){return /^(y|yes|1|true|on|oui|نعم)/i.test(String(v||'').trim())};
+
+/* ---- real walls section ---- */
+var list=(C.buyers||[]).filter(function(b){return b&&okimg(b.photo)});
+var sec=d.getElementById('buyers');
+function drawWalls(){
+  if(!sec)return;
+  if(!list.length){sec.style.display='none';return}
+  sec.style.display='';
+  sec.querySelector('[data-sell=rw_l]').textContent=T('rw_l');sec.querySelector('[data-sell=rw_t]').textContent=T('rw_t');sec.querySelector('[data-sell=rw_p]').textContent=T('rw_p');
+  var g=d.getElementById('buyers-grid');g.innerHTML='';
+  list.forEach(function(b){
+    var im=el('img',{src:b.photo,alt:(b.name||'')+' '+(b.place||''),loading:'lazy',decoding:'async',style:'display:block;width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:12px'});
+    var cap=el('div',{style:'margin-top:12px;color:#fff;font-size:16px',text:[b.name,b.place].filter(Boolean).join(' · ')});
+    var kids=[im,cap];
+    if(b.size)kids.push(el('span',{'class':'mx-badge',style:'margin-top:8px;align-self:flex-start',text:b.size}));
+    if(b.text)kids.push(el('div',{style:'margin-top:8px;color:#b7c4dc;font-size:14px;line-height:1.5',text:'“'+b.text+'”'}));
+    g.appendChild(el('div',{'class':'mx-card'},kids));
+  });
+}
+drawWalls();
+
+/* ---- "just bought" pop-up (only real sales the owner typed in) ---- */
+var pops=list.filter(function(b){return yes(b.toast)&&b.size});
+if(pops.length&&!(w.matchMedia&&w.matchMedia('(prefers-reduced-motion:reduce)').matches)){
+  var box=el('div',{id:'sell-toast','aria-live':'polite',style:'position:fixed;left:50%;bottom:18px;transform:translate(-50%,30px);opacity:0;z-index:880;max-width:min(92vw,420px);display:flex;gap:12px;align-items:center;padding:10px 16px 10px 10px;border-radius:999px;border:1px solid rgba(190,170,255,.5);background:rgba(10,14,40,.94);color:#fff;font-size:14px;transition:opacity .4s,transform .4s;pointer-events:none'});
+  d.body.appendChild(box);var i=0;
+  function once(){
+    if(d.hidden){setTimeout(once,15000);return}
+    var b=pops[i%pops.length];i++;
+    box.innerHTML='';
+    box.appendChild(el('img',{src:b.photo,alt:'',style:'width:40px;height:40px;border-radius:50%;object-fit:cover;flex:none'}));
+    box.appendChild(el('span',{text:'🛍 '+(b.name||T('someone'))+(b.place?' '+T('from')+' '+b.place:'')+' '+T('bought')+' '+b.size}));
+    box.style.opacity='1';box.style.transform='translate(-50%,0)';
+    setTimeout(function(){box.style.opacity='0';box.style.transform='translate(-50%,30px)'},6000);
+    setTimeout(once,45000);
+  }
+  setTimeout(once,14000);
+}
+
+/* ---- free gift for newsletter members ---- */
+var giftOn=yes(S.giftOn)&&(S.giftTitle||S.giftImg||S.giftCode);
+var nf=d.getElementById('nf');
+function teaser(){
+  var t=d.getElementById('gift-teaser');
+  if(!giftOn||!nf){if(t)t.remove();return}
+  if(!t){t=el('div',{id:'gift-teaser',style:'margin-top:16px;padding:14px 16px;border-radius:14px;border:1px dashed rgba(255,217,138,.7);background:rgba(255,217,138,.08);color:#ffe9b8;max-width:640px;font-size:15px;line-height:1.5'});nf.parentNode.insertBefore(t,nf)}
+  t.innerHTML='';t.appendChild(el('b',{text:'🎁 '+T('gift_h')+(S.giftTitle?': '+S.giftTitle:'')}));
+  if(S.giftText)t.appendChild(el('div',{style:'margin-top:4px;color:#d9ccaa',text:S.giftText}));
+}
+teaser();
+w.__gift=function(m){
+  if(!giftOn||!m)return;
+  m.innerHTML='';m.appendChild(el('div',{text:T('thanks')}));
+  var b=el('div',{style:'margin-top:12px;padding:14px 16px;border-radius:14px;border:1px solid rgba(123,224,166,.6);background:rgba(30,120,80,.18);max-width:520px'});
+  b.appendChild(el('b',{text:'🎁 '+(S.giftTitle||T('gift_h'))}));
+  if(okimg(S.giftImg)){var a=el('a',{href:S.giftImg,target:'_blank',rel:'noopener noreferrer',download:'',style:'display:inline-block;margin-top:10px;padding:10px 18px;border-radius:999px;border:1px solid rgba(255,255,255,.5);background:linear-gradient(90deg,rgba(30,140,90,.9),rgba(20,90,70,.9));color:#fff;text-decoration:none',text:'⬇ '+T('dl')});b.appendChild(a)}
+  if(S.giftCode){b.appendChild(el('div',{style:'margin-top:10px;color:#d6e0f5',text:T('code')+':'}));b.appendChild(el('div',{style:'margin-top:4px;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.1);font-family:monospace;font-size:20px;letter-spacing:.1em;user-select:all;display:inline-block',text:S.giftCode}));b.appendChild(el('div',{style:'margin-top:6px;font-size:13px;color:#b7c4dc',text:T('codeh')}))}
+  m.appendChild(b);
+};
+new MutationObserver(function(){drawWalls();teaser()}).observe(root,{attributes:true,attributeFilter:['lang']});
+}catch(err){try{console.warn('sell off',err)}catch(_){}}
+})();
+</script>
 <script id="layout-js">
 (function(){
 try{
 var d=document,w=window;
 w.C=w.C||{};
-var LAB={spotlight:'Art of the month',gallery:'Gallery',favorites:'Favorites',collections:'Collections',photography:'Photography',film:'Film',timelapse:'Time-lapse',commission:'Commissions',request:'Request a drawing',prices:'Prices',calc:'Price calculator',shop:'Shop',gifts:'Gift cards',challenge:'Challenge',tracker:'Order tracker',beforeafter:'Before and after',behind:'Behind the art',blog:'Blog',wallpapers:'Free wallpapers',instagram:'Instagram',reviews:'Reviews',card:'Space card',news:'Newsletter',about:'About'};
+var LAB={buyers:'Real walls (buyer photos)',spotlight:'Art of the month',gallery:'Gallery',favorites:'Favorites',collections:'Collections',photography:'Photography',film:'Film',timelapse:'Time-lapse',commission:'Commissions',request:'Request a drawing',prices:'Prices',calc:'Price calculator',shop:'Shop',gifts:'Gift cards',challenge:'Challenge',tracker:'Order tracker',beforeafter:'Before and after',behind:'Behind the art',blog:'Blog',wallpapers:'Free wallpapers',instagram:'Instagram',reviews:'Reviews',card:'Space card',news:'Newsletter',about:'About'};
 var L=w.C.layout=(w.C.layout&&typeof w.C.layout==='object')?w.C.layout:{};
 L.order=Array.isArray(L.order)?L.order:[];L.hidden=Array.isArray(L.hidden)?L.hidden:[];
 var secs=Array.prototype.filter.call(d.querySelectorAll('body section[id]'),function(s){return LAB[s.id]});
