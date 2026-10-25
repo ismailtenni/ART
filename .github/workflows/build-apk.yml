@@ -38,6 +38,16 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Fix duplicate Kotlin libraries
+        run: |
+          cat >> ANDROID-APP/app/build.gradle <<'EOT'
+
+          configurations.configureEach {
+              exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+              exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+          }
+          EOT
+
       - name: Make the signing key
         working-directory: ANDROID-APP
         run: |
