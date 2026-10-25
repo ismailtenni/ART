@@ -1,0 +1,57 @@
+name: ART-ISMAILTENNI EXE
+
+# Runs by itself when you change the ELECTRON-APP folder,
+# or when you press the green "Run workflow" button on the Actions page.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ELECTRON-APP/**'
+      - '.github/workflows/build-exe.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Get the files
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install the tools
+        working-directory: ELECTRON-APP
+        run: npm install
+
+      - name: Build the EXE
+        working-directory: ELECTRON-APP
+        run: npm run dist
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Show the files
+        shell: bash
+        run: ls -la ELECTRON-APP/dist
+
+      - name: Keep the EXE on the Actions page
+        uses: actions/upload-artifact@v4
+        with:
+          name: ART-ISMAILTENNI-exe
+          path: |
+            ELECTRON-APP/dist/ART-ISMAILTENNI.exe
+            ELECTRON-APP/dist/ART-ISMAILTENNI-Setup.exe
+
+      - name: Publish a download link (Releases page)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete exe-latest --yes --cleanup-tag || true
+          gh release create exe-latest ELECTRON-APP/dist/ART-ISMAILTENNI.exe ELECTRON-APP/dist/ART-ISMAILTENNI-Setup.exe \
+            --title "ART-ISMAILTENNI (Windows program)" \
+            --notes "ART-ISMAILTENNI.exe = open directly, no install. ART-ISMAILTENNI-Setup.exe = installs with a desktop icon."
