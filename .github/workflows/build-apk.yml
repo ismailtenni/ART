@@ -38,14 +38,29 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build the APK
+      - name: Make the signing key
         working-directory: ANDROID-APP
         run: |
-          gradle assembleRelease --no-daemon --console=plain > build.log 2>&1 || {
-            echo "=========== THE REAL ERROR IS BELOW ==========="
-            grep -v "^\s*at " build.log | grep -v "^\s*\.\.\." | tail -45
-            exit 1
-          }
+          rm -f art.keystore
+          keytool -genkeypair -keystore art.keystore -storetype PKCS12 \
+            -alias art -keyalg RSA -keysize 2048 -validity 36500 \
+            -storepass artismailtenni -keypass artismailtenni \
+            -dname "CN=ART ISMAILTENNI, O=ISMAILTENNI ART, C=MA"
+
+      - name: Build the APK
+        working-directory: ANDROID-APP
+        continue-on-error: true
+        id: build
+        run: gradle assembleRelease --no-daemon --console=plain > ../build.log 2>&1
+
+      - name: Show the real error (only if the build failed)
+        if: steps.build.outcome == 'failure'
+        run: |
+          echo "=========== THE REAL ERROR IS BELOW ==========="
+          grep -n -i -E "what went wrong|error|failed|not found|could not" build.log | grep -v "^\s*[0-9]*:\s*at " | head -40
+          echo "=========== LAST LINES ==========="
+          grep -v "^\s*at " build.log | tail -25
+          exit 1
 
       - name: Name the file ART-ISMAILTENNI.apk
         run: |
