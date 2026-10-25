@@ -86,6 +86,21 @@ async function checkTicket(env, t) {
 }
 
 // ---- email sending: Brevo (preferred) or Resend. Needs MAIL_FROM plus BREVO_API_KEY or RESEND_API_KEY ----
+let TSC = {};
+function tscfg(env) { return { site: env.TURNSTILE_SITEKEY || TSC.site || '', secret: env.TURNSTILE_SECRET || TSC.secret || '' }; }
+function tsReady(env) { const c = tscfg(env); return !!(c.site && c.secret); }
+// "I am not a robot" check (Cloudflare Turnstile). Returns '' when fine, or an error text.
+async function tsCheck(env, req, token) {
+  if (!tsReady(env)) return '';
+  token = String(token || '');
+  if (!token || token.length > 2200) return 'Please tick the box to show you are human.';
+  try {
+    const f = new URLSearchParams({ secret: tscfg(env).secret, response: token, remoteip: req.headers.get('cf-connecting-ip') || '' });
+    const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: f });
+    const j = await r.json();
+    return j && j.success ? '' : 'The human check failed. Please try again.';
+  } catch (e) { return 'The human check could not be reached. Please try again.'; }
+}
 let MC = {};
 function mcfg(env) { return { brevo: env.BREVO_API_KEY || MC.key || '', resend: env.RESEND_API_KEY || '', from: env.MAIL_FROM || MC.from || '' }; }
 function mailReady(env) { const c = mcfg(env); return !!((c.brevo || c.resend) && c.from); }
@@ -333,11 +348,11 @@ export default {
     if (!env.DB) return json({ error: 'The database is not connected yet.' }, 503);
     try {
       await ensureSchema(env);
-      try { const ar = await env.DB.prepare("SELECT v FROM content WHERE k = 'adminEmail'").first(); ADM = ar && ar.v ? String(ar.v) : null; const mr = await env.DB.prepare("SELECT v FROM content WHERE k = 'mail'").first(); MC = mr && mr.v ? JSON.parse(mr.v) : {}; } catch (e) {}
+      try { const ar = await env.DB.prepare("SELECT v FROM content WHERE k = 'adminEmail'").first(); ADM = ar && ar.v ? String(ar.v) : null; const mr = await env.DB.prepare("SELECT v FROM content WHERE k = 'mail'").first(); MC = mr && mr.v ? JSON.parse(mr.v) : {}; const tr2 = await env.DB.prepare("SELECT v FROM content WHERE k = 'ts'").first(); TSC = tr2 && tr2.v ? JSON.parse(tr2.v) : {}; } catch (e) {}
       if (url.pathname === '/api/me' && req.method === 'GET') {
         const u = await currentUser(env, req);
         const t2 = u ? await env.DB.prepare('SELECT enabled FROM user_2fa WHERE user_id = ?').bind(u.id).first() : null;
-        return json({ user: u ? { name: u.name, email: u.email } : null, admin: isAdmin(env, u), twofa: !!(t2 && t2.enabled), canReset: mailReady(env) });
+        return json({ user: u ? { name: u.name, email: u.email } : null, admin: isAdmin(env, u), twofa: !!(t2 && t2.enabled), canReset: mailReady(env), ts: tsReady(env) ? tscfg(env).site : '' });
       }
       if (url.pathname === '/api/counts' && req.method === 'GET') {
         const l = await env.DB.prepare('SELECT work_id AS id, COUNT(*) AS n FROM likes GROUP BY work_id').all();
@@ -392,6 +407,12 @@ export default {
         if (ok) await env.DB.prepare('DELETE FROM subscribers WHERE email = ?').bind(em).run();
         const msg = ok ? 'You are unsubscribed. / Vous \u00eates d\u00e9sinscrit(e). / \u062a\u0645 \u0625\u0644\u063a\u0627\u0621 \u0627\u0634\u062a\u0631\u0627\u0643\u0643.' : 'This link is not valid.';
         return new Response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ISMAILTENNI ART</title><body style="background:#070b1c;color:#fff;font-family:system-ui,sans-serif;display:flex;min-height:90vh;align-items:center;justify-content:center;text-align:center;padding:20px"><div><h1 style="font-weight:400;letter-spacing:.12em">ISMAILTENNI ART</h1><p>' + escH(msg) + '</p><p><a style="color:#a8d6ff" href="/">Back to the site</a></p></div>', { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+      }
+      if (url.pathname === '/api/admin/ts' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const c = tscfg(env);
+        return json({ ready: tsReady(env), site: c.site, hasSecret: !!c.secret });
       }
       if (url.pathname === '/api/admin/mail' && req.method === 'GET') {
         const me = await currentUser(env, req);
@@ -451,6 +472,11 @@ export default {
       const origin = req.headers.get('origin');
       if (origin && new URL(origin).host !== url.host) return json({ error: 'Not allowed' }, 403);
       const body = await req.json().catch(() => ({}));
+
+      if (['/api/signup', '/api/login', '/api/forgot', '/api/reset'].includes(url.pathname)) {
+        const tbad = await tsCheck(env, req, body.ts);
+        if (tbad) return json({ error: tbad, needTs: true }, 400);
+      }
 
       if (url.pathname === '/api/signup') {
         const name = String(body.name || '').trim().slice(0, 60);
@@ -603,6 +629,17 @@ export default {
         return json({ error: 'Not found' }, 404);
       }
 
+      if (url.pathname === '/api/admin/ts') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        if (body.off === true) { TSC = {}; await env.DB.prepare("DELETE FROM content WHERE k = 'ts'").run(); return json({ ok: true, ready: tsReady(env) }); }
+        const site = String(body.site || '').trim().slice(0, 100), secret = String(body.secret || '').trim().slice(0, 200);
+        if (!/^[0-9A-Za-z_-]{8,100}$/.test(site) || !(secret || TSC.secret)) return json({ error: 'Paste both the Site key and the Secret key.' }, 400);
+        const next = { site, secret: secret || TSC.secret };
+        await env.DB.prepare("INSERT OR REPLACE INTO content (k, v, updated_at) VALUES ('ts', ?, ?)").bind(JSON.stringify(next), Date.now()).run();
+        TSC = next;
+        return json({ ok: true, ready: tsReady(env) });
+      }
       if (url.pathname === '/api/admin/mail') {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);

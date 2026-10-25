@@ -606,6 +606,7 @@ document.getElementById('vw-img').onclick=function(){zoom=!zoom;this.style.cssTe
 <label style="display:block;margin-top:16px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9fb0c8" for="a-pw">Password</label><input id="a-pw" type="password" autocomplete="current-password" required style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(190,170,255,0.4);background:rgba(8,12,34,0.9);color:#fff;font-size:15px;font-family:inherit;margin-top:6px">
 <div id="ac2" style="display:none"><label style="display:block;margin-top:16px;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:#9fb0c8" for="a-code">6-digit code</label><input id="a-code" inputmode="numeric" autocomplete="one-time-code" placeholder="From your authenticator app" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(190,170,255,0.4);background:rgba(8,12,34,0.9);color:#fff;font-size:15px;font-family:inherit;margin-top:6px"><div style="margin-top:6px;font-size:12px;color:#9fb0c8">Lost your phone? Type one of your recovery codes instead.</div></div>
 <button type="button" id="afg" style="display:block;margin:12px 0 0;padding:0;border:0;background:none;color:#a8d6ff;font-size:13px;font-family:inherit;cursor:pointer;text-decoration:underline">Forgot password?</button>
+<div id="a-ts" style="margin-top:14px"></div>
 <div id="ae" role="alert" style="margin-top:14px;min-height:20px;color:#ffb0b8;font-size:14px"></div>
 <button id="ab" type="submit" style="width:100%;margin-top:10px;padding:14px;border-radius:999px;border:1px solid rgba(255,255,255,0.4);background:linear-gradient(90deg,rgba(42,120,170,0.9),rgba(100,70,200,0.9));color:#fff;font-size:16px;font-family:inherit;cursor:pointer">Log in</button>
 <button type="button" id="as" style="width:100%;margin-top:12px;padding:8px;border:0;background:none;color:#c4a0ff;font-size:14px;font-family:inherit;cursor:pointer">No account yet? Sign up</button>
@@ -622,10 +623,20 @@ function paint(u){
  else{box.innerHTML='<button id="li" style="'+pill+'">Log in</button><button id="su" style="'+pill+';background:linear-gradient(90deg,rgba(42,120,170,0.8),rgba(100,70,200,0.8))">Sign up</button>';
   document.getElementById('li').onclick=function(){openM('login')};document.getElementById('su').onclick=function(){openM('signup')};}
 }
+var tsTok='',tsWid=null,tsLoading=false;
+function tsShow(on){var box=document.getElementById('a-ts');if(!box)return;var key=window.__tsKey;
+ if(!key||!on){box.style.display='none';return}
+ box.style.display='block';
+ function draw(){if(tsWid!==null){try{window.turnstile.reset(tsWid)}catch(e){}tsTok='';return}
+  try{tsWid=window.turnstile.render('#a-ts',{sitekey:key,theme:'dark',callback:function(t){tsTok=t},'expired-callback':function(){tsTok=''},'error-callback':function(){tsTok=''}})}catch(e){}}
+ if(window.turnstile){draw();return}
+ if(tsLoading)return;tsLoading=true;
+ var sc=document.createElement('script');sc.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';sc.async=true;sc.onload=function(){draw()};document.head.appendChild(sc)}
+function tsDone(){tsTok='';if(tsWid!==null){try{window.turnstile.reset(tsWid)}catch(e){}}}
 function openM(md){mode=md;var s=md==='signup';document.getElementById('at').textContent=s?'Create your account':'Log in';
  document.getElementById('an').style.display=s?'block':'none';document.getElementById('ab').textContent=s?'Sign up':'Log in';
  document.getElementById('as').textContent=s?'Already have an account? Log in':'No account yet? Sign up';
- document.getElementById('a-pw').autocomplete=s?'new-password':'current-password';document.getElementById('ae').textContent='';tfaT='';resetT='';document.getElementById('ac2').style.display='none';document.getElementById('a-email').parentNode.style.display='';rowsShow(true);document.getElementById('afg').style.display=s?'none':'block';m.style.display='flex';}
+ document.getElementById('a-pw').autocomplete=s?'new-password':'current-password';document.getElementById('ae').textContent='';tfaT='';resetT='';document.getElementById('ac2').style.display='none';document.getElementById('a-email').parentNode.style.display='';rowsShow(true);document.getElementById('afg').style.display=s?'none':'block';m.style.display='flex';tsShow(true);}
 var tfaT='',resetT='';
 function rowsShow(v){var f=document.getElementById('af');f.querySelectorAll('label[for=a-email],#a-email,label[for=a-pw],#a-pw').forEach(function(e){e.style.display=v?'':'none'});document.getElementById('as').style.display=v?'':'none'}
 function closeM(){m.style.display='none';}
@@ -633,19 +644,19 @@ document.getElementById('ax').onclick=closeM;
 m.onclick=function(e){if(e.target===m)closeM()};
 document.getElementById('as').onclick=function(){openM(mode==='login'?'signup':'login')};
 document.getElementById('afg').onclick=function(){var er=document.getElementById('ae'),em=document.getElementById('a-email').value;if(!em){er.style.color='#ffb0b8';er.textContent='Type your email above first, then press this again.';return}
- fetch('/api/forgot',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:em})}).then(function(r){return r.json().then(function(j){return {ok:r.ok,d:j}})}).then(function(x){er.style.color=x.ok?'#9ff0c0':'#ffb0b8';er.textContent=x.ok?'If that email has an account, we sent a link to choose a new password. Check your inbox and spam.':(x.d.error||'Could not send.')}).catch(function(){er.textContent='Could not send.'})};
+ fetch('/api/forgot',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:em,ts:tsTok})}).then(function(r){return r.json().then(function(j){return {ok:r.ok,d:j}})}).then(function(x){tsDone();er.style.color=x.ok?'#9ff0c0':'#ffb0b8';er.textContent=x.ok?'If that email has an account, we sent a link to choose a new password. Check your inbox and spam.':(x.d.error||'Could not send.')}).catch(function(){er.textContent='Could not send.'})};
 function openReset(t){openM('login');resetT=t;document.getElementById('at').textContent='Choose a new password';document.getElementById('ab').textContent='Save new password';document.getElementById('a-pw').autocomplete='new-password';
  document.getElementById('a-email').style.display='none';document.querySelector('label[for=a-email]').style.display='none';document.getElementById('as').style.display='none';document.getElementById('afg').style.display='none';document.getElementById('ac2').style.display='block';document.querySelector('#ac2 label').textContent='2-step code (only if you turned it on)'}
 function chkReset(){var mm=(location.hash||'').match(/^#reset=([0-9a-f]{20,80})$/);if(mm){history.replaceState(null,'',location.pathname+location.search);openReset(mm[1])}}chkReset();window.addEventListener('hashchange',chkReset);
 document.getElementById('af').onsubmit=function(e){e.preventDefault();var er=document.getElementById('ae'),b=document.getElementById('ab');er.style.color='#ffb0b8';er.textContent='';b.disabled=true;
  var url,body;
- if(resetT){url='/api/reset';body={token:resetT,password:document.getElementById('a-pw').value,code:document.getElementById('a-code').value}}
+ if(resetT){url='/api/reset';body={ts:tsTok,token:resetT,password:document.getElementById('a-pw').value,code:document.getElementById('a-code').value}}
  else if(tfaT){url='/api/login2fa';body={ticket:tfaT,code:document.getElementById('a-code').value}}
- else{url='/api/'+mode;body={name:document.getElementById('a-name').value,email:document.getElementById('a-email').value,password:document.getElementById('a-pw').value}}
+ else{url='/api/'+mode;body={ts:tsTok,name:document.getElementById('a-name').value,email:document.getElementById('a-email').value,password:document.getElementById('a-pw').value}}
  fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)})
  .then(function(r){return r.json().then(function(d){return {ok:r.ok,d:d}})})
- .then(function(x){b.disabled=false;
-  if(x.ok&&x.d.need2fa){tfaT=x.d.ticket;rowsShow(false);document.getElementById('ac2').style.display='block';document.getElementById('at').textContent='Two-step check';b.textContent='Verify';document.getElementById('afg').style.display='none';document.getElementById('a-code').focus();return}
+ .then(function(x){b.disabled=false;if(!(x.ok&&x.d.need2fa))tsDone();
+  if(x.ok&&x.d.need2fa){tfaT=x.d.ticket;tsShow(false);rowsShow(false);document.getElementById('ac2').style.display='block';document.getElementById('at').textContent='Two-step check';b.textContent='Verify';document.getElementById('afg').style.display='none';document.getElementById('a-code').focus();return}
   if(x.ok&&resetT){resetT='';openM('login');er.style.color='#9ff0c0';er.textContent='Password changed. Now log in with your new password.';return}
   if(x.ok&&x.d.user){document.getElementById('a-pw').value='';document.getElementById('a-code').value='';tfaT='';closeM();paint(x.d.user);var sc=document.getElementById('soc');if(sc&&window.__social)window.__social(sc.getAttribute('data-id'))}else er.textContent=x.d.error||'Accounts are not available yet.'})
  .catch(function(){b.disabled=false;er.textContent='Accounts are not available yet.'});};
@@ -679,7 +690,7 @@ window.__social=function(id){
  }
 };
 counts();
-fetch('/api/me').then(function(r){return r.ok?r.json():null}).then(function(d){paint(d&&d.user)}).catch(function(){paint(null)});
+fetch('/api/me').then(function(r){return r.ok?r.json():null}).then(function(d){window.__tsKey=(d&&d.ts)||'';paint(d&&d.user)}).catch(function(){paint(null)});
 })();
 </script>
 <script>
@@ -1482,6 +1493,22 @@ function init(){
     box.appendChild(field1(P,'note','Small note under the price (optional)','The final price is confirmed on WhatsApp.',true));
   }
   var subs=null;
+  var tsSt=null;
+  function botSetup(){
+    var wrap=h('div',{style:'margin:0 0 22px;padding:16px;border-radius:14px;border:1px solid rgba(190,170,255,0.35);background:rgba(255,255,255,0.04)'});
+    wrap.appendChild(h('div',{style:'font-size:18px;color:#fff;margin-bottom:6px',text:'Robot protection ("I am not a robot" box)'}));
+    if(!tsSt){wrap.appendChild(h('p',{style:'color:#9fb0c8',text:'Loading ...'}));get('/api/admin/ts').then(function(r){tsSt=r;render()}).catch(function(e){say('Problem: '+e.message)});return wrap}
+    wrap.appendChild(h('p',{style:'margin:6px 0 12px;font-size:14px;color:'+(tsSt.ready?'#7be0a6':'#ffb0b8'),text:tsSt.ready?'ON. Log in, Sign up and Forgot password now ask visitors to prove they are human.':'OFF. Follow the steps below to turn it on.'}));
+    wrap.appendChild(note1('It shows on Log in, Sign up and Forgot password, and stops bots from guessing passwords. It does not show when people just open your site, so visitors and Google can still see your art. 1) Go to dash.cloudflare.com and open Turnstile (left menu). 2) Press Add widget, name it ART, add your site address (artist.ismailtenni6.workers.dev), choose Managed, and create it. 3) Copy the Site key and the Secret key and paste them here.'));
+    var f={site:tsSt.site||'',secret:''};
+    wrap.appendChild(field1(f,'site','Site key','0x4AAAA...'));
+    wrap.appendChild(field1(f,'secret','Secret key (stays hidden after saving)','0x4AAAA...'));
+    var row=h('div',{style:'display:flex;gap:10px;flex-wrap:wrap;margin-top:6px'});
+    var b1=h('button',{style:BTN,text:'Save and turn on'});b1.onclick=function(){fetch('/api/admin/ts',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({site:f.site,secret:f.secret})}).then(function(r){return r.json()}).then(function(j){if(j.error){say(j.error);return}say('Saved. Robot protection is ON.');tsSt=null;render()})};
+    row.appendChild(b1);
+    if(tsSt.ready){var b2=h('button',{style:BTN2,text:'Turn off'});b2.onclick=function(){fetch('/api/admin/ts',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({off:true})}).then(function(r){return r.json()}).then(function(){say('Turned off.');tsSt=null;render()})};row.appendChild(b2)}
+    wrap.appendChild(row);return wrap;
+  }
   var mailSt=null;
   function mailSetup(){
     var wrap=h('div',{style:'margin:0 0 22px;padding:16px;border-radius:14px;border:1px solid rgba(190,170,255,0.35);background:rgba(255,255,255,0.04)'});
@@ -1499,6 +1526,7 @@ function init(){
     return wrap;
   }
   function renderMailTab(){
+    box.appendChild(botSetup());
     box.appendChild(mailSetup());
     box.appendChild(note1('Write one message and send it to everyone who joined your newsletter. Every email has an Unsubscribe link.'));
     if(!subs){box.appendChild(h('p',{style:'color:#9fb0c8',text:'Loading ...'}));
