@@ -1440,7 +1440,24 @@ function init(){
     box.appendChild(field1(P,'note','Small note under the price (optional)','The final price is confirmed on WhatsApp.',true));
   }
   var subs=null;
+  var mailSt=null;
+  function mailSetup(){
+    var wrap=h('div',{style:'margin:0 0 22px;padding:16px;border-radius:14px;border:1px solid rgba(190,170,255,0.35);background:rgba(255,255,255,0.04)'});
+    wrap.appendChild(h('div',{style:'font-size:18px;color:#fff;margin-bottom:6px',text:'Email setup (password reset and newsletter)'}));
+    if(!mailSt){wrap.appendChild(h('p',{style:'color:#9fb0c8',text:'Loading ...'}));get('/api/admin/mail').then(function(r){mailSt=r;render()}).catch(function(e){say('Problem: '+e.message)});return wrap}
+    wrap.appendChild(h('p',{style:'margin:6px 0 12px;font-size:14px;color:'+(mailSt.ready?'#7be0a6':'#ffb0b8'),text:mailSt.ready?'Ready. Emails are sent with '+mailSt.via+' from '+mailSt.from+'.':'Not set up yet. Follow the 4 steps below.'}));
+    wrap.appendChild(note1('1) Make a free account at brevo.com. 2) In Brevo click your name (top right), then Senders, Domains and Dedicated IPs, then Senders, and add your Gmail. Brevo emails you a code to confirm it. 3) In Brevo click your name, then SMTP and API, then the API Keys tab, then Generate a new API key. Copy it. 4) Paste it below with your confirmed Gmail and press Save. Then press Send a test email.'));
+    var f={key:'',from:mailSt.from||''};
+    wrap.appendChild(field1(f,'key','Brevo API key (starts with xkeysib-)','xkeysib-...'));
+    wrap.appendChild(field1(f,'from','Sender email (the Gmail you confirmed in Brevo)','Ismail <ismailtenni6@gmail.com>'));
+    var row=h('div',{style:'display:flex;gap:10px;flex-wrap:wrap;margin-top:6px'});
+    var b1=h('button',{style:BTN,text:'Save'});b1.onclick=function(){fetch('/api/admin/mail',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({key:f.key,from:f.from})}).then(function(r){return r.json()}).then(function(j){if(j.error){say(j.error);return}say('Saved.');mailSt=null;render()})};
+    var b2=h('button',{style:BTN2,text:'Send a test email to me'});b2.onclick=function(){say('Sending ...');fetch('/api/admin/mail/test',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:'{}'}).then(function(r){return r.json()}).then(function(j){say(j.error?j.error:'Sent to '+j.to+'. Check your inbox and spam.')})};
+    row.appendChild(b1);row.appendChild(b2);wrap.appendChild(row);
+    return wrap;
+  }
   function renderMailTab(){
+    box.appendChild(mailSetup());
     box.appendChild(note1('Write one message and send it to everyone who joined your newsletter. Every email has an Unsubscribe link.'));
     if(!subs){box.appendChild(h('p',{style:'color:#9fb0c8',text:'Loading ...'}));
       get('/api/admin/subscribers').then(function(r){subs=r;render()}).catch(function(e){say('Problem: '+e.message)});return}

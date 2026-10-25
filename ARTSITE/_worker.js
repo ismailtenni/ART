@@ -86,7 +86,9 @@ async function checkTicket(env, t) {
 }
 
 // ---- email sending: Brevo (preferred) or Resend. Needs MAIL_FROM plus BREVO_API_KEY or RESEND_API_KEY ----
-function mailReady(env) { return !!((env.BREVO_API_KEY || env.RESEND_API_KEY) && env.MAIL_FROM); }
+let MC = {};
+function mcfg(env) { return { brevo: env.BREVO_API_KEY || MC.key || '', resend: env.RESEND_API_KEY || '', from: env.MAIL_FROM || MC.from || '' }; }
+function mailReady(env) { const c = mcfg(env); return !!((c.brevo || c.resend) && c.from); }
 function parseFrom(f) {
   const m = String(f || '').match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
   return m ? { name: m[1].replace(/^"|"$/g, '') || 'ISMAILTENNI ART', email: m[2].trim() } : { name: 'ISMAILTENNI ART', email: String(f || '').trim() };
@@ -94,20 +96,21 @@ function parseFrom(f) {
 async function sendMails(env, mails) {
   // mails: [{ to, subject, html, text, headers }]  ->  true if the provider accepted them
   if (!mails.length) return true;
+  const cfg = mcfg(env);
   try {
-    if (env.BREVO_API_KEY) {
-      const sender = parseFrom(env.MAIL_FROM);
+    if (cfg.brevo) {
+      const sender = parseFrom(cfg.from);
       const base = { sender, subject: mails[0].subject, htmlContent: mails[0].html, textContent: mails[0].text };
       const body = mails.length === 1
         ? { ...base, to: [{ email: mails[0].to }], headers: mails[0].headers }
         : { ...base, to: [{ email: mails[0].to }], messageVersions: mails.map((m) => ({ to: [{ email: m.to }], subject: m.subject, htmlContent: m.html, textContent: m.text })) };
       if (mails.length > 1) delete body.to;
-      const r = await fetch('https://api.brevo.com/v3/smtp/email', { method: 'POST', headers: { 'api-key': env.BREVO_API_KEY, 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(body) });
+      const r = await fetch('https://api.brevo.com/v3/smtp/email', { method: 'POST', headers: { 'api-key': cfg.brevo, 'content-type': 'application/json', accept: 'application/json' }, body: JSON.stringify(body) });
       return r.ok;
     }
-    const rs = await fetch(mails.length === 1 ? 'https://api.resend.com/emails' : 'https://api.resend.com/emails/batch', { method: 'POST', headers: { authorization: 'Bearer ' + env.RESEND_API_KEY, 'content-type': 'application/json' },
-      body: JSON.stringify(mails.length === 1 ? { from: env.MAIL_FROM, to: [mails[0].to], subject: mails[0].subject, html: mails[0].html, text: mails[0].text, headers: mails[0].headers }
-        : mails.map((m) => ({ from: env.MAIL_FROM, to: [m.to], subject: m.subject, html: m.html, text: m.text, headers: m.headers }))) });
+    const rs = await fetch(mails.length === 1 ? 'https://api.resend.com/emails' : 'https://api.resend.com/emails/batch', { method: 'POST', headers: { authorization: 'Bearer ' + cfg.resend, 'content-type': 'application/json' },
+      body: JSON.stringify(mails.length === 1 ? { from: cfg.from, to: [mails[0].to], subject: mails[0].subject, html: mails[0].html, text: mails[0].text, headers: mails[0].headers }
+        : mails.map((m) => ({ from: cfg.from, to: [m.to], subject: m.subject, html: m.html, text: m.text, headers: m.headers }))) });
     return rs.ok;
   } catch (e) { return false; }
 }
@@ -330,7 +333,7 @@ export default {
     if (!env.DB) return json({ error: 'The database is not connected yet.' }, 503);
     try {
       await ensureSchema(env);
-      try { const ar = await env.DB.prepare("SELECT v FROM content WHERE k = 'adminEmail'").first(); ADM = ar && ar.v ? String(ar.v) : null; } catch (e) {}
+      try { const ar = await env.DB.prepare("SELECT v FROM content WHERE k = 'adminEmail'").first(); ADM = ar && ar.v ? String(ar.v) : null; const mr = await env.DB.prepare("SELECT v FROM content WHERE k = 'mail'").first(); MC = mr && mr.v ? JSON.parse(mr.v) : {}; } catch (e) {}
       if (url.pathname === '/api/me' && req.method === 'GET') {
         const u = await currentUser(env, req);
         const t2 = u ? await env.DB.prepare('SELECT enabled FROM user_2fa WHERE user_id = ?').bind(u.id).first() : null;
@@ -389,6 +392,12 @@ export default {
         if (ok) await env.DB.prepare('DELETE FROM subscribers WHERE email = ?').bind(em).run();
         const msg = ok ? 'You are unsubscribed. / Vous \u00eates d\u00e9sinscrit(e). / \u062a\u0645 \u0625\u0644\u063a\u0627\u0621 \u0627\u0634\u062a\u0631\u0627\u0643\u0643.' : 'This link is not valid.';
         return new Response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ISMAILTENNI ART</title><body style="background:#070b1c;color:#fff;font-family:system-ui,sans-serif;display:flex;min-height:90vh;align-items:center;justify-content:center;text-align:center;padding:20px"><div><h1 style="font-weight:400;letter-spacing:.12em">ISMAILTENNI ART</h1><p>' + escH(msg) + '</p><p><a style="color:#a8d6ff" href="/">Back to the site</a></p></div>', { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+      }
+      if (url.pathname === '/api/admin/mail' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const c = mcfg(env);
+        return json({ ready: mailReady(env), via: c.brevo ? 'Brevo' : c.resend ? 'Resend' : '', from: c.from, hasKey: !!(c.brevo || c.resend), lockedByCloudflare: !!(env.BREVO_API_KEY || env.MAIL_FROM) });
       }
       if (url.pathname === '/api/admin/subscribers' && req.method === 'GET') {
         const me = await currentUser(env, req);
@@ -592,6 +601,26 @@ export default {
           return json({ ok: true });
         }
         return json({ error: 'Not found' }, 404);
+      }
+
+      if (url.pathname === '/api/admin/mail') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const key = String(body.key || '').trim().slice(0, 300);
+        const from = String(body.from || '').trim().slice(0, 150);
+        if (from && !/^[^<>@\s][^<>]*<[^<>@\s]+@[^<>@\s]+\.[^<>@\s]+>$|^[^<>@\s]+@[^<>@\s]+\.[^<>@\s]+$/.test(from)) return json({ error: 'The sender must look like name@gmail.com' }, 400);
+        const next = { key: key || MC.key || '', from: from || MC.from || '' };
+        if (body.clear === true) { next.key = ''; }
+        await env.DB.prepare("INSERT OR REPLACE INTO content (k, v, updated_at) VALUES ('mail', ?, ?)").bind(JSON.stringify(next), Date.now()).run();
+        MC = next;
+        return json({ ok: true, ready: mailReady(env) });
+      }
+      if (url.pathname === '/api/admin/mail/test') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        if (!mailReady(env)) return json({ error: 'Add the API key and the sender first.' }, 400);
+        const okm = await sendMails(env, [{ to: me.email, subject: 'Test email from your site', html: '<p>It works. Your site can now send emails (password resets and newsletters).</p>', text: 'It works. Your site can now send emails.' }]);
+        return okm ? json({ ok: true, to: me.email }) : json({ error: 'The email provider refused it. Check that the API key is right and the sender email is confirmed in Brevo.' }, 502);
       }
 
       if (url.pathname === '/api/like') {
