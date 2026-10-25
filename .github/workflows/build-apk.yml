@@ -48,14 +48,25 @@ jobs:
           }
           EOT
 
-      - name: Make the signing key
+      - name: Signing key (made once, then remembered)
         working-directory: ANDROID-APP
         run: |
-          rm -f art.keystore
-          keytool -genkeypair -keystore art.keystore -storetype PKCS12 \
-            -alias art -keyalg RSA -keysize 2048 -validity 36500 \
-            -storepass artismailtenni -keypass artismailtenni \
-            -dname "CN=ART ISMAILTENNI, O=ISMAILTENNI ART, C=MA"
+          if [ ! -f art.keystore ]; then
+            keytool -genkeypair -keystore art.keystore -storetype PKCS12 \
+              -alias art -keyalg RSA -keysize 2048 -validity 36500 \
+              -storepass artismailtenni -keypass artismailtenni \
+              -dname "CN=ART ISMAILTENNI, O=ISMAILTENNI ART, C=MA"
+            echo "NEWKEY=1" >> "$GITHUB_ENV"
+          fi
+
+      - name: Remember the signing key (so phone updates install over the old app)
+        if: env.NEWKEY == '1'
+        run: |
+          git config user.name "art-build"
+          git config user.email "art-build@users.noreply.github.com"
+          git add -f ANDROID-APP/art.keystore
+          git commit -m "Add app signing key" || true
+          git push || true
 
       - name: Build the APK
         working-directory: ANDROID-APP
