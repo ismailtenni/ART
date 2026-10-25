@@ -14,6 +14,7 @@ import android.os.Environment;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -62,6 +63,14 @@ public class MainActivity extends AppCompatActivity {
         s.setUseWideViewPort(true);
         s.setSupportZoom(false);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        s.setLoadsImagesAutomatically(true);
+        s.setBlockNetworkImage(false);
+        s.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+        s.setOffscreenPreRaster(true);
+        s.setTextZoom(100);
+        web.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        web.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        WebView.setWebContentsDebuggingEnabled(false);
         s.setUserAgentString(s.getUserAgentString() + " ArtApp/1.0");
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(web, true);
@@ -77,6 +86,18 @@ public class MainActivity extends AppCompatActivity {
                 if (request.isForMainFrame()) {
                     showOffline();
                 }
+            }
+
+            // If Android kills the page engine to free memory (this makes photos vanish or the app freeze),
+            // start a fresh one instead of staying broken.
+            @Override
+            public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+                try {
+                    root.removeView(web);
+                    web.destroy();
+                } catch (Exception e) { /* ignore */ }
+                recreate();
+                return true;
             }
 
             @Override
