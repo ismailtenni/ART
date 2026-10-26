@@ -3378,27 +3378,6 @@ d.addEventListener('keydown',function(e){if(e.key==='Escape')pn.style.display='n
 }catch(err){try{console.warn('cursor off',err)}catch(_){}}
 })();
 </script>
-<script id="appdl-js">
-(function(){
-try{
-if(!/ArtApp/.test(navigator.userAgent||''))return;
-document.addEventListener('click',function(e){
-  var a=e.target.closest&&e.target.closest('a[download]');if(!a)return;
-  var h=a.getAttribute('href')||'';
-  if(!/^(blob:|data:)/.test(h))return;
-  e.preventDefault();e.stopPropagation();
-  var B=window.ArtBridge;
-  if(!B||!B.save){alert('Please update the app to save pictures.');return}
-  var name=a.getAttribute('download')||'art.png';
-  fetch(h).then(function(r){return r.blob()}).then(function(b){
-    var fr=new FileReader();
-    fr.onload=function(){var s=String(fr.result||'');var i=s.indexOf(',');B.save(name,b.type||'image/png',s.slice(i+1))};
-    fr.readAsDataURL(b);
-  }).catch(function(){alert('Could not save the picture.')});
-},true);
-}catch(e){}
-})();
-</script>
 <script id="layout-js">
 (function(){
 try{
