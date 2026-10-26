@@ -232,6 +232,20 @@ html.lite img.mv[style*="kenburns"],html.lite .mv[style*="nebula"]{animation:non
 html.lite .mv[style*="drop-shadow"]{filter:none!important}
 html.lite #fxdust,html.lite .fxglow{display:none!important}
 html.lite *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+html.phone,html.phone body{background:#050914!important}
+#lite-bg{display:none}
+html.phone #lite-bg{display:block;position:fixed;left:0;top:0;width:100%;height:100%;z-index:-1;background:#050914 url(assets/space-bg-baked.jpg) center/cover no-repeat;pointer-events:none;transform:translateZ(0)}
+html.phone .mv[style*="floatY"]{animation:none!important;box-shadow:0 0 40px rgba(130,150,255,.35)!important}
+html.phone .mv[style*="spin"]{animation:none!important}
+html.phone .mv[style*="drop-shadow"]{filter:none!important}
+html.phone .mv[style*="rock"]{animation-duration:60s!important;will-change:transform}
+html.phone *{text-shadow:none!important}
+html.phone .bob,html.phone [class*="bob"],html.phone [style*="bob"]{animation:none!important}
+html.phone [style*="animation: spin"],html.phone [style*="animation:spin"]{animation:none!important}
+html.phone [style*="drop-shadow"]{filter:none!important}
+html.phone .art-card,html.phone .mx-card,html.phone figure{box-shadow:none!important}
+html.phone section{content-visibility:auto;contain-intrinsic-size:auto 900px}
+html.phone img{image-rendering:auto}
 .fx-paused{animation-play-state:paused!important}
 </style>
 </head><body>
@@ -736,9 +750,33 @@ if(saved&&DICT[saved])apply(saved);else apply('en');
 <script id="perf-js">
 (function(){try{
 var w=window,d=document,root=d.documentElement,nav=navigator;
-var weak=(nav.hardwareConcurrency&&nav.hardwareConcurrency<=4)||(nav.deviceMemory&&nav.deviceMemory<=4)||w.innerWidth<700;
+var weak=(nav.hardwareConcurrency&&nav.hardwareConcurrency<=4)||(nav.deviceMemory&&nav.deviceMemory<=4)||w.innerWidth<900;
 var sv=nav.connection&&nav.connection.saveData;
-if(weak||sv)root.classList.add('lite');
+var touch=(w.matchMedia&&w.matchMedia('(pointer:coarse)').matches)||/ArtApp|Android|iPhone|iPad|Mobile/i.test(nav.userAgent||'');
+if(weak||sv||touch)root.classList.add('lite');
+/* phones and the Android app: ONE still background instead of ~100 animated layers (this removes the glitch, blank patches and lag) */
+if(root.classList.contains('lite')&&(touch||w.innerWidth<900)){
+  root.classList.add('phone');
+  function trim(){
+    try{
+      var bgc=d.querySelector('div[aria-hidden="true"][style*="position: absolute"]');
+      if(!bgc||bgc.__trim)return;bgc.__trim=1;
+      var rocks=0;
+      Array.prototype.slice.call(bgc.querySelectorAll('.mv')).forEach(function(e){
+        if(!e.parentNode)return;
+        var st=e.getAttribute('style')||'';
+        if(/rock[AB]/.test(st)&&e.tagName==='DIV'){rocks++;if(rocks>4){e.parentNode.removeChild(e);return}return}
+        if(/kenburns|nebula|twinkle|starDrift|shoot|fall|radial-gradient/.test(st)&&!/floatY/.test(st)){
+          var par=e.parentNode;
+          if(/kenburns/.test(st)&&par&&par!==bgc&&par.children.length===1)par.parentNode&&par.parentNode.removeChild(par);else e.parentNode.removeChild(e);
+        }
+      });
+      var wrap=bgc.parentNode;if(wrap)wrap.style.setProperty('background','none','important');
+      if(!d.getElementById('lite-bg')){var lb=d.createElement('div');lb.id='lite-bg';lb.setAttribute('aria-hidden','true');d.body.insertBefore(lb,d.body.firstChild)}
+    }catch(e){}
+  }
+  if(d.readyState==='loading')d.addEventListener('DOMContentLoaded',trim);else trim();
+}
 /* pause the big background animations while they are off screen */
 if('IntersectionObserver' in w){
   var io=new IntersectionObserver(function(es){es.forEach(function(e){

@@ -46,7 +46,7 @@ let ADM = null;
 
 // ---------- chat safety: no links, sexual content, slurs or insults ----------
 const BAD_LONG = ['fuck', 'shit', 'porn', 'pussy', 'whore', 'slut', 'nigg', 'faggot', 'bitch', 'cunt', 'blowjob', 'handjob', 'asshole', 'dickhead', 'motherfuck', 'retard', 'tranny', 'putain', 'salope', 'enculer', 'connard', 'connasse', 'batard', 'kahba', 'nikmok', 'sharmout', 'شرموط', 'قحبة', 'عاهرة', 'منيوك', 'كس امك', 'كسمك', 'ابن الكلب', 'ابن القحبة'];
-const BAD_WORD = ['sex', 'sexy', 'xxx', 'nudes', 'dick', 'cock', 'cum', 'boobs', 'tits', 'anal', 'horny', 'milf', 'slutty', 'fag', 'kike', 'chink', 'spic', 'idiot', 'stupid', 'dumb', 'moron', 'loser', 'ugly', 'trash', 'garbage', 'stfu', 'wtf', 'pute', 'merde', 'ntm', 'zebi', 'zeb', 'nique', 'niquer', 'couille', 'couilles', 'baise', 'kelb', 'hmar', 'zamel', 'زب', 'كس', 'كلب', 'نيك'];
+const BAD_WORD = ['sex', 'sexy', 'nudes', 'dick', 'cock', 'cum', 'boobs', 'tits', 'anal', 'horny', 'milf', 'slutty', 'fag', 'kike', 'chink', 'spic', 'idiot', 'stupid', 'dumb', 'moron', 'loser', 'ugly', 'trash', 'garbage', 'stfu', 'wtf', 'pute', 'merde', 'ntm', 'zebi', 'zeb', 'nique', 'niquer', 'couille', 'couilles', 'baise', 'kelb', 'hmar', 'zamel', 'زب', 'كس', 'كلب', 'نيك'];
 const BAD_PHRASE = ['shut up', 'fuck you', 'go die', 'kill yourself', 'suck my', 'sexe', 'ta gueule', 'ferme la'];
 function normText(t) {
   return String(t || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
@@ -56,6 +56,7 @@ function normText(t) {
 function badText(text, extra) {
   const raw = String(text || '').toLowerCase();
   if (/https?:|www\.|\b[a-z0-9-]{2,}\.(com|net|org|io|ru|xyz|info|me|co|ly|tk|ml|ga|cf|gq|site|online|shop|top|club|link|click|app|dev|cc|biz|us|fr|ma)\b|\bt\.me|wa\.me|bit\.ly|discord\.gg|[a-z0-9._-]+@[a-z0-9-]+\.[a-z]{2,}/i.test(raw)) return 'links';
+  if (/\bx{3,}\b/.test(raw)) return 'language';
   const n0 = normText(raw), n1 = normText(raw.replace(/(\p{L})[.\-_*]+(?=\p{L})/gu, '$1'));
   for (const n of (n0 === n1 ? [n0] : [n0, n1])) { const r = badIn(n, extra); if (r) return r; }
   return '';
