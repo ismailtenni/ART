@@ -220,7 +220,7 @@ const SCH = {
   spotlight: { on: 's3', title: 's100', text: 's800', image: 'img', price: 's40', pay: 'url' },
   ba: { before: 'img', after: 'img', caption: 's100' },
   about: { portrait: 'img', t1: 's700', t2: 's700', t3: 's700', p1: 'img', p2: 'img', p3: 'img', poster: 'img', vurl: 's300' },
-  settings: { coOff: 's3', payDefault: 'url', payLabel: 's30', noRooms: 's3', ghUser: 's40', ghRepo: 's60', apkUrl: 'url', exeUrl: 'url', secChk: 's40', giftOn: 's3', giftTitle: 's60', giftText: 's200', giftImg: 'img', giftCode: 's30' },
+  settings: { curDef: 's20', curSize: 's6', curOff: 's3', coOff: 's3', payDefault: 'url', payLabel: 's30', noRooms: 's3', ghUser: 's40', ghRepo: 's60', apkUrl: 'url', exeUrl: 'url', secChk: 's40', giftOn: 's3', giftTitle: 's60', giftText: 's200', giftImg: 'img', giftCode: 's30' },
   buyers: { photo: 'img', name: 's40', place: 's40', size: 's30', text: 's200', toast: 's3' },
   rooms: { name: 's40', img: 'img', x: 'n', y: 'n', cm: 'n' },
   posts: { title: 's100', text: 's6000', image: 'img', date: 's10' },
