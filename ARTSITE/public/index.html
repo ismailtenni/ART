@@ -1154,11 +1154,11 @@ function init(){
     box.appendChild(h('div',{id:'ed-msg',style:'margin-top:12px;min-height:20px;color:#a8d6ff;font-size:14px',text:msg}));
     if(cur){box.appendChild(workForm(cur.o,cur.n));return}
     var tabs=h('div',{style:'display:flex;gap:10px;margin:18px 0;flex-wrap:wrap'});
-    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['buyers','Real walls'],['gift','Free gift'],['draw','Draw me'],['pay','Checkout and crypto'],['sec','Security checklist'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
+    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['buyers','Real walls'],['gift','Free gift'],['draw','Draw me'],['mem','Members'],['pay','Checkout and crypto'],['sec','Security checklist'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
       tabs.appendChild(h('button',{type:'button',style:(tab===t[0]?BTN2:BTN),text:t[1],on:{click:function(){tab=t[0];render()}}}));
     });
     box.appendChild(tabs);
-    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='buyers')renderBuyersTab();else if(tab==='gift')renderGiftTab();else if(tab==='draw')renderDrawTab();else if(tab==='pay')renderPayTab();else if(tab==='sec')renderSecTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
+    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='buyers')renderBuyersTab();else if(tab==='gift')renderGiftTab();else if(tab==='draw')renderDrawTab();else if(tab==='mem')renderMemTab();else if(tab==='pay')renderPayTab();else if(tab==='sec')renderSecTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
   }
   function renderWorks(){
     box.appendChild(h('button',{type:'button',style:BTN2,text:'+ Add new artwork',on:{click:function(){editing='new';cur={n:true,o:{id:'',title:'',meta:'',series:'',status:'',ratio:'3 / 4',desc:'',cover:'',shots:[],process:[]}};render()}}}));
@@ -1336,6 +1336,39 @@ function init(){
     box.appendChild(note1('Add the coins you accept. Buyers see your address with a Copy button and then send you the transaction ID on WhatsApp. IMPORTANT: copy the address from your wallet app, send a tiny test payment first, and check it twice. Crypto payments cannot be reversed, and only YOU should ever type these addresses here.'));
     box.appendChild(listEd(data.wallets,[{k:'coin',l:'Coin',p:'USDT'},{k:'network',l:'Network',p:'TRC20'},{k:'addr',l:'Wallet address',p:'paste your address'}],'+ Add coin',function(){return {coin:'',network:'',addr:''}}));
     box.appendChild(note1('Online payment link: set it in the Shop and payments tab. Press Save and publish at the top.'));
+  }
+  var memData=null,memQ='';
+  function renderMemTab(){
+    if(!memData){box.appendChild(h('p',{style:'color:#9fb0c8',text:'Loading members ...'}));
+      post('/api/admin/members',{}).then(function(r){memData=r;render()}).catch(function(e){say('Problem: '+e.message)});return}
+    var M=memData;
+    var stats=h('div',{style:'display:flex;gap:12px;flex-wrap:wrap;margin:12px 0'});
+    [['Members',M.total],['New in 24 hours',M.today],['New in 7 days',M.week],['Blocked',M.banned]].forEach(function(x){stats.appendChild(h('div',{style:'min-width:130px;padding:14px;border:1px solid rgba(190,170,255,.3);border-radius:14px;background:rgba(20,26,66,.4)'},[h('div',{style:'font-size:30px;color:#fff',text:String(x[1])}),h('div',{style:'font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#c4a0ff',text:x[0]})]))});
+    box.appendChild(stats);
+    box.appendChild(note1('Everyone who joined your site. Block stops a person from logging in, liking and commenting. Delete removes the account and their comments and likes. Comments, sign-up names, requests and reviews are checked automatically: links, insults, slurs and sexual words are refused.'));
+    var q=h('input',{type:'search',placeholder:'Search name or email',value:memQ,style:'width:100%;max-width:420px;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid rgba(190,170,255,.3);background:rgba(8,12,34,.7);color:#fff;font:inherit;margin:8px 0'});
+    var list=h('div',{});
+    function paint(){
+      list.innerHTML='';var t=memQ.toLowerCase();
+      M.members.filter(function(m){return !t||String(m.name).toLowerCase().indexOf(t)>-1||String(m.email).toLowerCase().indexOf(t)>-1}).forEach(function(m){
+        var acts=h('div',{style:'display:flex;gap:8px;flex-wrap:wrap;margin-top:8px'});
+        if(!m.owner){
+          acts.appendChild(h('button',{type:'button',style:m.banned?BTN2:BTN,text:m.banned?'Unblock':'Block',on:{click:function(){if(!m.banned&&!confirm('Block '+m.name+'?'))return;post('/api/admin/member/ban',{id:m.id,ban:!m.banned}).then(function(){m.banned=!m.banned;M.banned+=m.banned?1:-1;render()}).catch(function(e){say('Problem: '+e.message)})}}}));
+          acts.appendChild(h('button',{type:'button',style:BTNR,text:'Delete',on:{click:function(){if(!confirm('Delete '+m.name+' and all their comments and likes?'))return;post('/api/admin/member/delete',{id:m.id}).then(function(){M.members=M.members.filter(function(x){return x.id!==m.id});M.total--;if(m.banned)M.banned--;render()}).catch(function(e){say('Problem: '+e.message)})}}}));
+        }
+        list.appendChild(h('div',{style:'margin:10px 0;padding:14px;border:1px solid '+(m.banned?'rgba(255,100,120,.6)':'rgba(190,170,255,.3)')+';border-radius:14px;background:rgba(20,26,66,.4);max-width:780px;line-height:1.6'},[
+          h('div',{style:'font-size:17px',text:m.name+(m.owner?'  (you, owner)':'')+(m.banned?'  · BLOCKED':'')}),
+          h('div',{style:'color:#a8d6ff',text:m.email}),
+          h('div',{style:'font-size:13px;color:#9fb0c8',text:'Joined '+new Date(m.at).toLocaleString()+'  ·  '+m.likes+' likes  ·  '+m.comments+' comments'}),acts]))});
+      if(!list.childNodes.length)list.appendChild(h('p',{style:'color:#9fb0c8',text:'No members found.'}));
+    }
+    q.addEventListener('input',function(){memQ=q.value;paint()});
+    box.appendChild(q);paint();box.appendChild(list);
+    box.appendChild(sub('My own blocked words'));
+    box.appendChild(note1('Add extra words you want refused (separate with commas). Links and the built-in bad words are always blocked.'));
+    var ta=h('textarea',{rows:'3',style:'width:100%;max-width:620px;box-sizing:border-box;padding:12px;border-radius:12px;border:1px solid rgba(190,170,255,.3);background:rgba(8,12,34,.7);color:#fff;font:inherit'});ta.value=M.words||'';
+    box.appendChild(ta);
+    box.appendChild(h('div',{style:'margin-top:10px'},[h('button',{type:'button',style:BTN2,text:'Save blocked words',on:{click:function(){post('/api/admin/badwords',{words:ta.value}).then(function(){M.words=ta.value;say('Saved.')}).catch(function(e){say('Problem: '+e.message)})}}})]));
   }
   function renderGiftTab(){
     var S=data.settings;
@@ -3172,10 +3205,14 @@ function go(){
     if(!data.items.length)pn.appendChild(el('div',{style:'color:#9fb0c8;padding:10px 0',text:'Nothing yet. New comments, likes, requests, orders and sign-ups will show here.'}));
     data.items.forEach(function(x){
       var nw=x.at>data.seen;
-      var row=el('div',{style:'display:flex;gap:10px;padding:10px;margin:6px 0;border-radius:12px;background:'+(nw?'rgba(120,90,230,.25)':'rgba(255,255,255,.04)')+(x.tab?';cursor:pointer':'')},[
+      var wk=null;if(x.work&&w.C&&w.C.works)(w.C.works||[]).forEach(function(q){if(q&&q.id===x.work)wk=q});
+      var okc=wk&&typeof wk.cover==='string'&&/^(\/api\/media\/[a-f0-9]{8,32}|assets\/[A-Za-z0-9._-]+)$/.test(wk.cover);
+      var txt=x.type==='like'?(wk?'“'+(wk.title||'')+'”':'Artwork '+x.text):(wk?'On “'+(wk.title||'')+'”: '+(x.text||''):(x.text||''));
+      var row=el('div',{style:'display:flex;gap:10px;padding:10px;margin:6px 0;border-radius:12px;background:'+(nw?'rgba(120,90,230,.25)':'rgba(255,255,255,.04)')+((x.tab||wk)?';cursor:pointer':'')},[
         el('span',{style:'font-size:20px',text:IC[x.type]||'•'}),
-        el('div',{style:'flex:1;min-width:0'},[el('div',{style:'font-weight:600',text:(LB[x.type]||'')+' · '+x.who}),el('div',{style:'color:#c4d0e6;word-break:break-word',text:x.text||''}),el('div',{style:'color:#9fb0c8;font-size:12px',text:ago(x.at)+' ago'})])]);
+        el('div',{style:'flex:1;min-width:0'},[el('div',{style:'font-weight:600',text:(LB[x.type]||'')+' · '+x.who}),el('div',{style:'color:#c4d0e6;word-break:break-word',text:txt}),el('div',{style:'color:#9fb0c8;font-size:12px',text:ago(x.at)+' ago'+(wk?' · tap to open':'')})])].concat(okc?[el('img',{src:wk.cover,alt:'',loading:'lazy',style:'width:48px;height:60px;object-fit:cover;border-radius:8px;flex:none'})]:[]));
       if(x.tab)row.addEventListener('click',function(){pn.style.display='none';if(w.__openTab)w.__openTab(x.tab)});
+      if(wk)row.addEventListener('click',function(){pn.style.display='none';var c=d.querySelector('#g-works .cnt[data-id="'+wk.id.replace(/[^A-Za-z0-9_-]/g,'')+'"]');var f=c&&c.closest('figure');var bt=f&&f.querySelector('button');if(bt){bt.scrollIntoView({block:'center'});bt.click()}});
       pn.appendChild(row);
     });
   }

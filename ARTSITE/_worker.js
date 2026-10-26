@@ -24,7 +24,7 @@ async function currentUser(env, req) {
   const t = getCookie(req, 'session');
   if (!t) return null;
   const h = await sha256(t);
-  return await env.DB.prepare('SELECT u.id, u.name, u.email FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires_at > ?')
+  return await env.DB.prepare('SELECT u.id, u.name, u.email FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires_at > ? AND u.id NOT IN (SELECT user_id FROM bans)')
     .bind(h, Date.now()).first();
 }
 async function startSession(env, userId) {
@@ -43,6 +43,35 @@ async function tooMany(env, key) {
 function isAdmin(env, me) { const a = ADM || env.ADMIN_EMAIL; return !!(me && a && String(a).trim().toLowerCase() === me.email); }
 
 let ADM = null;
+
+// ---------- chat safety: no links, sexual content, slurs or insults ----------
+const BAD_LONG = ['fuck', 'shit', 'porn', 'pussy', 'whore', 'slut', 'nigg', 'faggot', 'bitch', 'cunt', 'blowjob', 'handjob', 'asshole', 'dickhead', 'motherfuck', 'retard', 'tranny', 'putain', 'salope', 'enculer', 'connard', 'connasse', 'batard', 'kahba', 'nikmok', 'sharmout', 'شرموط', 'قحبة', 'عاهرة', 'منيوك', 'كس امك', 'كسمك', 'ابن الكلب', 'ابن القحبة'];
+const BAD_WORD = ['sex', 'sexy', 'xxx', 'nudes', 'dick', 'cock', 'cum', 'boobs', 'tits', 'anal', 'horny', 'milf', 'slutty', 'fag', 'kike', 'chink', 'spic', 'idiot', 'stupid', 'dumb', 'moron', 'loser', 'ugly', 'trash', 'garbage', 'stfu', 'wtf', 'pute', 'merde', 'ntm', 'zebi', 'zeb', 'nique', 'niquer', 'couille', 'couilles', 'baise', 'kelb', 'hmar', 'zamel', 'زب', 'كس', 'كلب', 'نيك'];
+const BAD_PHRASE = ['shut up', 'fuck you', 'go die', 'kill yourself', 'suck my', 'sexe', 'ta gueule', 'ferme la'];
+function normText(t) {
+  return String(t || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[0@]/g, 'o').replace(/[1!|]/g, 'i').replace(/3/g, 'e').replace(/[4]/g, 'a').replace(/[5$]/g, 's').replace(/7/g, 't')
+    .replace(/(.)\1+/g, '$1');
+}
+function badText(text, extra) {
+  const raw = String(text || '').toLowerCase();
+  if (/https?:|www\.|\b[a-z0-9-]{2,}\.(com|net|org|io|ru|xyz|info|me|co|ly|tk|ml|ga|cf|gq|site|online|shop|top|club|link|click|app|dev|cc|biz|us|fr|ma)\b|\bt\.me|wa\.me|bit\.ly|discord\.gg|[a-z0-9._-]+@[a-z0-9-]+\.[a-z]{2,}/i.test(raw)) return 'links';
+  const n0 = normText(raw), n1 = normText(raw.replace(/(\p{L})[.\-_*]+(?=\p{L})/gu, '$1'));
+  for (const n of (n0 === n1 ? [n0] : [n0, n1])) { const r = badIn(n, extra); if (r) return r; }
+  return '';
+}
+function badIn(n, extra) {
+  const toks = n.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+  const set = new Set(toks);
+  const bag = ' ' + toks.join(' ') + ' ';
+  for (const w of BAD_LONG) { const c = normText(w); if (n.includes(c)) return 'language'; }
+  for (const w of BAD_WORD) if (set.has(normText(w))) return 'language';
+  for (const w of BAD_PHRASE) if (bag.includes(' ' + normText(w) + ' ')) return 'language';
+  for (const w of String(extra || '').split(/[,\n]+/)) { const c = normText(w.trim()); if (c && set.has(c)) return 'language'; }
+  return '';
+}
+let BADX = '';
+const BAD_MSG = 'Please keep it kind: no links, insults, slurs or sexual content.';
 const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 function b32enc(bytes) { let bits = '', out = ''; for (const b of bytes) bits += b.toString(2).padStart(8, '0'); for (let i = 0; i < bits.length; i += 5) out += B32[parseInt(bits.slice(i, i + 5).padEnd(5, '0'), 2)]; return out; }
 function b32dec(s) { let bits = ''; for (const c of String(s).replace(/=+$/, '').toUpperCase()) { const v = B32.indexOf(c); if (v < 0) continue; bits += v.toString(2).padStart(5, '0'); } const out = []; for (let i = 0; i + 8 <= bits.length; i += 8) out.push(parseInt(bits.slice(i, i + 8), 2)); return new Uint8Array(out); }
@@ -146,6 +175,7 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, work_id TEXT NOT NULL, user_id INTEGER NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL)',
   'CREATE INDEX IF NOT EXISTS comments_work ON comments (work_id, created_at)',
   'CREATE TABLE IF NOT EXISTS subscribers (email TEXT PRIMARY KEY, created_at INTEGER NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS bans (user_id INTEGER PRIMARY KEY, at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS content (k TEXT PRIMARY KEY, v TEXT NOT NULL, updated_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS media (id TEXT PRIMARY KEY, mime TEXT NOT NULL, n INTEGER NOT NULL, created_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS requests (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, contact TEXT NOT NULL, kind TEXT, size TEXT, budget TEXT, idea TEXT NOT NULL, ref TEXT, created_at INTEGER NOT NULL)',
@@ -358,7 +388,7 @@ const app = {
     if (!env.DB) return json({ error: 'The database is not connected yet.' }, 503);
     try {
       await ensureSchema(env);
-      try { const ar = await env.DB.prepare("SELECT v FROM content WHERE k = 'adminEmail'").first(); ADM = ar && ar.v ? String(ar.v) : null; const mr = await env.DB.prepare("SELECT v FROM content WHERE k = 'mail'").first(); MC = mr && mr.v ? JSON.parse(mr.v) : {}; const tr2 = await env.DB.prepare("SELECT v FROM content WHERE k = 'ts'").first(); TSC = tr2 && tr2.v ? JSON.parse(tr2.v) : {}; } catch (e) {}
+      try { const ar = await env.DB.prepare("SELECT v FROM content WHERE k = 'adminEmail'").first(); ADM = ar && ar.v ? String(ar.v) : null; const mr = await env.DB.prepare("SELECT v FROM content WHERE k = 'mail'").first(); MC = mr && mr.v ? JSON.parse(mr.v) : {}; const bx = await env.DB.prepare("SELECT v FROM content WHERE k = 'badWords'").first(); BADX = bx && bx.v ? String(bx.v) : ''; const tr2 = await env.DB.prepare("SELECT v FROM content WHERE k = 'ts'").first(); TSC = tr2 && tr2.v ? JSON.parse(tr2.v) : {}; } catch (e) {}
       if (url.pathname === '/api/me' && req.method === 'GET') {
         const u = await currentUser(env, req);
         const t2 = u ? await env.DB.prepare('SELECT enabled FROM user_2fa WHERE user_id = ?').bind(u.id).first() : null;
@@ -493,6 +523,7 @@ const app = {
         const email = String(body.email || '').trim().toLowerCase().slice(0, 120);
         const password = String(body.password || '');
         if (!name) return json({ error: 'Please enter your name.' }, 400);
+        if (badText(name, BADX)) return json({ error: BAD_MSG }, 400);
         if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: 'Please enter a valid email.' }, 400);
         if (password.length < 8 || password.length > 200) return json({ error: 'Password must be at least 8 characters.' }, 400);
         const ip = req.headers.get('cf-connecting-ip') || 'x';
@@ -516,6 +547,7 @@ const app = {
         const u = await env.DB.prepare('SELECT id, name, email, salt, hash FROM users WHERE email = ?').bind(email).first();
         const ok = u && (await hashPassword(password, unb64(u.salt))) === u.hash;
         if (!ok) { await note(env, key); return json({ error: 'Wrong email or password.' }, 401); }
+        if (await env.DB.prepare('SELECT 1 AS x FROM bans WHERE user_id = ?').bind(u.id).first()) return json({ error: 'This account has been blocked.' }, 403);
         const t2 = await env.DB.prepare('SELECT enabled FROM user_2fa WHERE user_id = ?').bind(u.id).first();
         if (t2 && t2.enabled) return json({ need2fa: true, ticket: await mkTicket(env, u.id) });
         const cookie = await startSession(env, u.id);
@@ -687,6 +719,7 @@ const app = {
         const work = String(body.work || '');
         const text = String(body.text || '').trim().slice(0, 500);
         if (!WORK.test(work) || !text) return json({ error: 'Write something first.' }, 400);
+        if (badText(text, BADX)) return json({ error: BAD_MSG }, 400);
         if (await tooMany(env, 'comment:' + me.id)) return json({ error: 'Slow down a little, then try again.' }, 429);
         await note(env, 'comment:' + me.id);
         const now = Date.now();
@@ -710,6 +743,7 @@ const app = {
         const stars = Math.min(5, Math.max(1, parseInt(body.stars, 10) || 5));
         const text = str(body.text, 600).trim(), name = str(body.name, 60).trim() || link.name;
         if (text.length < 3) return json({ error: 'Please write a few words.' }, 400);
+        if (badText(name + ' ' + text, BADX)) return json({ error: BAD_MSG }, 400);
         await env.DB.batch([
           env.DB.prepare('INSERT INTO client_reviews (name, stars, text, created_at, approved) VALUES (?, ?, ?, ?, 0)').bind(name, stars, text, Date.now()),
           env.DB.prepare('UPDATE review_links SET used = 1 WHERE token = ?').bind(t),
@@ -782,6 +816,7 @@ const app = {
       if (url.pathname === '/api/commission') {
         const name = str(body.name, 80).trim(), contact = str(body.contact, 120).trim(), idea = str(body.idea, 1500).trim();
         if (!name || !contact || !idea) return json({ error: 'Please fill in your name, how to reach you, and your idea.' }, 400);
+        if (badText(name + ' ' + idea, BADX)) return json({ error: BAD_MSG }, 400);
         const ip = req.headers.get('cf-connecting-ip') || 'x';
         if (await tooMany(env, 'req:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
         await note(env, 'req:' + ip);
@@ -840,6 +875,39 @@ const app = {
         }
         return json({ sent, failed });
       }
+      if (url.pathname === '/api/admin/members') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const day = 86400000, now = Date.now();
+        const one = async (sql, ...a) => { const r = await env.DB.prepare(sql).bind(...a).first(); return r ? r.n : 0; };
+        const rows = (await env.DB.prepare('SELECT u.id, u.name, u.email, u.created_at, (SELECT COUNT(*) FROM likes l WHERE l.user_id = u.id) AS likes, (SELECT COUNT(*) FROM comments c WHERE c.user_id = u.id) AS comments, (SELECT COUNT(*) FROM bans b WHERE b.user_id = u.id) AS banned FROM users u ORDER BY u.created_at DESC LIMIT 500').all()).results || [];
+        const adm = String(ADM || env.ADMIN_EMAIL || '').trim().toLowerCase();
+        return json({ total: await one('SELECT COUNT(*) AS n FROM users'), today: await one('SELECT COUNT(*) AS n FROM users WHERE created_at > ?', now - day), week: await one('SELECT COUNT(*) AS n FROM users WHERE created_at > ?', now - 7 * day), banned: await one('SELECT COUNT(*) AS n FROM bans'), words: BADX,
+          members: rows.map((r) => ({ id: r.id, name: r.name, email: r.email, at: r.created_at, likes: r.likes, comments: r.comments, banned: !!r.banned, owner: String(r.email).toLowerCase() === adm })) });
+      }
+      if (url.pathname === '/api/admin/member/ban' || url.pathname === '/api/admin/member/delete') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const id = Number(body.id) || 0;
+        const u = await env.DB.prepare('SELECT id, email FROM users WHERE id = ?').bind(id).first();
+        if (!u) return json({ error: 'Member not found.' }, 404);
+        if (isAdmin(env, { email: String(u.email).toLowerCase() })) return json({ error: 'You cannot do that to the owner account.' }, 400);
+        if (url.pathname.endsWith('/delete')) {
+          await env.DB.batch([env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM likes WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM comments WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM user_2fa WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM reset_tokens WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM bans WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id)]);
+          return json({ ok: true });
+        }
+        if (body.ban === false) await env.DB.prepare('DELETE FROM bans WHERE user_id = ?').bind(id).run();
+        else await env.DB.batch([env.DB.prepare('INSERT OR REPLACE INTO bans (user_id, at) VALUES (?, ?)').bind(id, Date.now()), env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(id)]);
+        return json({ ok: true });
+      }
+      if (url.pathname === '/api/admin/badwords') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const w = String(body.words || '').replace(/[^\p{L}\p{N}, \n]/gu, '').slice(0, 1500);
+        await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('badWords', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at").bind(w, Date.now()).run();
+        BADX = w;
+        return json({ ok: true });
+      }
       if (url.pathname === '/api/admin/notifs') {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
@@ -852,9 +920,9 @@ const app = {
         for (const r of await q('SELECT name, kind, size, budget, created_at FROM requests ORDER BY created_at DESC LIMIT 25'))
           ev.push({ type: /^(Draw me|Order)$/.test(r.kind || '') ? 'order' : 'request', who: T(r.name, 60), text: T([r.kind || 'Request', r.size, r.budget].filter(Boolean).join(' · '), 120), at: r.created_at, tab: 'reqs' });
         for (const r of await q('SELECT c.text, c.work_id, c.created_at, u.name FROM comments c JOIN users u ON u.id = c.user_id WHERE lower(u.email) != ? ORDER BY c.created_at DESC LIMIT 25', adm))
-          ev.push({ type: 'comment', who: T(r.name, 60), text: T(r.text, 140), at: r.created_at });
+          ev.push({ type: 'comment', who: T(r.name, 60), text: T(r.text, 140), work: T(r.work_id, 40), at: r.created_at });
         for (const r of await q('SELECT l.work_id, l.created_at, u.name FROM likes l JOIN users u ON u.id = l.user_id WHERE lower(u.email) != ? ORDER BY l.created_at DESC LIMIT 25', adm))
-          ev.push({ type: 'like', who: T(r.name, 60), text: T(r.work_id, 40), at: r.created_at });
+          ev.push({ type: 'like', who: T(r.name, 60), text: T(r.work_id, 40), work: T(r.work_id, 40), at: r.created_at });
         for (const r of await q('SELECT name, created_at FROM users ORDER BY created_at DESC LIMIT 15'))
           ev.push({ type: 'member', who: T(r.name, 60), text: 'New member', at: r.created_at });
         for (const r of await q('SELECT email, created_at FROM subscribers ORDER BY created_at DESC LIMIT 15'))
