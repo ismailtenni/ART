@@ -226,6 +226,7 @@ const SCH = {
   rooms: { name: 's40', img: 'img', x: 'n', y: 'n', cm: 'n' },
   posts: { title: 's100', text: 's6000', image: 'img', date: 's10' },
   draw: { on: 's3', title: 's80', text: 's500', img1: 'img', img2: 'img', img3: 'img', extra: 's20', days: 's40', cur: 's6', rates: 's200', origAdd: 's20', copyAdd: 's20' },
+  drawimgs: { img: 'img' },
   drawsizes: { name: 's40', price: 's20' },
   wallets: { coin: 's20', network: 's30', addr: 's120' },
   drawopts: { name: 's40', price: 's20', note: 's80' },
@@ -299,6 +300,7 @@ function cleanContent(b) {
     wallets: cleanList(b.wallets, SCH.wallets, 8, ['coin', 'addr']).map((x) => ({ ...x, addr: String(x.addr || '').replace(/[^A-Za-z0-9:_.\-]/g, '') })),
     drawopts: cleanList(b.drawopts, SCH.drawopts, 6, ['name']),
     drawsizes: cleanList(b.drawsizes, SCH.drawsizes, 10, ['name']),
+    drawimgs: cleanList(b.drawimgs, SCH.drawimgs, 24, ['img']),
     rooms: cleanList(b.rooms, SCH.rooms, 12, ['img']).map((r) => ({ ...r, x: Math.min(r.x ?? 50, 100), y: Math.min(r.y ?? 30, 100), cm: Math.min(Math.max(r.cm || 300, 30), 2000) })),
     layout: (() => { const l = b.layout && typeof b.layout === 'object' ? b.layout : {}; const ok = (a) => [...new Set((Array.isArray(a) ? a : []).filter((x) => typeof x === 'string' && /^[a-z]{2,20}$/.test(x)))].slice(0, 40); return { order: ok(l.order), hidden: ok(l.hidden) }; })(),
   };

@@ -930,7 +930,7 @@ fetch('/api/me',{credentials:'same-origin'}).then(function(r){return r.json()}).
 function init(){
   var data={works:clone(w.C&&w.C.works),photos:clone(w.C&&w.C.photos),films:clone(w.C&&w.C.films),texts:JSON.parse(JSON.stringify((w.C&&w.C.texts)||{}))};
   var textsInfo=null;
-  ['shop','gifts','reviews','behind','wallpapers','timelapse','prints','bamore','buyers','drawopts','drawsizes','wallets'].forEach(function(k){data[k]=clone(w.C&&w.C[k])});
+  ['shop','gifts','reviews','behind','wallpapers','timelapse','prints','bamore','buyers','drawopts','drawsizes','drawimgs','wallets'].forEach(function(k){data[k]=clone(w.C&&w.C[k])});
   data.pricing=JSON.parse(JSON.stringify((w.C&&w.C.pricing)||{}));data.pricing.sizes=data.pricing.sizes||[];data.pricing.styles=data.pricing.styles||[];
   data.imgs=JSON.parse(JSON.stringify((w.C&&w.C.imgs)||{}));data.rooms=JSON.parse(JSON.stringify((w.C&&w.C.rooms)||[]));if(w.C){w.C.layout=(w.C.layout&&typeof w.C.layout==='object')?w.C.layout:{};w.C.layout.order=w.C.layout.order||[];w.C.layout.hidden=w.C.layout.hidden||[];data.layout=w.C.layout}else data.layout={order:[],hidden:[]};
   data.posts=JSON.parse(JSON.stringify((w.C&&w.C.posts)||[]));
@@ -1357,6 +1357,9 @@ function init(){
     box.appendChild(img1(c,'img1','Example drawing 1 (big)',1400));
     box.appendChild(img1(c,'img2','Example drawing 2',1000));
     box.appendChild(img1(c,'img3','Example drawing 3',1000));
+    box.appendChild(sub('More example drawings'));
+    box.appendChild(note1('Add as many more as you like (up to 24). Press + Add photo, then choose the picture.'));
+    box.appendChild(listEd(data.drawimgs,[{k:'img',l:'Picture',t:'img',max:1000}],'+ Add photo',function(){return {img:''}}));
     box.appendChild(field1(c,'origAdd','Extra price if they want the ORIGINAL drawing (number, optional)','50'));
     box.appendChild(field1(c,'copyAdd','Extra price if they want a print COPY (number, optional)','0'));
     box.appendChild(sub('Sizes (extra price added)'));
@@ -3075,7 +3078,7 @@ function draw(){
   sec.querySelector('[data-dy=t]').textContent=cfg.title||T('t');
   sec.querySelector('[data-dy=p]').textContent=cfg.text||T('p');
   var g=el('div',{'class':'dy-g'});
-  var im=[cfg.img1,cfg.img2,cfg.img3].filter(okimg);
+  var im=[cfg.img1,cfg.img2,cfg.img3].concat((C.drawimgs||[]).map(function(x){return x&&x.img})).filter(okimg);
   if(im.length){var ex=el('div',{'class':'dy-ex'});im.forEach(function(u){ex.appendChild(el('img',{src:u,alt:T('ex'),loading:'lazy',decoding:'async'}))});g.appendChild(ex)}
   var f=el('form',{'class':'dy-f'});
   if(Object.keys(rt).length){var cs=el('select',{'aria-label':'currency',style:'width:auto;margin:0 0 4px;padding:8px 12px;border-radius:10px;border:1px solid rgba(190,170,255,.3);background:rgba(8,12,34,.7);color:#fff;font:inherit'});[cur].concat(Object.keys(rt)).forEach(function(c){var o=el('option',{value:c,text:c});if(c===(vc||cur))o.selected=true;cs.appendChild(o)});cs.addEventListener('change',function(){vc=cs.value===cur?'':cs.value;draw()});f.appendChild(cs)}
@@ -3373,6 +3376,27 @@ function draw(){
 btn.addEventListener('click',function(){var o=pn.style.display==='block';pn.style.display=o?'none':'block';if(!o)draw()});
 d.addEventListener('keydown',function(e){if(e.key==='Escape')pn.style.display='none'});
 }catch(err){try{console.warn('cursor off',err)}catch(_){}}
+})();
+</script>
+<script id="appdl-js">
+(function(){
+try{
+if(!/ArtApp/.test(navigator.userAgent||''))return;
+document.addEventListener('click',function(e){
+  var a=e.target.closest&&e.target.closest('a[download]');if(!a)return;
+  var h=a.getAttribute('href')||'';
+  if(!/^(blob:|data:)/.test(h))return;
+  e.preventDefault();e.stopPropagation();
+  var B=window.ArtBridge;
+  if(!B||!B.save){alert('Please update the app to save pictures.');return}
+  var name=a.getAttribute('download')||'art.png';
+  fetch(h).then(function(r){return r.blob()}).then(function(b){
+    var fr=new FileReader();
+    fr.onload=function(){var s=String(fr.result||'');var i=s.indexOf(',');B.save(name,b.type||'image/png',s.slice(i+1))};
+    fr.readAsDataURL(b);
+  }).catch(function(){alert('Could not save the picture.')});
+},true);
+}catch(e){}
 })();
 </script>
 <script id="layout-js">
