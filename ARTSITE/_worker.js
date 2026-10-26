@@ -194,7 +194,8 @@ const SCH = {
   buyers: { photo: 'img', name: 's40', place: 's40', size: 's30', text: 's200', toast: 's3' },
   rooms: { name: 's40', img: 'img', x: 'n', y: 'n', cm: 'n' },
   posts: { title: 's100', text: 's6000', image: 'img', date: 's10' },
-  draw: { on: 's3', title: 's80', text: 's500', img1: 'img', img2: 'img', img3: 'img', extra: 's20', days: 's40', cur: 's6', rates: 's200' },
+  draw: { on: 's3', title: 's80', text: 's500', img1: 'img', img2: 'img', img3: 'img', extra: 's20', days: 's40', cur: 's6', rates: 's200', origAdd: 's20', copyAdd: 's20' },
+  drawsizes: { name: 's40', price: 's20' },
   wallets: { coin: 's20', network: 's30', addr: 's120' },
   drawopts: { name: 's40', price: 's20', note: 's80' },
   challenge: { on: 's3', title: 's100', text: 's800', prize: 's100', deadline: 's10' },
@@ -266,6 +267,7 @@ function cleanContent(b) {
     draw: cleanRow(b.draw, SCH.draw),
     wallets: cleanList(b.wallets, SCH.wallets, 8, ['coin', 'addr']).map((x) => ({ ...x, addr: String(x.addr || '').replace(/[^A-Za-z0-9:_.\-]/g, '') })),
     drawopts: cleanList(b.drawopts, SCH.drawopts, 6, ['name']),
+    drawsizes: cleanList(b.drawsizes, SCH.drawsizes, 10, ['name']),
     rooms: cleanList(b.rooms, SCH.rooms, 12, ['img']).map((r) => ({ ...r, x: Math.min(r.x ?? 50, 100), y: Math.min(r.y ?? 30, 100), cm: Math.min(Math.max(r.cm || 300, 30), 2000) })),
     layout: (() => { const l = b.layout && typeof b.layout === 'object' ? b.layout : {}; const ok = (a) => [...new Set((Array.isArray(a) ? a : []).filter((x) => typeof x === 'string' && /^[a-z]{2,20}$/.test(x)))].slice(0, 40); return { order: ok(l.order), hidden: ok(l.hidden) }; })(),
   };
@@ -785,6 +787,7 @@ const app = {
         await note(env, 'req:' + ip);
         await env.DB.prepare('INSERT INTO requests (name, contact, kind, size, budget, idea, ref, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
           .bind(name, contact, str(body.kind, 40), str(body.size, 60), str(body.budget, 60), idea, str(body.ref, 300), Date.now()).run();
+        try { const to = String(ADM || env.ADMIN_EMAIL || '').trim(); if (to && mailReady(env)) { const kd = str(body.kind, 40) || 'Request'; await sendMails(env, [{ to, subject: 'New ' + kd + ' from ' + name, text: kd + ' from ' + name + ' (' + contact + ')\n\n' + idea, html: '<p><b>' + kd.replace(/[<>&]/g, '') + '</b> from ' + name.replace(/[<>&]/g, '') + ' (' + contact.replace(/[<>&]/g, '') + ')</p><pre style="white-space:pre-wrap">' + idea.replace(/[<>&]/g, '') + '</pre>' }]); } } catch (e) {}
         return json({ ok: true });
       }
       if (url.pathname === '/api/hit') {
@@ -836,6 +839,39 @@ const app = {
           if (await sendMails(env, mails)) sent += chunk.length; else failed += chunk.length;
         }
         return json({ sent, failed });
+      }
+      if (url.pathname === '/api/admin/notifs') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const sr = await env.DB.prepare("SELECT v FROM content WHERE k = 'notifSeen'").first();
+        const seen = Number(sr && sr.v) || 0;
+        const adm = String(ADM || env.ADMIN_EMAIL || '').trim().toLowerCase();
+        const q = async (sql, ...a) => { try { return (await env.DB.prepare(sql).bind(...a).all()).results || []; } catch (e) { return []; } };
+        const T = (x, n) => String(x == null ? '' : x).slice(0, n);
+        const ev = [];
+        for (const r of await q('SELECT name, kind, size, budget, created_at FROM requests ORDER BY created_at DESC LIMIT 25'))
+          ev.push({ type: /^(Draw me|Order)$/.test(r.kind || '') ? 'order' : 'request', who: T(r.name, 60), text: T([r.kind || 'Request', r.size, r.budget].filter(Boolean).join(' · '), 120), at: r.created_at, tab: 'reqs' });
+        for (const r of await q('SELECT c.text, c.work_id, c.created_at, u.name FROM comments c JOIN users u ON u.id = c.user_id WHERE lower(u.email) != ? ORDER BY c.created_at DESC LIMIT 25', adm))
+          ev.push({ type: 'comment', who: T(r.name, 60), text: T(r.text, 140), at: r.created_at });
+        for (const r of await q('SELECT l.work_id, l.created_at, u.name FROM likes l JOIN users u ON u.id = l.user_id WHERE lower(u.email) != ? ORDER BY l.created_at DESC LIMIT 25', adm))
+          ev.push({ type: 'like', who: T(r.name, 60), text: T(r.work_id, 40), at: r.created_at });
+        for (const r of await q('SELECT name, created_at FROM users ORDER BY created_at DESC LIMIT 15'))
+          ev.push({ type: 'member', who: T(r.name, 60), text: 'New member', at: r.created_at });
+        for (const r of await q('SELECT email, created_at FROM subscribers ORDER BY created_at DESC LIMIT 15'))
+          ev.push({ type: 'sub', who: T(r.email, 80), text: 'Joined your newsletter', at: r.created_at });
+        for (const r of await q('SELECT product, email, created_at FROM waitlist ORDER BY created_at DESC LIMIT 15'))
+          ev.push({ type: 'wait', who: T(r.email, 80), text: 'Waiting list: ' + T(r.product, 60), at: r.created_at });
+        for (const r of await q('SELECT name, stars, text, created_at FROM client_reviews ORDER BY created_at DESC LIMIT 10'))
+          ev.push({ type: 'review', who: T(r.name, 60), text: T(r.stars + ' stars · ' + r.text, 140), at: r.created_at, tab: 'rev' });
+        ev.sort((a, b) => b.at - a.at);
+        const items = ev.slice(0, 60);
+        return json({ seen, unread: items.filter((x) => x.at > seen).length, items });
+      }
+      if (url.pathname === '/api/admin/notifs/seen') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('notifSeen', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at").bind(String(Date.now()), Date.now()).run();
+        return json({ ok: true });
       }
       if (url.pathname === '/api/admin/stats') {
         const me = await currentUser(env, req);
