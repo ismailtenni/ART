@@ -11,15 +11,6 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.content.ContentValues;
-import android.os.Build;
-import android.provider.MediaStore;
-import android.util.Base64;
-import android.webkit.JavascriptInterface;
-import android.widget.Toast;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
@@ -162,45 +153,9 @@ public class MainActivity extends AppCompatActivity {
                 r.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, URLUtil.guessFileName(url, contentDisposition, mimetype));
                 ((DownloadManager) getSystemService(DOWNLOAD_SERVICE)).enqueue(r);
             } catch (Exception e) {
-                try {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                } catch (Exception e2) {
-                    Toast.makeText(this, "Could not save this file.", Toast.LENGTH_SHORT).show();
-                }
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
             }
         });
-        // lets the website save pictures it creates itself (like the space card) into Downloads
-        web.addJavascriptInterface(new Object() {
-            @JavascriptInterface
-            public void save(String name, String mime, String b64) {
-                try {
-                    String safe = (name == null ? "art.png" : name).replaceAll("[^A-Za-z0-9._-]", "_");
-                    if (safe.length() > 80) safe = safe.substring(safe.length() - 80);
-                    String type = (mime == null || mime.length() > 60) ? "image/png" : mime;
-                    byte[] bytes = Base64.decode(b64, Base64.DEFAULT);
-                    if (bytes.length > 25 * 1024 * 1024) throw new Exception("too big");
-                    if (Build.VERSION.SDK_INT >= 29) {
-                        ContentValues cv = new ContentValues();
-                        cv.put(MediaStore.Downloads.DISPLAY_NAME, safe);
-                        cv.put(MediaStore.Downloads.MIME_TYPE, type);
-                        cv.put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
-                        Uri u = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, cv);
-                        OutputStream o = getContentResolver().openOutputStream(u);
-                        o.write(bytes);
-                        o.close();
-                    } else {
-                        File dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-                        File f = new File(dir, safe);
-                        FileOutputStream o = new FileOutputStream(f);
-                        o.write(bytes);
-                        o.close();
-                    }
-                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Saved to Downloads", Toast.LENGTH_LONG).show());
-                } catch (Exception e) {
-                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Could not save the picture.", Toast.LENGTH_LONG).show());
-                }
-            }
-        }, "ArtBridge");
 
         if (savedInstanceState != null) {
             web.restoreState(savedInstanceState);
