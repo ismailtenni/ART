@@ -704,7 +704,7 @@ window.__social=function(id){
   d.comments.forEach(function(c){h+=bub(c)});
   h+='</div>';box.innerHTML=h;wire(d);
  }
- function bub(c){var hu=hue(c.name);return '<div class="cmt" data-cid="'+c.id+'" style="display:flex;gap:10px"><div style="flex:none;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,hsl('+hu+',70%,55%),hsl('+((hu+60)%360)+',70%,40%));display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff">'+E(c.name.charAt(0).toUpperCase())+'</div><div style="min-width:0;flex:1;padding:10px 14px;border-radius:4px 14px 14px 14px;background:rgba(255,255,255,0.07)"><div style="font-size:12px;color:#c4a0ff">'+E(c.name)+' <span style="color:#7e8bab">· '+ago(c.at)+'</span>'+(c.mine?' <button data-del="'+c.id+'" aria-label="Delete comment" style="float:right;border:0;background:none;color:#ff9aa8;cursor:pointer;font-size:12px;font-family:inherit">delete</button>':'')+'</div><div style="margin-top:4px;font-size:14px;line-height:1.5;color:#e8eefc;overflow-wrap:anywhere;white-space:pre-line">'+E(c.text)+'</div></div></div>'}
+ function bub(c){var hu=hue(c.name);return '<div class="cmt" data-cid="'+c.id+'" style="display:flex;gap:10px"><div style="flex:none;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,hsl('+hu+',70%,55%),hsl('+((hu+60)%360)+',70%,40%));display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;overflow:hidden">'+(c.av&&c.uid?'<img src="/api/avatar/'+(+c.uid)+'?v='+(+c.av)+'" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover">':E(c.name.charAt(0).toUpperCase()))+'</div><div style="min-width:0;flex:1;padding:10px 14px;border-radius:4px 14px 14px 14px;background:rgba(255,255,255,0.07)"><div style="font-size:12px;color:#c4a0ff">'+E(c.name)+' <span style="color:#7e8bab">· '+ago(c.at)+'</span>'+(c.mine?' <button data-del="'+c.id+'" aria-label="Delete comment" style="float:right;border:0;background:none;color:#ff9aa8;cursor:pointer;font-size:12px;font-family:inherit">delete</button>':'')+'</div><div style="margin-top:4px;font-size:14px;line-height:1.5;color:#e8eefc;overflow-wrap:anywhere;white-space:pre-line">'+E(c.text)+'</div></div></div>'}
  function wire(d){
   var hb=document.getElementById('hb');
   hb.onclick=function(){if(!d.me){openM('login');return}fetch('/api/like',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({work:id})}).then(function(r){return r.json()}).then(function(x){if(x.error)return;d.liked=x.liked;d.likes=x.likes;draw(d);var hh=document.getElementById('hh');if(x.liked)hh.className='heart-on';counts()})};
@@ -1182,7 +1182,9 @@ function init(){
     return f;
   }
 
+  var msgT=0;
   function render(){
+    if(msgT){clearInterval(msgT);msgT=0}
     box.innerHTML='';
     var top=h('div',{style:'position:sticky;top:0;z-index:5;margin:-18px calc(-1*clamp(14px,3vw,40px)) 0;padding:14px clamp(14px,3vw,40px);background:#04050f;border-bottom:1px solid rgba(190,170,255,.25);display:flex;gap:12px;align-items:center;flex-wrap:wrap'},[
       h('div',{style:'font-size:18px;letter-spacing:.14em;flex:1 1 160px',text:'EDIT MY SITE'}),
@@ -1192,11 +1194,11 @@ function init(){
     box.appendChild(h('div',{id:'ed-msg',style:'margin-top:12px;min-height:20px;color:#a8d6ff;font-size:14px',text:msg}));
     if(cur){box.appendChild(workForm(cur.o,cur.n));return}
     var tabs=h('div',{style:'display:flex;gap:10px;margin:18px 0;flex-wrap:wrap'});
-    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['buyers','Real walls'],['gift','Free gift'],['draw','Draw me'],['mem','Members'],['cur','Mouse cursor'],['pay','Checkout and crypto'],['sec','Security checklist'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
+    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['buyers','Real walls'],['gift','Free gift'],['draw','Draw me'],['msg','Messages'],['mem','Members'],['cur','Mouse cursor'],['pay','Checkout and crypto'],['sec','Security checklist'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
       tabs.appendChild(h('button',{type:'button',style:(tab===t[0]?BTN2:BTN),text:t[1],on:{click:function(){tab=t[0];render()}}}));
     });
     box.appendChild(tabs);
-    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='buyers')renderBuyersTab();else if(tab==='gift')renderGiftTab();else if(tab==='draw')renderDrawTab();else if(tab==='mem')renderMemTab();else if(tab==='cur')renderCurTab();else if(tab==='pay')renderPayTab();else if(tab==='sec')renderSecTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
+    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='buyers')renderBuyersTab();else if(tab==='gift')renderGiftTab();else if(tab==='draw')renderDrawTab();else if(tab==='mem')renderMemTab();else if(tab==='msg')renderMsgTab();else if(tab==='cur')renderCurTab();else if(tab==='pay')renderPayTab();else if(tab==='sec')renderSecTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
   }
   function renderWorks(){
     box.appendChild(h('button',{type:'button',style:BTN2,text:'+ Add new artwork',on:{click:function(){editing='new';cur={n:true,o:{id:'',title:'',meta:'',series:'',status:'',ratio:'3 / 4',desc:'',cover:'',shots:[],process:[]}};render()}}}));
@@ -1378,6 +1380,51 @@ function init(){
     box.appendChild(listEd(data.wallets,[{k:'coin',l:'Coin',p:'USDT'},{k:'network',l:'Network',p:'TRC20'},{k:'addr',l:'Wallet address',p:'paste your address'}],'+ Add coin',function(){return {coin:'',network:'',addr:''}}));
     box.appendChild(note1('Online payment link: set it in the Shop and payments tab. Press Save and publish at the top.'));
   }
+  var msgSel=0,msgList=null,msgTh=null;
+  function avatarEl(id,av,name,px){
+    var st='width:'+px+'px;height:'+px+'px;border-radius:50%;flex:none;overflow:hidden;background:linear-gradient(135deg,#7a5cff,#2a78aa);display:flex;align-items:center;justify-content:center;color:#fff;font-size:'+Math.round(px*.42)+'px';
+    var d1=h('div',{style:st});
+    if(av){d1.appendChild(h('img',{src:'/api/avatar/'+id+'?v='+av,alt:'',style:'width:100%;height:100%;object-fit:cover'}))}else d1.textContent=String(name||'?').charAt(0).toUpperCase();
+    return d1;
+  }
+  function renderMsgTab(){
+    box.appendChild(note1('Messages from your members. They write to you from their Account window on the site. Answer here. You also get a bell alert and an email when someone writes.'));
+    var holder=h('div',{});box.appendChild(holder);
+    function loadList(){return post('/api/admin/msg/threads',{}).then(function(r){msgList=r;})}
+    function loadThread(){if(!msgSel)return Promise.resolve();return post('/api/admin/msg/thread',{id:msgSel}).then(function(r){msgTh=r})}
+    function paint(){
+      holder.innerHTML='';
+      if(!msgSel){
+        if(!msgList){holder.appendChild(h('p',{style:'color:#9fb0c8',text:'Loading ...'}));return}
+        if(!msgList.threads.length)holder.appendChild(h('p',{style:'color:#9fb0c8',text:'No messages yet. Open the Members tab and press Message to start a chat with someone.'}));
+        msgList.threads.forEach(function(t){
+          var row=h('div',{style:'display:flex;gap:12px;align-items:center;margin:10px 0;padding:12px;max-width:780px;border:1px solid '+(t.unread?'#c4a0ff':'rgba(190,170,255,.3)')+';border-radius:14px;background:rgba(20,26,66,.4);cursor:pointer'},[
+            avatarEl(t.id,t.av,t.name,44),
+            h('div',{style:'flex:1;min-width:0'},[h('div',{style:'font-size:16px',text:t.name}),h('div',{style:'color:#9fb0c8;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis',text:(t.fromOwner?'You: ':'')+t.last})]),
+            h('div',{style:'text-align:right;font-size:12px;color:#9fb0c8'},[h('div',{text:new Date(t.at).toLocaleDateString()}),t.unread?h('div',{style:'margin-top:4px;display:inline-block;min-width:20px;padding:2px 7px;border-radius:10px;background:#ff4d6d;color:#fff;font-weight:700',text:String(t.unread)}):h('span')])]);
+          row.addEventListener('click',function(){msgSel=t.id;msgTh=null;paint();loadThread().then(function(){paint();loadList()})});
+          holder.appendChild(row);
+        });
+        return;
+      }
+      holder.appendChild(h('button',{type:'button',style:BTN,text:'← All messages',on:{click:function(){msgSel=0;msgTh=null;loadList().then(paint);paint()}}}));
+      if(!msgTh){holder.appendChild(h('p',{style:'color:#9fb0c8',text:'Loading ...'}));return}
+      holder.appendChild(h('div',{style:'display:flex;gap:12px;align-items:center;margin:14px 0'},[avatarEl(msgTh.user.id,msgTh.user.av,msgTh.user.name,48),h('div',{},[h('div',{style:'font-size:20px',text:msgTh.user.name}),h('div',{style:'color:#a8d6ff;font-size:13px',text:msgTh.user.email})])]));
+      var conv=h('div',{style:'max-width:680px;display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid rgba(190,170,255,.3);border-radius:14px;background:rgba(20,26,66,.3);max-height:55vh;overflow-y:auto'});
+      if(!msgTh.items.length)conv.appendChild(h('p',{style:'color:#9fb0c8',text:'No messages yet. Write the first one below.'}));
+      msgTh.items.forEach(function(m){
+        var b=h('div',{style:'max-width:82%;padding:10px 14px;border-radius:'+(m.mine?'16px 16px 4px 16px':'16px 16px 16px 4px')+';align-self:'+(m.mine?'flex-end':'flex-start')+';background:'+(m.mine?'rgba(100,80,220,.55)':'rgba(255,255,255,.09)')+';line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere'},[document.createTextNode(m.text),h('div',{style:'font-size:11px;color:#9fb0c8;margin-top:4px',text:new Date(m.at).toLocaleString()})]);
+        conv.appendChild(b);
+      });
+      holder.appendChild(conv);setTimeout(function(){conv.scrollTop=conv.scrollHeight},0);
+      var ta=h('textarea',{rows:'3',placeholder:'Write your answer ...',style:'width:100%;max-width:680px;box-sizing:border-box;margin-top:12px;padding:12px;border-radius:12px;border:1px solid rgba(190,170,255,.3);background:rgba(8,12,34,.7);color:#fff;font:inherit'});
+      holder.appendChild(ta);
+      holder.appendChild(h('div',{style:'margin-top:10px'},[h('button',{type:'button',style:BTN2,text:'Send',on:{click:function(){var v=ta.value.trim();if(!v)return;post('/api/admin/msg/send',{id:msgSel,text:v}).then(function(){ta.value='';return loadThread()}).then(function(){paint()}).catch(function(e){say('Problem: '+e.message)})}}})]));
+    }
+    paint();
+    loadList().then(function(){if(msgSel)return loadThread()}).then(paint).catch(function(e){say('Problem: '+e.message)});
+    msgT=setInterval(function(){if(document.hidden)return;if(msgSel){var y=holder.querySelector('textarea');if(y&&y.value)return;loadThread().then(function(){paint()}).catch(function(){})}else loadList().then(paint).catch(function(){})},15000);
+  }
   var memData=null,memQ='';
   function renderMemTab(){
     if(!memData){box.appendChild(h('p',{style:'color:#9fb0c8',text:'Loading members ...'}));
@@ -1397,10 +1444,12 @@ function init(){
           acts.appendChild(h('button',{type:'button',style:m.banned?BTN2:BTN,text:m.banned?'Unblock':'Block',on:{click:function(){if(!m.banned&&!confirm('Block '+m.name+'?'))return;post('/api/admin/member/ban',{id:m.id,ban:!m.banned}).then(function(){m.banned=!m.banned;M.banned+=m.banned?1:-1;render()}).catch(function(e){say('Problem: '+e.message)})}}}));
           acts.appendChild(h('button',{type:'button',style:BTNR,text:'Delete',on:{click:function(){if(!confirm('Delete '+m.name+' and all their comments and likes?'))return;post('/api/admin/member/delete',{id:m.id}).then(function(){M.members=M.members.filter(function(x){return x.id!==m.id});M.total--;if(m.banned)M.banned--;render()}).catch(function(e){say('Problem: '+e.message)})}}}));
         }
-        list.appendChild(h('div',{style:'margin:10px 0;padding:14px;border:1px solid '+(m.banned?'rgba(255,100,120,.6)':'rgba(190,170,255,.3)')+';border-radius:14px;background:rgba(20,26,66,.4);max-width:780px;line-height:1.6'},[
+        if(!m.owner)acts.insertBefore(h('button',{type:'button',style:BTN2,text:'Message',on:{click:function(){msgSel=m.id;msgTh=null;msgList=null;tab='msg';render()}}}),acts.firstChild);
+        if(m.av&&!m.owner)acts.appendChild(h('button',{type:'button',style:BTN,text:'Remove photo',on:{click:function(){post('/api/admin/member/avatar',{id:m.id}).then(function(){m.av=0;render()}).catch(function(e){say('Problem: '+e.message)})}}}));
+        list.appendChild(h('div',{style:'margin:10px 0;padding:14px;border:1px solid '+(m.banned?'rgba(255,100,120,.6)':'rgba(190,170,255,.3)')+';border-radius:14px;background:rgba(20,26,66,.4);max-width:780px;line-height:1.6;display:flex;gap:14px'},[avatarEl(m.id,m.av,m.name,52),h('div',{style:'flex:1;min-width:0'},[
           h('div',{style:'font-size:17px',text:m.name+(m.owner?'  (you, owner)':'')+(m.banned?'  · BLOCKED':'')}),
           h('div',{style:'color:#a8d6ff',text:m.email}),
-          h('div',{style:'font-size:13px;color:#9fb0c8',text:'Joined '+new Date(m.at).toLocaleString()+'  ·  '+m.likes+' likes  ·  '+m.comments+' comments'}),acts]))});
+          h('div',{style:'font-size:13px;color:#9fb0c8',text:'Joined '+new Date(m.at).toLocaleString()+'  ·  '+m.likes+' likes  ·  '+m.comments+' comments'}),acts])]))});
       if(!list.childNodes.length)list.appendChild(h('p',{style:'color:#9fb0c8',text:'No members found.'}));
     }
     q.addEventListener('input',function(){memQ=q.value;paint()});
@@ -1872,12 +1921,12 @@ var d=document,w=window,root=d.documentElement;
 var X={
 fr:{nav_shop:"Boutique",col_label:"Collections",col_title:"Explorer par univers",col_p:"Des visages et des émotions, dessinés à la main.",col_f:"Des mondes et des créatures imaginaires.",col_s:"Planètes, nébuleuses et inconnu.",col_open:"Ouvrir la collection",n_p:"Portraits",n_f:"Fantastique",n_s:"Espace",
 tl_label:"Time-lapse",tl_title:"Regardez le dessin se faire",tl_intro:"Chaque œuvre en accéléré, du premier trait à la touche finale.",tl_soon:"Vidéo bientôt",
-sh_label:"Boutique",sh_title:"Tirages et plus",sh_intro:"Choisissez un article et touchez Acheter : on termine la commande sur WhatsApp.",pr1:"Tirage d’art",pr2:"Affiche",pr3:"Pack d’autocollants",pr4:"Coque de téléphone",sh_price:"Prix bientôt",sh_buy:"Acheter sur WhatsApp",sh_img:"Photo du produit",
+sh_label:"Boutique",sh_title:"Tirages et plus",sh_intro:"Choisissez un article et touchez Acheter : on termine la commande sur WhatsApp.",pr1:"Tirage d’art",pr2:"Affiche",pr3:"Pack d’autocollants",pr4:"Coque de téléphone",sh_price:"Prix bientôt",sh_buy:"Acheter maintenant",sh_img:"Photo du produit",
 ba_hint:"Faites glisser la ligne pour comparer l’esquisse et l’œuvre finie.",ba_s:"Esquisse",ba_f:"Œuvre finie",
 wl_btn:"Voir sur un mur",wl_back:"Retour à l’œuvre",wl_size:"Taille",wl_room:"Pièce",wl_r1:"Salon",wl_r2:"Chambre",wl_r3:"Bureau",wl_r4:"Café",wl_r5:"Galerie",wl_r6:"Couloir",wl_r7:"Salle à manger",wl_r8:"Chambre d’enfant",wl_r9:"Salle de jeux",wl_ask:"Prix : demandez-moi",wl_orig:"Original",wl_fit:"Ce tirage est affiché à la taille maximale qui rentre sur ce mur.",wl_buy:"Acheter sur WhatsApp"},
 ar:{nav_shop:"المتجر",col_label:"المجموعات",col_title:"تصفح حسب العالم",col_p:"وجوه ومشاعر مرسومة باليد.",col_f:"عوالم ومخلوقات من الخيال.",col_s:"كواكب وسدم ومجهول.",col_open:"افتح المجموعة",n_p:"بورتريه",n_f:"فانتازيا",n_s:"الفضاء",
 tl_label:"تسريع الزمن",tl_title:"شاهد الرسم وهو يولد",tl_intro:"كل عمل بالتسريع، من أول خط إلى اللمسة الأخيرة.",tl_soon:"الفيديو قريباً",
-sh_label:"المتجر",sh_title:"مطبوعات وأكثر",sh_intro:"اختر منتجاً واضغط شراء، ونُكمل الطلب عبر واتساب.",pr1:"مطبوعة فنية",pr2:"ملصق كبير",pr3:"حزمة ستيكرات",pr4:"غطاء هاتف",sh_price:"السعر قريباً",sh_buy:"اشترِ عبر واتساب",sh_img:"صورة المنتج",
+sh_label:"المتجر",sh_title:"مطبوعات وأكثر",sh_intro:"اختر منتجاً واضغط شراء، ونُكمل الطلب عبر واتساب.",pr1:"مطبوعة فنية",pr2:"ملصق كبير",pr3:"حزمة ستيكرات",pr4:"غطاء هاتف",sh_price:"السعر قريباً",sh_buy:"اشترِ الآن",sh_img:"صورة المنتج",
 ba_hint:"اسحب الخط للمقارنة بين الرسم الأولي والعمل النهائي.",ba_s:"الرسم الأولي",ba_f:"العمل النهائي",
 wl_btn:"شاهدها على الجدار",wl_back:"العودة للعمل",wl_size:"الحجم",wl_room:"الغرفة",wl_r1:"الصالة",wl_r2:"غرفة النوم",wl_r3:"المكتب",wl_r4:"المقهى",wl_r5:"المعرض",wl_r6:"الممر",wl_r7:"غرفة الطعام",wl_r8:"غرفة الأطفال",wl_r9:"غرفة الألعاب",wl_ask:"السعر: اسألني",wl_orig:"الأصلية",wl_fit:"عُرضت بأكبر حجم يناسب هذا الجدار.",wl_buy:"اشترِ عبر واتساب"}};
 function tr(){
@@ -2117,15 +2166,15 @@ fr:{by_tap:"Touchez une taille pour la voir sur un mur",by_prints:"Tirages de ce
 gf_label:"Cartes cadeaux",gf_title:"Offrez un dessin",gf_intro:"Choisissez un montant. La personne choisit ensuite l’œuvre.",gf_ask:"Demander une carte cadeau",gf_soon:"Montant bientôt",
 rq_label:"Demande de dessin",rq_title:"Racontez-moi votre idée",rq_intro:"Remplissez ce petit formulaire. Je vous réponds avec un prix et un délai.",
 rq_name:"Votre nom",rq_contact:"Email ou numéro WhatsApp",rq_kind:"Type de dessin",k1:"Portrait",k2:"Scène fantastique",k3:"Autre idée",rq_size:"Taille souhaitée",rq_budget:"Budget",rq_idea:"Votre idée",rq_ref:"Lien d’une photo de référence (facultatif)",rq_send:"Envoyer ma demande",rq_wa:"Envoyer sur WhatsApp",rq_ok:"Merci ! J’ai bien reçu votre demande et je vous réponds vite.",rq_err:"Un problème est survenu. Essayez WhatsApp.",
-sh_buy:"Acheter sur WhatsApp",sh_pay:"Payer en ligne",sh_soon:"Prix bientôt",sh_lim:"Édition limitée",sh_left:"restants",sh_out:"Épuisé",
+sh_buy:"Acheter maintenant",sh_pay:"Payer en ligne",sh_soon:"Prix bientôt",sh_lim:"Édition limitée",sh_left:"restants",sh_out:"Épuisé",
 dl:"Télécharger",tr_nf:"Code introuvable. Écrivez-moi sur WhatsApp, je vérifie."},
 ar:{by_tap:"المس حجماً لتراه على الجدار",by_prints:"نسخ مطبوعة من هذه الرسمة",by_from:"اختر الحجم",rv_n:"تقييمات",mk_title:"كواليس الرسم",mk_hint:"حرّك الشريط لترى الرسمة تولد",mk_play:"تشغيل",mk_stop:"إيقاف",mk_step:"الخطوة",mk_final:"النتيجة النهائية",rv_form_title:"اترك تقييمك",rv_name:"اسمك",rv_stars:"تقييمك",rv_text:"كلماتك",rv_send:"أرسل تقييمي",rv_thanks:"شكراً! سيظهر تقييمك بعد أن أراجعه.",rv_bad:"رابط التقييم غير صالح أو استُخدم من قبل.",rv_close:"إغلاق",wl_btn:"أخبرني عند توفرها",wl_email:"بريدك الإلكتروني",wl_send:"أخبرني",wl_ok:"تم! سأراسلك.",wl_bad:"أدخل بريداً صحيحاً.",wl_sold:"هذه الرسمة بيعت. اترك بريدك لأخبرك إذا رسمت واحدة مشابهة.",cd_label:"بطاقة الفضاء",cd_title:"اصنع بطاقتك الفضائية",cd_intro:"اكتب اسمك واحصل على بطاقة لمشاركتها في ستوري إنستغرام.",cd_name:"اسمك",cd_moon:"القمر",cd_pluto:"بلوتو",cd_make:"أنشئ بطاقتي",cd_dl:"تحميل",cd_share:"مشاركة",cd_tag:"نجمة في Eternal Space",pc_label:"حاسبة الأسعار",pc_title:"كم سعر رسمتي؟",pc_intro:"اختر خياراتك وشاهد السعر فوراً. السعر النهائي أؤكده أنا.",pc_size:"الحجم",pc_style:"الأسلوب",pc_people:"عدد الأشخاص",pc_rush:"طلب مستعجل",pc_total:"السعر التقديري",pc_send:"أرسل عبر واتساب",pc_hello:"مرحباً! أريد رسمة.",pc_est:"السعر التقديري",ins_link:"ثبّت التطبيق",ins_help:"على الآيفون: اضغط مشاركة ثم «إضافة إلى الشاشة الرئيسية». على الأندرويد: افتح قائمة المتصفح واضغط «تثبيت التطبيق».",bl_label:"المدونة",bl_title:"من دفتر رسوماتي",bl_soon:"أول منشور قريباً.",bl_read:"اقرأ المزيد",bl_less:"إغلاق",fv_label:"مفضلتك",fv_title:"الأعمال التي تحبها",fv_empty:"اضغط على القلب في أي عمل لحفظه هنا.",ch_label:"تحدٍّ",ch_prize:"الجائزة",ch_days:"أيام متبقية",ch_ended:"انتهى هذا التحدي.",ch_name:"اسمك",ch_contact:"إنستغرام أو واتساب",ch_link:"رابط رسمتك (اختياري)",ch_join:"شارك",ch_ok:"تم تسجيلك! حظاً موفقاً.",g_play:"العب لعبة",sp_label:"عمل الشهر",sp_btn:"اسأل عن هذا العمل",
 gf_label:"بطاقات الهدايا",gf_title:"أهدِ رسمة",gf_intro:"اختر مبلغاً، ثم يختار المُهدى إليه العمل.",gf_ask:"اسأل عن بطاقة هدية",gf_soon:"المبلغ قريباً",
 rq_label:"طلب رسمة",rq_title:"أخبرني بفكرتك",rq_intro:"املأ هذا النموذج الصغير وسأرد عليك بالسعر والمدة.",
 rq_name:"اسمك",rq_contact:"البريد أو رقم واتساب",rq_kind:"نوع الرسمة",k1:"بورتريه",k2:"مشهد فانتازي",k3:"فكرة أخرى",rq_size:"الحجم المطلوب",rq_budget:"الميزانية",rq_idea:"فكرتك",rq_ref:"رابط صورة مرجعية (اختياري)",rq_send:"أرسل طلبي",rq_wa:"أرسل عبر واتساب",rq_ok:"شكراً! وصلني طلبك وسأرد عليك قريباً.",rq_err:"حدثت مشكلة. جرّب واتساب.",
-sh_buy:"اشترِ عبر واتساب",sh_pay:"ادفع عبر الإنترنت",sh_soon:"السعر قريباً",sh_lim:"إصدار محدود",sh_left:"متبقية",sh_out:"نفدت",
+sh_buy:"اشترِ الآن",sh_pay:"ادفع عبر الإنترنت",sh_soon:"السعر قريباً",sh_lim:"إصدار محدود",sh_left:"متبقية",sh_out:"نفدت",
 dl:"تحميل",tr_nf:"الرمز غير موجود. راسلني على واتساب وسأتحقق."}};
-var EN={by_tap:"Tap a size to see it on a wall",by_prints:"Prints of this artwork",by_from:"Choose a size",rv_n:"reviews",mk_title:"Making of",mk_hint:"Drag the slider to watch it come to life",mk_play:"Play",mk_stop:"Pause",mk_step:"Step",mk_final:"Finished",rv_form_title:"Leave your review",rv_name:"Your name",rv_stars:"Your rating",rv_text:"Your words",rv_send:"Send my review",rv_thanks:"Thank you! Your review will appear after I check it.",rv_bad:"This review link is not valid or was already used.",rv_close:"Close",wl_btn:"Tell me when it is back",wl_email:"Your email",wl_send:"Notify me",wl_ok:"Done! I will write to you.",wl_bad:"Please enter a valid email.",wl_sold:"This artwork is sold. Leave your email and I will tell you if I make a similar one.",cd_label:"Space card",cd_title:"Make your space card",cd_intro:"Type your name and get a card to share on Instagram Stories.",cd_name:"Your name",cd_moon:"Moon",cd_pluto:"Pluto",cd_make:"Create my card",cd_dl:"Download",cd_share:"Share",cd_tag:"A star in Eternal Space",pc_label:"Price calculator",pc_title:"How much is my drawing?",pc_intro:"Choose your options and see the price straight away. I confirm the final price.",pc_size:"Size",pc_style:"Style",pc_people:"Number of people",pc_rush:"Rush order (faster)",pc_total:"Estimated price",pc_send:"Send to the artist on WhatsApp",pc_hello:"Hello! I would like a drawing.",pc_est:"Estimated price",ins_link:"Install the app",ins_help:"On iPhone: tap Share, then Add to Home Screen. On Android: open the browser menu and tap Install app.",bl_read:"Read more",bl_less:"Close",fv_empty:"Tap the heart on an artwork to save it here.",ch_prize:"Prize",ch_days:"days left",ch_ended:"This challenge has ended.",ch_ok:"You are in! Good luck.",ch_join:"Join",g_play:"Play a game",sp_label:"Art of the month",sp_btn:"Ask about this artwork",gf_ask:"Ask about a gift card",gf_soon:"Amount coming soon",rq_ok:"Thank you! I got your request and I will reply soon.",rq_err:"Something went wrong. Please try WhatsApp.",sh_buy:"Buy on WhatsApp",sh_pay:"Pay online",sh_soon:"Price coming soon",sh_lim:"Limited edition",sh_left:"left",sh_out:"Sold out",dl:"Download"};
+var EN={by_tap:"Tap a size to see it on a wall",by_prints:"Prints of this artwork",by_from:"Choose a size",rv_n:"reviews",mk_title:"Making of",mk_hint:"Drag the slider to watch it come to life",mk_play:"Play",mk_stop:"Pause",mk_step:"Step",mk_final:"Finished",rv_form_title:"Leave your review",rv_name:"Your name",rv_stars:"Your rating",rv_text:"Your words",rv_send:"Send my review",rv_thanks:"Thank you! Your review will appear after I check it.",rv_bad:"This review link is not valid or was already used.",rv_close:"Close",wl_btn:"Tell me when it is back",wl_email:"Your email",wl_send:"Notify me",wl_ok:"Done! I will write to you.",wl_bad:"Please enter a valid email.",wl_sold:"This artwork is sold. Leave your email and I will tell you if I make a similar one.",cd_label:"Space card",cd_title:"Make your space card",cd_intro:"Type your name and get a card to share on Instagram Stories.",cd_name:"Your name",cd_moon:"Moon",cd_pluto:"Pluto",cd_make:"Create my card",cd_dl:"Download",cd_share:"Share",cd_tag:"A star in Eternal Space",pc_label:"Price calculator",pc_title:"How much is my drawing?",pc_intro:"Choose your options and see the price straight away. I confirm the final price.",pc_size:"Size",pc_style:"Style",pc_people:"Number of people",pc_rush:"Rush order (faster)",pc_total:"Estimated price",pc_send:"Send to the artist on WhatsApp",pc_hello:"Hello! I would like a drawing.",pc_est:"Estimated price",ins_link:"Install the app",ins_help:"On iPhone: tap Share, then Add to Home Screen. On Android: open the browser menu and tap Install app.",bl_read:"Read more",bl_less:"Close",fv_empty:"Tap the heart on an artwork to save it here.",ch_prize:"Prize",ch_days:"days left",ch_ended:"This challenge has ended.",ch_ok:"You are in! Good luck.",ch_join:"Join",g_play:"Play a game",sp_label:"Art of the month",sp_btn:"Ask about this artwork",gf_ask:"Ask about a gift card",gf_soon:"Amount coming soon",rq_ok:"Thank you! I got your request and I will reply soon.",rq_err:"Something went wrong. Please try WhatsApp.",sh_buy:"Buy now",sh_pay:"Pay online",sh_soon:"Price coming soon",sh_lim:"Limited edition",sh_left:"left",sh_out:"Sold out",dl:"Download"};
 function L(){return root.getAttribute('lang')||'en'}
 function T(k){var x=Z[L()];return (x&&x[k])||EN[k]||''}
 function el(tag,attrs,kids){var e=d.createElement(tag);for(var k in (attrs||{})){if(k==='text')e.textContent=attrs[k];else if(k==='style')e.style.cssText=attrs[k];else e.setAttribute(k,attrs[k])}(kids||[]).forEach(function(c){if(c)e.appendChild(c)});return e}
@@ -2164,8 +2213,8 @@ function renderShop(){
     var sold=(edition&&left===0)||closed;
     if(sold)card.appendChild(waitForm(p.name||'Product'));
     if(!sold){
-      card.appendChild(btnA(waLink('Hi! I want to buy: '+(p.name||'')+(p.price?' ('+p.price+')':'')+'.'),T('sh_buy')));
-      var pay=safeHttps(p.pay)||def;if(pay&&p.price)card.appendChild(btnA(pay,lab||T('sh_pay'),'v'));
+      var ba=btnA(waLink('Hi! I want to buy: '+(p.name||'')+(p.price?' ('+p.price+')':'')+'.'),T('sh_buy'),'v');
+      var pay=safeHttps(p.pay)||def;if(pay&&p.price)ba.setAttribute('data-pay',pay);card.appendChild(ba);
     }
     g.appendChild(card);
   });
@@ -2183,8 +2232,7 @@ function renderGifts(){
   var items=(C.gifts&&C.gifts.length)?C.gifts:null,def=safeHttps(C.settings&&C.settings.payDefault),lab=(C.settings&&C.settings.payLabel)||'';
   if(!items){for(var i=0;i<3;i++){var c=el('div',{'class':'mx-card art-card'},[el('div',{'class':'t',text:'🎁 '+T('gf_label')}),el('div',{'class':'d',text:T('gf_soon')}),btnA(waLink('Hi! I want to ask about a gift card.'),T('gf_ask'))]);g.appendChild(c)}return}
   items.forEach(function(it){
-    var c=el('div',{'class':'mx-card art-card'},[el('div',{'class':'t',text:'🎁 '+(it.name||T('gf_label'))}),el('div',{'class':'d',text:it.price||T('gf_soon')}),btnA(waLink('Hi! I want to buy a gift card: '+(it.name||'')+(it.price?' ('+it.price+')':'')+'.'),T('sh_buy'))]);
-    var pay=safeHttps(it.pay)||def;if(pay&&it.price)c.appendChild(btnA(pay,lab||T('sh_pay'),'v'));
+    var c=el('div',{'class':'mx-card art-card'},[el('div',{'class':'t',text:'🎁 '+(it.name||T('gf_label'))}),el('div',{'class':'d',text:it.price||T('gf_soon')}),(function(){var ba=btnA(waLink('Hi! I want to buy a gift card: '+(it.name||'')+(it.price?' ('+it.price+')':'')+'.'),T('sh_buy'),'v');var pay=safeHttps(it.pay)||def;if(pay&&it.price)ba.setAttribute('data-pay',pay);return ba})()]);
     g.appendChild(c);
   });
 }
@@ -2198,8 +2246,8 @@ function renderSpot(){
   if(sp.price)tx.appendChild(el('div',{style:'margin-top:10px;color:#ffd98a;font-size:18px',text:sp.price}));
   if(sp.text)tx.appendChild(el('p',{text:sp.text}));
   var row=el('div',{style:'display:flex;gap:12px;flex-wrap:wrap;margin-top:24px'});
-  row.appendChild(btnA(waLink('Hi! I am interested in the artwork of the month: '+(sp.title||'')+'.'),T('sp_btn')));
-  var pay=safeHttps(sp.pay);if(pay&&sp.price)row.appendChild(btnA(pay,(C.settings&&C.settings.payLabel)||T('sh_pay'),'v'));
+  if(sp.price){var sb=btnA(waLink('Hi! I want to buy the artwork of the month: '+(sp.title||'')+' ('+sp.price+').'),T('sh_buy'),'v');var pay=safeHttps(sp.pay)||safeHttps(C.settings&&C.settings.payDefault);if(pay)sb.setAttribute('data-pay',pay);row.appendChild(sb)}
+  else row.appendChild(btnA(waLink('Hi! I am interested in the artwork of the month: '+(sp.title||'')+'.'),T('sp_btn')));
   tx.appendChild(row);card.appendChild(tx);box.appendChild(card);
 }
 function renderReviews(){
@@ -2554,8 +2602,8 @@ function buyBlock(by,wk){
   else if(!NSALE)box.appendChild(el('div',{style:'font-size:16px;margin-bottom:10px;color:#b7c4dc','data-z':'wl_ask',text:T('wl_ask')||'Price: ask me on WhatsApp'}));
   if(!NSALE){
     var row=el('div',{style:'display:flex;gap:10px;flex-wrap:wrap'});
-    row.appendChild(btnA(waLink('Hi! I want to buy the artwork: '+(wk.title||'')+(wk.price?' ('+wk.price+')':'')+'.'),T('sh_buy')));
-    var pay=safeHttps(wk.pay)||def;if(pay&&wk.price)row.appendChild(btnA(pay,lab||T('sh_pay'),'v'));
+    var wb=btnA(waLink('Hi! I want to buy the artwork: '+(wk.title||'')+(wk.price?' ('+wk.price+')':'')+'.'),T('sh_buy'),'v');
+    var pay=safeHttps(wk.pay)||def;if(pay&&wk.price)wb.setAttribute('data-pay',pay);row.appendChild(wb);
     box.appendChild(row);
   }
   var pr=(C.prints||[]).filter(function(x){return x&&x.name});
@@ -2566,8 +2614,8 @@ function buyBlock(by,wk){
       var r=el('div',{'data-pr':pi,title:T('by_tap'),style:'cursor:pointer;display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;padding:12px;border:1px solid rgba(190,170,255,.3);border-radius:14px;background:rgba(20,26,66,.35)'});
       r.addEventListener('click',function(e){if(e.target.closest&&e.target.closest('a'))return;if(w.__wallPick)w.__wallPick(pi)});
       r.appendChild(el('div',{style:'flex:1 1 120px;font-size:15px',text:x.name+(x.price?'  ·  '+x.price:'')}));
-      r.appendChild(btnA(waLink('Hi! I want a print of "'+(wk.title||'')+'" in size '+x.name+(x.price?' ('+x.price+')':'')+'.'),T('sh_buy')));
-      var pp=safeHttps(x.pay)||def;if(pp&&x.price)r.appendChild(btnA(pp,lab||T('sh_pay'),'v'));
+      var pb=btnA(waLink('Hi! I want a print of "'+(wk.title||'')+'" in size '+x.name+(x.price?' ('+x.price+')':'')+'.'),T('sh_buy'),'v');
+      var pp=safeHttps(x.pay)||def;if(pp&&x.price)pb.setAttribute('data-pay',pp);r.appendChild(pb);
       box.appendChild(r);
     });
   }
@@ -2787,6 +2835,8 @@ function draw(extra){
  ov.innerHTML='<div style="font-family:Sora,Inter,system-ui,sans-serif;position:relative;width:100%;max-width:460px;margin:auto;box-sizing:border-box;padding:26px 22px;border-radius:18px;border:1px solid rgba(190,170,255,0.45);background:rgba(10,14,40,0.99);color:#e8eefc;box-shadow:0 0 60px rgba(110,90,255,0.35)">'
  +'<button id="ac-x" aria-label="Close" style="position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,0.4);background:rgba(8,10,30,0.85);color:#fff;cursor:pointer;font-size:15px">&#10005;</button>'
  +'<h3 style="margin:0;font-weight:400;font-size:26px;color:#fff">My account</h3><div style="margin-top:6px;color:#9fb0c8;font-size:14px">'+E(me.email)+'</div>'
+ +'<div style="'+card+'"><div style="display:flex;gap:16px;align-items:center"><div id="ac-av" style="flex:none;width:84px;height:84px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#7a5cff,#2a78aa);display:flex;align-items:center;justify-content:center;font-size:34px;color:#fff;border:2px solid rgba(190,170,255,.6)">'+(info.avatar?'<img src="/api/avatar/'+(+me.id)+'?v='+(+info.avatar)+'" alt="" style="width:100%;height:100%;object-fit:cover">':E(me.name.charAt(0).toUpperCase()))+'</div><div style="flex:1"><b>Profile photo</b><div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button id="ac-ph" style="padding:9px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(60,90,200,.5);color:#fff;font-family:inherit;cursor:pointer">'+(info.avatar?'Change photo':'Add photo')+'</button>'+(info.avatar?'<button id="ac-phx" style="padding:9px 14px;border-radius:999px;border:1px solid rgba(255,140,160,.6);background:rgba(120,20,50,.35);color:#ffd0d8;font-family:inherit;cursor:pointer">Remove</button>':'')+'</div><input id="ac-file" type="file" accept="image/*" style="display:none"></div></div><div id="ac-phm" style="min-height:18px;margin-top:8px;font-size:14px"></div></div>'
+ +'<div style="'+card+'"><b>Messages</b><div style="margin-top:6px;color:#b7c4dc;font-size:14px">Write to me here on the site. If you want something changed or have a question, I will answer you here.</div><button id="ac-chat" style="'+btn+'">Open messages'+(info.unread?' ('+(+info.unread)+' new)':'')+'</button></div>'
  +'<div style="'+card+'"><b>Your name</b><input id="ac-name" value="'+E(me.name)+'" maxlength="60" style="'+inp+'"><button id="ac-name-b" style="'+btn+'">Save name</button><div id="ac-name-m" style="min-height:18px;margin-top:8px;font-size:14px"></div></div>'
  +'<div style="'+card+'"><b>Change email</b><label style="'+lab+'">New email</label><input id="ac-em" type="email" autocomplete="email" style="'+inp+'"><label style="'+lab+'">Current password</label><input id="ac-em-pw" type="password" autocomplete="current-password" style="'+inp+'">'
  +(on?'<label style="'+lab+'">2-step code</label><input id="ac-em-cd" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code" style="'+inp+'">':'')
@@ -2802,8 +2852,12 @@ function draw(extra){
  +'<button id="ac-out" style="'+btn2+'">Log out</button></div>';
  ov.style.display='flex';d.body.style.overflow='hidden';
  q('ac-x').onclick=close;
- q('ac-name-b').onclick=function(){post('/api/account/name',{name:q('ac-name').value}).then(function(x){if(x.ok){me=x.d.user;msg('ac-name-m','Saved.',1);refreshBar()}else msg('ac-name-m',x.d.error||'Error')})};
- q('ac-em-b').onclick=function(){post('/api/account/email',{email:q('ac-em').value,password:q('ac-em-pw').value,code:(q('ac-em-cd')||{}).value}).then(function(x){if(x.ok){me=x.d.user;msg('ac-em-m','Email changed.',1);refreshBar()}else msg('ac-em-m',x.d.error||'Error')})};
+ q('ac-chat').onclick=function(){openChat(0)};
+ q('ac-ph').onclick=function(){q('ac-file').click()};
+ q('ac-file').onchange=function(){var f=this.files&&this.files[0];if(!f)return;msg('ac-phm','Saving ...',1);shrink(f,function(d){if(!d){msg('ac-phm','Could not read that picture.');return}post('/api/avatar/set',{data:d}).then(function(x){if(x.ok){info.avatar=x.d.avatar;draw();decorate()}else msg('ac-phm',x.d.error||'Error')})})};
+ if(q('ac-phx'))q('ac-phx').onclick=function(){post('/api/avatar/set',{remove:true}).then(function(){info.avatar=0;draw();decorate()})};
+ q('ac-name-b').onclick=function(){post('/api/account/name',{name:q('ac-name').value}).then(function(x){if(x.ok){me=Object.assign({},me,x.d.user);msg('ac-name-m','Saved.',1);refreshBar()}else msg('ac-name-m',x.d.error||'Error')})};
+ q('ac-em-b').onclick=function(){post('/api/account/email',{email:q('ac-em').value,password:q('ac-em-pw').value,code:(q('ac-em-cd')||{}).value}).then(function(x){if(x.ok){me=Object.assign({},me,x.d.user);msg('ac-em-m','Email changed.',1);refreshBar()}else msg('ac-em-m',x.d.error||'Error')})};
  q('ac-pw-b').onclick=function(){post('/api/account/password',{password:q('ac-pw0').value,next:q('ac-pw1').value,code:(q('ac-pw-cd')||{}).value}).then(function(x){if(x.ok){q('ac-pw0').value='';q('ac-pw1').value='';msg('ac-pw-m','Password changed. Other devices were logged out.',1)}else msg('ac-pw-m',x.d.error||'Error')})};
  q('ac-out').onclick=function(){fetch('/api/logout',{method:'POST'}).then(function(){location.reload()})};
  if(q('ac-b-b'))q('ac-b-b').onclick=function(){post('/api/account/2fa/begin',{password:q('ac-b-pw').value}).then(function(x){
@@ -2816,11 +2870,59 @@ function draw(extra){
      msg('ac-2m','');q('ac-done').onclick=function(){load(function(){draw()})}})}})};
  if(q('ac-d-b'))q('ac-d-b').onclick=function(){post('/api/account/2fa/disable',{password:q('ac-d-pw').value,code:q('ac-d-cd').value}).then(function(x){if(x.ok){info.twofa=false;draw()}else msg('ac-2m',x.d.error||'Error')})};
 }
+
+function shrink(file,cb){
+ var r=new FileReader();r.onerror=function(){cb(null)};
+ r.onload=function(){var im=new Image();im.onerror=function(){cb(null)};im.onload=function(){
+  try{var S=256,c=d.createElement('canvas');c.width=S;c.height=S;var x=c.getContext('2d');var m=Math.min(im.width,im.height),sx=(im.width-m)/2,sy=(im.height-m)/2;x.fillStyle='#000';x.fillRect(0,0,S,S);x.drawImage(im,sx,sy,m,m,0,0,S,S);cb(c.toDataURL('image/jpeg',0.85))}catch(e){cb(null)}};im.src=r.result};
+ r.readAsDataURL(file);
+}
+function avImg(px){return info.avatar&&me?'<img src="/api/avatar/'+(+me.id)+'?v='+(+info.avatar)+'" alt="" style="width:'+px+'px;height:'+px+'px;border-radius:50%;object-fit:cover;display:block">':''}
+var deco=0;
+function decorate(){
+ var box=q('acct');if(!box||!me||deco)return;deco=1;
+ try{
+  var old=q('ac-hdr');if(old)old.remove();
+  var w=d.createElement('span');w.id='ac-hdr';w.style.cssText='display:inline-flex;align-items:center;gap:8px';
+  var av=d.createElement('button');av.type='button';av.setAttribute('aria-label','My account');av.style.cssText='width:34px;height:34px;padding:0;border-radius:50%;overflow:hidden;border:1px solid rgba(190,170,255,.6);background:linear-gradient(135deg,#7a5cff,#2a78aa);color:#fff;cursor:pointer;font-size:15px';
+  av.innerHTML=info.avatar?avImg(34):E(me.name.charAt(0).toUpperCase());av.onclick=function(){if(window.__acct)window.__acct()};
+  var mb=d.createElement('button');mb.type='button';mb.setAttribute('aria-label','Messages');mb.style.cssText='position:relative;width:34px;height:34px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.45);background:rgba(10,18,40,.6);color:#fff;cursor:pointer;font-size:15px';
+  mb.innerHTML='&#9993;'+(info.unread?'<span style="position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:#ff4d6d;color:#fff;font:700 11px/18px system-ui;padding:0 4px">'+(+info.unread)+'</span>':'');
+  mb.onclick=function(){openChat(1)};
+  w.appendChild(av);w.appendChild(mb);box.insertBefore(w,box.firstChild);
+ }catch(e){}
+ deco=0;
+}
+var chatEl=null,chatT=0;
+function openChat(fromBar){
+ if(!me){load(function(){if(me)openChat(fromBar)});return}
+ if(chatEl)chatEl.remove();
+ var o=d.createElement('div');chatEl=o;o.style.cssText='position:fixed;inset:0;z-index:1400;background:rgba(3,4,14,.92);display:flex;align-items:center;justify-content:center;padding:12px;box-sizing:border-box';
+ o.innerHTML='<div style="font-family:Sora,Inter,system-ui,sans-serif;display:flex;flex-direction:column;width:100%;max-width:480px;height:min(640px,92vh);border-radius:18px;border:1px solid rgba(190,170,255,.45);background:rgba(10,14,40,.99);color:#e8eefc;box-shadow:0 0 60px rgba(110,90,255,.35);overflow:hidden"><div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(190,170,255,.25)"><b style="font-weight:500;font-size:18px">Messages to Ismail</b><button id="ch-x" aria-label="Close" style="width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.4);background:none;color:#fff;cursor:pointer">&#10005;</button></div><div id="ch-l" style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px"></div><div id="ch-m" style="min-height:18px;padding:0 16px;font-size:13px;color:#ffb0b8"></div><form id="ch-f" style="display:flex;gap:8px;padding:12px 14px;border-top:1px solid rgba(190,170,255,.25)"><textarea id="ch-t" rows="2" maxlength="800" placeholder="Write your message ..." style="flex:1;resize:none;padding:10px 12px;border-radius:12px;border:1px solid rgba(190,170,255,.4);background:rgba(8,12,34,.9);color:#fff;font:inherit;font-size:15px"></textarea><button type="submit" style="padding:0 18px;border-radius:12px;border:1px solid rgba(255,255,255,.4);background:linear-gradient(90deg,rgba(42,120,170,.9),rgba(100,70,200,.9));color:#fff;font:inherit;cursor:pointer">Send</button></form></div>';
+ d.body.appendChild(o);d.body.style.overflow='hidden';
+ function stop(){clearInterval(chatT);o.remove();chatEl=null;d.body.style.overflow='';info.unread=0;load(function(){var h=q('ac-hdr');if(h)h.remove();decorate()})}
+ o.querySelector('#ch-x').onclick=stop;o.addEventListener('click',function(e){if(e.target===o)stop()});
+ var list=o.querySelector('#ch-l'),last=-1;
+ function paintMsgs(items){
+  var key=items.length+':'+(items.length?items[items.length-1].id:0);if(key===last)return;last=key;
+  list.innerHTML='';
+  if(!items.length){list.innerHTML='<div style="margin:auto;text-align:center;color:#9fb0c8;font-size:14px;line-height:1.6">No messages yet.<br>Write to me below. I read everything.</div>';return}
+  items.forEach(function(m){var b=d.createElement('div');b.style.cssText='max-width:82%;padding:10px 14px;border-radius:'+(m.mine?'16px 16px 4px 16px':'16px 16px 16px 4px')+';align-self:'+(m.mine?'flex-end':'flex-start')+';background:'+(m.mine?'rgba(100,80,220,.55)':'rgba(255,255,255,.09)')+';font-size:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere';b.textContent=m.text;var t=d.createElement('div');t.style.cssText='font-size:11px;color:#9fb0c8;margin-top:4px';t.textContent=new Date(m.at).toLocaleString();b.appendChild(t);list.appendChild(b)});
+  list.scrollTop=list.scrollHeight;
+ }
+ function refresh(){post('/api/msg/list',{}).then(function(x){if(x.ok)paintMsgs(x.d.items||[])})}
+ refresh();chatT=setInterval(function(){if(!d.hidden)refresh()},15000);
+ o.querySelector('#ch-f').onsubmit=function(e){e.preventDefault();var t=o.querySelector('#ch-t'),v=t.value.trim();if(!v)return;
+  post('/api/msg/send',{text:v}).then(function(x){if(x.ok){t.value='';o.querySelector('#ch-m').textContent='';last=-1;refresh()}else o.querySelector('#ch-m').textContent=x.d.error||'Error'})};
+}
 function refreshBar(){var s=d.querySelector('#acct span');if(s&&me)s.textContent='Hi, '+me.name}
 function close(){ov.style.display='none';d.body.style.overflow=''}
 ov.addEventListener('click',function(e){if(e.target===ov)close()});
 d.addEventListener('keydown',function(e){if(e.key==='Escape'&&ov.style.display==='flex')close()});
 window.__acct=function(){load(function(){draw()})};
+function boot(){load(function(){decorate()})}
+boot();
+try{new MutationObserver(function(){if(!deco&&!q('ac-hdr')&&q('ac'))load(decorate)}).observe(q('acct'),{childList:true})}catch(e){}
 }catch(err){try{console.warn('acct off',err)}catch(_){}}
 })();
 </script>
@@ -3161,7 +3263,8 @@ function close(){ov.classList.remove('on');ov.innerHTML=''}
 ov.addEventListener('click',function(e){if(e.target===ov)close()});
 d.addEventListener('keydown',function(e){if(e.key==='Escape')close()});
 function wallets(){return (C.wallets||[]).filter(function(x){return x&&x.coin&&x.addr})}
-function open(item,price){
+var curPay='';
+function open(item,price,pl){curPay=/^https:\/\/[^\s"'<>]+$/.test(pl||'')?pl:(/^https:\/\/[^\s"'<>]+$/.test(S.payDefault||'')?S.payDefault:'');
   ov.innerHTML='';var b=el('div',{'class':'co-b'});ov.appendChild(b);ov.classList.add('on');
   b.appendChild(el('h3',{text:T('h')}));
   b.appendChild(el('label',{text:T('item')}));b.appendChild(el('div',{'class':'co-it',text:item+(price?'  ·  '+price:'')}));
@@ -3174,7 +3277,7 @@ function open(item,price){
   f.appendChild(el('label',{text:T('pay')}));
   var pm=el('div',{'class':'co-pm'});f.appendChild(pm);
   var opts=[['wa',T('wa')]];if(wallets().length)opts.push(['crypto',T('cr')+' ('+wallets().map(function(x){return x.coin}).join(', ')+')']);
-  var pay=/^https:\/\/[^\s"'<>]+$/.test(S.payDefault||'')?S.payDefault:'';if(pay)opts.push(['online',S.payLabel||T('on')]);
+  if(curPay)opts.push(['online',S.payLabel||T('on')]);
   opts.forEach(function(o,i){var r=el('input',{type:'radio',name:'pm',value:o[0]});if(i===0)r.checked=true;pm.appendChild(el('label',{},[r,el('span',{text:o[1]})]))});
   f.appendChild(el('div',{style:'font-size:13px;color:#9fb0c8;margin-top:12px',text:T('priv')}));
   var ms=el('div',{style:'margin-top:12px;color:#ffd98a',role:'status'});
@@ -3214,7 +3317,7 @@ function done(ref,item,price,m,name){
     b.appendChild(el('div',{style:'margin-top:12px;color:#ffd98a;font-size:14px;line-height:1.5',text:'⚠ '+T('warn')}));
     b.appendChild(el('a',{'class':'mx-btn v',href:wa,target:'_blank',rel:'noopener noreferrer',style:'margin-top:16px;display:inline-block'},[el('span',{text:T('proof')})]));
   }else if(m==='online'){
-    var u=S.payDefault;b.appendChild(el('a',{'class':'mx-btn v',href:u,target:'_blank',rel:'noopener noreferrer',style:'margin-top:16px;display:inline-block'},[el('span',{text:S.payLabel||T('on')})]));
+    var u=curPay;b.appendChild(el('a',{'class':'mx-btn v',href:u,target:'_blank',rel:'noopener noreferrer',style:'margin-top:16px;display:inline-block'},[el('span',{text:S.payLabel||T('on')})]));
     b.appendChild(el('a',{'class':'mx-btn',href:wa,target:'_blank',rel:'noopener noreferrer',style:'margin:16px 0 0 10px;display:inline-block'},[el('span',{text:'WhatsApp'})]));
   }else{
     b.appendChild(el('a',{'class':'mx-btn v',href:wa,target:'_blank',rel:'noopener noreferrer',style:'margin-top:16px;display:inline-block'},[el('span',{text:'WhatsApp'})]));
@@ -3229,7 +3332,7 @@ d.addEventListener('click',function(e){
   e.preventDefault();e.stopPropagation();
   var item=t.replace(/^Hi! I want (to buy( the artwork| a gift card)?:? ?|a )/,'').replace(/\.$/,''),price='';
   var pm=item.match(/\s\(([^()]+)\)$/);if(pm){price=pm[1];item=item.slice(0,pm.index)}
-  open(item||t,price);
+  open(item||t,price,a.getAttribute('data-pay'));
 },true);
 }catch(err){try{console.warn('checkout off',err)}catch(_){}}
 })();
@@ -3241,8 +3344,8 @@ var d=document,w=window;
 fetch('/api/me',{credentials:'same-origin'}).then(function(r){return r.json()}).then(function(j){if(j&&j.admin)go()}).catch(function(){});
 function el(t,a,k){var e=d.createElement(t);for(var x in (a||{})){if(x==='text')e.textContent=a[x];else if(x==='style')e.style.cssText=a[x];else e.setAttribute(x,a[x])}(k||[]).forEach(function(c){e.appendChild(c)});return e}
 function go(){
-  var IC={order:'🛍',request:'✉',comment:'💬',like:'❤',member:'👤',sub:'📧',wait:'⏳',review:'⭐'};
-  var LB={order:'New order / Draw me request',request:'New request',comment:'New comment',like:'New like',member:'New member',sub:'Newsletter sign-up',wait:'Waiting list',review:'New review'};
+  var IC={message:'✉',order:'🛍',request:'✉',comment:'💬',like:'❤',member:'👤',sub:'📧',wait:'⏳',review:'⭐'};
+  var LB={message:'New message',order:'New order / Draw me request',request:'New request',comment:'New comment',like:'New like',member:'New member',sub:'Newsletter sign-up',wait:'Waiting list',review:'New review'};
   var t0=d.title,known=0,first=true;
   var bell=el('button',{id:'nt-bell',type:'button','aria-label':'Notifications',style:'position:fixed;left:18px;bottom:190px;z-index:950;width:52px;height:52px;border-radius:50%;border:1px solid rgba(190,170,255,.5);background:#1b1550;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 8px 26px rgba(70,50,200,.55)',text:'🔔'});
   var bd=el('span',{style:'position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:10px;background:#ff4d6d;color:#fff;font:700 12px/20px system-ui;text-align:center;display:none;padding:0 5px'});bell.appendChild(bd);

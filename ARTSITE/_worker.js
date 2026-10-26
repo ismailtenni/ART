@@ -176,6 +176,8 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, work_id TEXT NOT NULL, user_id INTEGER NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL)',
   'CREATE INDEX IF NOT EXISTS comments_work ON comments (work_id, created_at)',
   'CREATE TABLE IF NOT EXISTS subscribers (email TEXT PRIMARY KEY, created_at INTEGER NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS avatars (user_id INTEGER PRIMARY KEY, data TEXT NOT NULL, at INTEGER NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, from_owner INTEGER NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL, read INTEGER NOT NULL DEFAULT 0)',
   'CREATE TABLE IF NOT EXISTS bans (user_id INTEGER PRIMARY KEY, at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS content (k TEXT PRIMARY KEY, v TEXT NOT NULL, updated_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS media (id TEXT PRIMARY KEY, mime TEXT NOT NULL, n INTEGER NOT NULL, created_at INTEGER NOT NULL)',
@@ -395,7 +397,9 @@ const app = {
       if (url.pathname === '/api/me' && req.method === 'GET') {
         const u = await currentUser(env, req);
         const t2 = u ? await env.DB.prepare('SELECT enabled FROM user_2fa WHERE user_id = ?').bind(u.id).first() : null;
-        return json({ user: u ? { name: u.name, email: u.email } : null, admin: isAdmin(env, u), twofa: !!(t2 && t2.enabled), canReset: mailReady(env), ts: tsReady(env) ? tscfg(env).site : '' });
+        const av = u ? await env.DB.prepare('SELECT at FROM avatars WHERE user_id = ?').bind(u.id).first() : null;
+        const un = u ? await env.DB.prepare('SELECT COUNT(*) AS n FROM messages WHERE user_id = ? AND from_owner = 1 AND read = 0').bind(u.id).first() : null;
+        return json({ user: u ? { name: u.name, email: u.email, id: u.id } : null, avatar: av ? av.at : 0, unread: un ? un.n : 0, admin: isAdmin(env, u), twofa: !!(t2 && t2.enabled), canReset: mailReady(env), ts: tsReady(env) ? tscfg(env).site : '' });
       }
       if (url.pathname === '/api/counts' && req.method === 'GET') {
         const l = await env.DB.prepare('SELECT work_id AS id, COUNT(*) AS n FROM likes GROUP BY work_id').all();
@@ -481,9 +485,9 @@ const app = {
         const me = await currentUser(env, req);
         const lk = await env.DB.prepare('SELECT COUNT(*) AS n FROM likes WHERE work_id = ?').bind(work).first();
         const mine = me ? await env.DB.prepare('SELECT 1 AS x FROM likes WHERE work_id = ? AND user_id = ?').bind(work, me.id).first() : null;
-        const cm = await env.DB.prepare('SELECT c.id, c.text, c.created_at, u.name, c.user_id FROM comments c JOIN users u ON u.id = c.user_id WHERE c.work_id = ? ORDER BY c.created_at DESC LIMIT 60').bind(work).all();
+        const cm = await env.DB.prepare('SELECT c.id, c.text, c.created_at, u.name, c.user_id, (SELECT at FROM avatars a WHERE a.user_id = c.user_id) AS av FROM comments c JOIN users u ON u.id = c.user_id WHERE c.work_id = ? ORDER BY c.created_at DESC LIMIT 60').bind(work).all();
         return json({ likes: lk ? lk.n : 0, liked: !!mine, me: me ? { name: me.name } : null,
-          comments: (cm.results || []).map((r) => ({ id: r.id, name: r.name, text: r.text, at: r.created_at, mine: !!me && (me.id === r.user_id || isAdmin(env, me)) })) });
+          comments: (cm.results || []).map((r) => ({ id: r.id, name: r.name, text: r.text, at: r.created_at, uid: r.user_id, av: r.av || 0, mine: !!me && (me.id === r.user_id || isAdmin(env, me)) })) });
       }
       if (url.pathname === '/api/order' && req.method === 'GET') {
         const code = String(url.searchParams.get('code') || '').trim().toUpperCase().slice(0, 30);
@@ -508,6 +512,14 @@ const app = {
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
         const r = await env.DB.prepare('SELECT id, name, contact, kind, size, budget, idea, ref, created_at FROM requests ORDER BY created_at DESC LIMIT 100').all();
         return json({ requests: r.results || [] });
+      }
+      const avm = url.pathname.match(/^\/api\/avatar\/(\d{1,9})$/);
+      if (avm && req.method === 'GET') {
+        const r = await env.DB.prepare('SELECT data FROM avatars WHERE user_id = ?').bind(Number(avm[1])).first();
+        if (!r) return new Response('', { status: 404 });
+        const bin = atob(r.data), arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        return new Response(arr, { headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=600', 'x-content-type-options': 'nosniff' } });
       }
       const mm = url.pathname.match(/^\/api\/media\/([a-f0-9]{8,32})$/);
       if (mm && req.method === 'GET') return serveMedia(env, req, mm[1]);
@@ -878,15 +890,84 @@ const app = {
         }
         return json({ sent, failed });
       }
+      if (url.pathname === '/api/avatar/set') {
+        const me = await currentUser(env, req);
+        if (!me) return json({ error: 'Please log in.' }, 401);
+        if (body.remove === true) { await env.DB.prepare('DELETE FROM avatars WHERE user_id = ?').bind(me.id).run(); return json({ ok: true, avatar: 0 }); }
+        const d = String(body.data || '');
+        if (!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(d) || d.length > 120000) return json({ error: 'Please choose a smaller picture.' }, 400);
+        const b64 = d.slice('data:image/jpeg;base64,'.length);
+        let raw = ''; try { raw = atob(b64); } catch (e) { return json({ error: 'Bad picture.' }, 400); }
+        if (raw.charCodeAt(0) !== 0xff || raw.charCodeAt(1) !== 0xd8) return json({ error: 'Bad picture.' }, 400);
+        if (await tooMany(env, 'avatar:' + me.id)) return json({ error: 'Slow down a little, then try again.' }, 429);
+        await note(env, 'avatar:' + me.id);
+        const at = Date.now();
+        await env.DB.prepare('INSERT INTO avatars (user_id, data, at) VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, at = excluded.at').bind(me.id, b64, at).run();
+        return json({ ok: true, avatar: at });
+      }
+      if (url.pathname === '/api/msg/list') {
+        const me = await currentUser(env, req);
+        if (!me) return json({ error: 'Please log in.' }, 401);
+        const r = (await env.DB.prepare('SELECT id, from_owner, text, created_at FROM messages WHERE user_id = ? ORDER BY id DESC LIMIT 150').bind(me.id).all()).results || [];
+        await env.DB.prepare('UPDATE messages SET read = 1 WHERE user_id = ? AND from_owner = 1 AND read = 0').bind(me.id).run();
+        return json({ items: r.reverse().map((m) => ({ id: m.id, mine: !m.from_owner, text: m.text, at: m.created_at })) });
+      }
+      if (url.pathname === '/api/msg/send') {
+        const me = await currentUser(env, req);
+        if (!me) return json({ error: 'Please log in to send a message.' }, 401);
+        const text = String(body.text || '').trim().slice(0, 800);
+        if (!text) return json({ error: 'Write something first.' }, 400);
+        if (badText(text, BADX)) return json({ error: BAD_MSG }, 400);
+        if (await tooMany(env, 'msg:' + me.id)) return json({ error: 'Slow down a little, then try again.' }, 429);
+        await note(env, 'msg:' + me.id);
+        const now = Date.now();
+        await env.DB.prepare('INSERT INTO messages (user_id, from_owner, text, created_at, read) VALUES (?, 0, ?, ?, 0)').bind(me.id, text, now).run();
+        try { const to = String(ADM || env.ADMIN_EMAIL || '').trim(); if (to && mailReady(env)) await sendMails(env, [{ to, subject: 'New message from ' + me.name, text: me.name + ' (' + me.email + '):\n\n' + text, html: '<p><b>' + String(me.name).replace(/[<>&]/g, '') + '</b> wrote:</p><pre style="white-space:pre-wrap">' + text.replace(/[<>&]/g, '') + '</pre>' }]); } catch (e) {}
+        return json({ ok: true, item: { mine: true, text, at: now } });
+      }
+      if (url.pathname === '/api/admin/msg/threads') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const rows = (await env.DB.prepare('SELECT u.id, u.name, u.email, (SELECT at FROM avatars a WHERE a.user_id = u.id) AS av, m.text, m.created_at, m.from_owner, (SELECT COUNT(*) FROM messages x WHERE x.user_id = u.id AND x.from_owner = 0 AND x.read = 0) AS unread FROM users u JOIN messages m ON m.id = (SELECT MAX(id) FROM messages WHERE user_id = u.id) ORDER BY m.created_at DESC LIMIT 200').all()).results || [];
+        const tot = rows.reduce((a, r) => a + (r.unread || 0), 0);
+        return json({ unread: tot, threads: rows.map((r) => ({ id: r.id, name: r.name, email: r.email, av: r.av || 0, last: String(r.text).slice(0, 80), at: r.created_at, fromOwner: !!r.from_owner, unread: r.unread || 0 })) });
+      }
+      if (url.pathname === '/api/admin/msg/thread') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const id = Number(body.id) || 0;
+        const u = await env.DB.prepare('SELECT id, name, email FROM users WHERE id = ?').bind(id).first();
+        if (!u) return json({ error: 'Member not found.' }, 404);
+        const r = (await env.DB.prepare('SELECT id, from_owner, text, created_at FROM messages WHERE user_id = ? ORDER BY id DESC LIMIT 200').bind(id).all()).results || [];
+        await env.DB.prepare('UPDATE messages SET read = 1 WHERE user_id = ? AND from_owner = 0 AND read = 0').bind(id).run();
+        const av = await env.DB.prepare('SELECT at FROM avatars WHERE user_id = ?').bind(id).first();
+        return json({ user: { id: u.id, name: u.name, email: u.email, av: av ? av.at : 0 }, items: r.reverse().map((m) => ({ id: m.id, mine: !!m.from_owner, text: m.text, at: m.created_at })) });
+      }
+      if (url.pathname === '/api/admin/msg/send') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const id = Number(body.id) || 0, text = String(body.text || '').trim().slice(0, 1500);
+        if (!text) return json({ error: 'Write something first.' }, 400);
+        const u = await env.DB.prepare('SELECT id FROM users WHERE id = ?').bind(id).first();
+        if (!u) return json({ error: 'Member not found.' }, 404);
+        await env.DB.prepare('INSERT INTO messages (user_id, from_owner, text, created_at, read) VALUES (?, 1, ?, ?, 0)').bind(id, text, Date.now()).run();
+        return json({ ok: true });
+      }
+      if (url.pathname === '/api/admin/member/avatar') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        await env.DB.prepare('DELETE FROM avatars WHERE user_id = ?').bind(Number(body.id) || 0).run();
+        return json({ ok: true });
+      }
       if (url.pathname === '/api/admin/members') {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
         const day = 86400000, now = Date.now();
         const one = async (sql, ...a) => { const r = await env.DB.prepare(sql).bind(...a).first(); return r ? r.n : 0; };
-        const rows = (await env.DB.prepare('SELECT u.id, u.name, u.email, u.created_at, (SELECT COUNT(*) FROM likes l WHERE l.user_id = u.id) AS likes, (SELECT COUNT(*) FROM comments c WHERE c.user_id = u.id) AS comments, (SELECT COUNT(*) FROM bans b WHERE b.user_id = u.id) AS banned FROM users u ORDER BY u.created_at DESC LIMIT 500').all()).results || [];
+        const rows = (await env.DB.prepare('SELECT u.id, u.name, u.email, u.created_at, (SELECT COUNT(*) FROM likes l WHERE l.user_id = u.id) AS likes, (SELECT COUNT(*) FROM comments c WHERE c.user_id = u.id) AS comments, (SELECT COUNT(*) FROM bans b WHERE b.user_id = u.id) AS banned, (SELECT at FROM avatars a WHERE a.user_id = u.id) AS av FROM users u ORDER BY u.created_at DESC LIMIT 500').all()).results || [];
         const adm = String(ADM || env.ADMIN_EMAIL || '').trim().toLowerCase();
         return json({ total: await one('SELECT COUNT(*) AS n FROM users'), today: await one('SELECT COUNT(*) AS n FROM users WHERE created_at > ?', now - day), week: await one('SELECT COUNT(*) AS n FROM users WHERE created_at > ?', now - 7 * day), banned: await one('SELECT COUNT(*) AS n FROM bans'), words: BADX,
-          members: rows.map((r) => ({ id: r.id, name: r.name, email: r.email, at: r.created_at, likes: r.likes, comments: r.comments, banned: !!r.banned, owner: String(r.email).toLowerCase() === adm })) });
+          members: rows.map((r) => ({ id: r.id, name: r.name, email: r.email, at: r.created_at, likes: r.likes, comments: r.comments, av: r.av || 0, banned: !!r.banned, owner: String(r.email).toLowerCase() === adm })) });
       }
       if (url.pathname === '/api/admin/member/ban' || url.pathname === '/api/admin/member/delete') {
         const me = await currentUser(env, req);
@@ -896,7 +977,7 @@ const app = {
         if (!u) return json({ error: 'Member not found.' }, 404);
         if (isAdmin(env, { email: String(u.email).toLowerCase() })) return json({ error: 'You cannot do that to the owner account.' }, 400);
         if (url.pathname.endsWith('/delete')) {
-          await env.DB.batch([env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM likes WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM comments WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM user_2fa WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM reset_tokens WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM bans WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id)]);
+          await env.DB.batch([env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM likes WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM comments WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM user_2fa WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM reset_tokens WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM bans WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM avatars WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM messages WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id)]);
           return json({ ok: true });
         }
         if (body.ban === false) await env.DB.prepare('DELETE FROM bans WHERE user_id = ?').bind(id).run();
@@ -926,6 +1007,8 @@ const app = {
           ev.push({ type: 'comment', who: T(r.name, 60), text: T(r.text, 140), work: T(r.work_id, 40), at: r.created_at });
         for (const r of await q('SELECT l.work_id, l.created_at, u.name FROM likes l JOIN users u ON u.id = l.user_id WHERE lower(u.email) != ? ORDER BY l.created_at DESC LIMIT 25', adm))
           ev.push({ type: 'like', who: T(r.name, 60), text: T(r.work_id, 40), work: T(r.work_id, 40), at: r.created_at });
+        for (const r of await q('SELECT m.text, m.created_at, u.name FROM messages m JOIN users u ON u.id = m.user_id WHERE m.from_owner = 0 ORDER BY m.created_at DESC LIMIT 20'))
+          ev.push({ type: 'message', who: T(r.name, 60), text: T(r.text, 140), at: r.created_at, tab: 'msg' });
         for (const r of await q('SELECT name, created_at FROM users ORDER BY created_at DESC LIMIT 15'))
           ev.push({ type: 'member', who: T(r.name, 60), text: 'New member', at: r.created_at });
         for (const r of await q('SELECT email, created_at FROM subscribers ORDER BY created_at DESC LIMIT 15'))
