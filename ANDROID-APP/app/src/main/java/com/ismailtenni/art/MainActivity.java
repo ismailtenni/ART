@@ -66,7 +66,7 @@ public class MainActivity extends AppCompatActivity {
         s.setLoadsImagesAutomatically(true);
         s.setBlockNetworkImage(false);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
-        s.setOffscreenPreRaster(true);
+        s.setOffscreenPreRaster(false);
         s.setTextZoom(100);
         web.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         web.setOverScrollMode(View.OVER_SCROLL_NEVER);
