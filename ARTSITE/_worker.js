@@ -190,10 +190,13 @@ const SCH = {
   spotlight: { on: 's3', title: 's100', text: 's800', image: 'img', price: 's40', pay: 'url' },
   ba: { before: 'img', after: 'img', caption: 's100' },
   about: { portrait: 'img', t1: 's700', t2: 's700', t3: 's700', p1: 'img', p2: 'img', p3: 'img', poster: 'img', vurl: 's300' },
-  settings: { payDefault: 'url', payLabel: 's30', noRooms: 's3', ghUser: 's40', ghRepo: 's60', apkUrl: 'url', exeUrl: 'url', secChk: 's40', giftOn: 's3', giftTitle: 's60', giftText: 's200', giftImg: 'img', giftCode: 's30' },
+  settings: { coOff: 's3', payDefault: 'url', payLabel: 's30', noRooms: 's3', ghUser: 's40', ghRepo: 's60', apkUrl: 'url', exeUrl: 'url', secChk: 's40', giftOn: 's3', giftTitle: 's60', giftText: 's200', giftImg: 'img', giftCode: 's30' },
   buyers: { photo: 'img', name: 's40', place: 's40', size: 's30', text: 's200', toast: 's3' },
   rooms: { name: 's40', img: 'img', x: 'n', y: 'n', cm: 'n' },
   posts: { title: 's100', text: 's6000', image: 'img', date: 's10' },
+  draw: { on: 's3', title: 's80', text: 's500', img1: 'img', img2: 'img', img3: 'img', extra: 's20', days: 's40', cur: 's6', rates: 's200' },
+  wallets: { coin: 's20', network: 's30', addr: 's120' },
+  drawopts: { name: 's40', price: 's20', note: 's80' },
   challenge: { on: 's3', title: 's100', text: 's800', prize: 's100', deadline: 's10' },
 };
 function cleanRow(o, sch) {
@@ -260,6 +263,9 @@ function cleanContent(b) {
     settings: cleanRow(b.settings, SCH.settings),
     posts: cleanList(b.posts, SCH.posts, 80, ['title']),
     challenge: cleanRow(b.challenge, SCH.challenge),
+    draw: cleanRow(b.draw, SCH.draw),
+    wallets: cleanList(b.wallets, SCH.wallets, 8, ['coin', 'addr']).map((x) => ({ ...x, addr: String(x.addr || '').replace(/[^A-Za-z0-9:_.\-]/g, '') })),
+    drawopts: cleanList(b.drawopts, SCH.drawopts, 6, ['name']),
     rooms: cleanList(b.rooms, SCH.rooms, 12, ['img']).map((r) => ({ ...r, x: Math.min(r.x ?? 50, 100), y: Math.min(r.y ?? 30, 100), cm: Math.min(Math.max(r.cm || 300, 30), 2000) })),
     layout: (() => { const l = b.layout && typeof b.layout === 'object' ? b.layout : {}; const ok = (a) => [...new Set((Array.isArray(a) ? a : []).filter((x) => typeof x === 'string' && /^[a-z]{2,20}$/.test(x)))].slice(0, 40); return { order: ok(l.order), hidden: ok(l.hidden) }; })(),
   };
