@@ -40,6 +40,12 @@ async function tooMany(env, key) {
   const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM attempts WHERE key = ? AND at > ?').bind(key, since).first();
   return r && r.n >= 8;
 }
+function jpegOk(d, max) {
+  d = String(d || '');
+  if (!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(d) || d.length > max) return false;
+  let raw = ''; try { raw = atob(d.slice(23, 63)); } catch (e) { return false; }
+  return raw.charCodeAt(0) === 0xff && raw.charCodeAt(1) === 0xd8;
+}
 function isAdmin(env, me) { const a = ADM || env.ADMIN_EMAIL; return !!(me && a && String(a).trim().toLowerCase() === me.email); }
 
 let ADM = null;
@@ -179,6 +185,8 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS avatars (user_id INTEGER PRIMARY KEY, data TEXT NOT NULL, at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, from_owner INTEGER NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL, read INTEGER NOT NULL DEFAULT 0)',
   'CREATE TABLE IF NOT EXISTS msgimgs (msg_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, data TEXT NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS reqimgs (id INTEGER PRIMARY KEY AUTOINCREMENT, req_id INTEGER NOT NULL, data TEXT NOT NULL)',
+  'CREATE INDEX IF NOT EXISTS reqimgs_req ON reqimgs (req_id)',
   'CREATE TABLE IF NOT EXISTS bans (user_id INTEGER PRIMARY KEY, at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS content (k TEXT PRIMARY KEY, v TEXT NOT NULL, updated_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS media (id TEXT PRIMARY KEY, mime TEXT NOT NULL, n INTEGER NOT NULL, created_at INTEGER NOT NULL)',
@@ -556,8 +564,8 @@ const app = {
       if (url.pathname === '/api/admin/requests' && req.method === 'GET') {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
-        const r = await env.DB.prepare('SELECT id, name, contact, kind, size, budget, idea, ref, created_at FROM requests ORDER BY created_at DESC LIMIT 100').all();
-        return json({ requests: r.results || [] });
+        const r = await env.DB.prepare('SELECT id, name, contact, kind, size, budget, idea, ref, created_at, (SELECT group_concat(id) FROM reqimgs WHERE req_id = requests.id) AS imgs FROM requests ORDER BY created_at DESC LIMIT 100').all();
+        return json({ requests: (r.results || []).map((q) => ({ ...q, imgs: q.imgs ? String(q.imgs).split(',').map(Number) : [] })) });
       }
       const avm = url.pathname.match(/^\/api\/avatar\/(\d{1,9})$/);
       if (avm && req.method === 'GET') {
@@ -567,6 +575,18 @@ const app = {
         for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
         return new Response(arr, { headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=600', 'x-content-type-options': 'nosniff' } });
       }
+      const rim = url.pathname.match(/^\/api\/reqimg\/(\d{1,12})$/);
+      if (rim && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return new Response('', { status: 404 });
+        const r = await env.DB.prepare('SELECT data, req_id FROM reqimgs WHERE id = ?').bind(Number(rim[1])).first();
+        if (!r) return new Response('', { status: 404 });
+        const bin = atob(r.data), arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        const h = { 'content-type': 'image/jpeg', 'cache-control': 'private, max-age=3600', 'x-content-type-options': 'nosniff' };
+        if (url.searchParams.get('dl')) h['content-disposition'] = 'attachment; filename="draw-me-request-' + r.req_id + '-photo-' + rim[1] + '.jpg"';
+        return new Response(arr, { headers: h });
+      }
       const imm = url.pathname.match(/^\/api\/msgimg\/(\d{1,12})$/);
       if (imm && req.method === 'GET') {
         const me = await currentUser(env, req);
@@ -575,7 +595,9 @@ const app = {
         if (!r || (r.user_id !== me.id && !isAdmin(env, me))) return new Response('', { status: 404 });
         const bin = atob(r.data), arr = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-        return new Response(arr, { headers: { 'content-type': 'image/jpeg', 'cache-control': 'private, max-age=3600', 'x-content-type-options': 'nosniff' } });
+        const hh = { 'content-type': 'image/jpeg', 'cache-control': 'private, max-age=3600', 'x-content-type-options': 'nosniff' };
+        if (url.searchParams.get('dl')) hh['content-disposition'] = 'attachment; filename="photo-' + imm[1] + '.jpg"';
+        return new Response(arr, { headers: hh });
       }
       const mm = url.pathname.match(/^\/api\/media\/([a-f0-9]{8,32})$/);
       if (mm && req.method === 'GET') return serveMedia(env, req, mm[1]);
@@ -893,9 +915,12 @@ const app = {
         const ip = req.headers.get('cf-connecting-ip') || 'x';
         if (await tooMany(env, 'req:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
         await note(env, 'req:' + ip);
-        await env.DB.prepare('INSERT INTO requests (name, contact, kind, size, budget, idea, ref, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+        const pics = (Array.isArray(body.imgs) ? body.imgs : []).slice(0, 3);
+        for (const p of pics) if (!jpegOk(p, 1400000)) return json({ error: 'One photo is too big or not a JPG/PNG. Please choose another.' }, 400);
+        const rins = await env.DB.prepare('INSERT INTO requests (name, contact, kind, size, budget, idea, ref, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
           .bind(name, contact, str(body.kind, 40), str(body.size, 60), str(body.budget, 60), idea, str(body.ref, 300), Date.now()).run();
-        try { const to = String(ADM || env.ADMIN_EMAIL || '').trim(); if (to && mailReady(env)) { const kd = str(body.kind, 40) || 'Request'; await sendMails(env, [{ to, subject: 'New ' + kd + ' from ' + name, text: kd + ' from ' + name + ' (' + contact + ')\n\n' + idea, html: '<p><b>' + kd.replace(/[<>&]/g, '') + '</b> from ' + name.replace(/[<>&]/g, '') + ' (' + contact.replace(/[<>&]/g, '') + ')</p><pre style="white-space:pre-wrap">' + idea.replace(/[<>&]/g, '') + '</pre>' }]); } } catch (e) {}
+        for (const p of pics) await env.DB.prepare('INSERT INTO reqimgs (req_id, data) VALUES (?, ?)').bind(rins.meta.last_row_id, p.slice(23)).run();
+        try { const to = String(ADM || env.ADMIN_EMAIL || '').trim(); if (to && mailReady(env)) { const kd = str(body.kind, 40) || 'Request'; await sendMails(env, [{ to, subject: 'New ' + kd + ' from ' + name, text: kd + ' from ' + name + ' (' + contact + ')\n\n' + idea + (pics.length ? '\n\n[' + pics.length + ' photo(s) attached - download them in Edit my site, Requests]' : ''), html: '<p><b>' + kd.replace(/[<>&]/g, '') + '</b> from ' + name.replace(/[<>&]/g, '') + ' (' + contact.replace(/[<>&]/g, '') + ')</p><pre style="white-space:pre-wrap">' + idea.replace(/[<>&]/g, '') + '</pre>' }]); } } catch (e) {}
         return json({ ok: true });
       }
       if (url.pathname === '/api/hit') {
@@ -1159,7 +1184,7 @@ const app = {
       if (url.pathname === '/api/admin/request/delete') {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
-        await env.DB.prepare('DELETE FROM requests WHERE id = ?').bind(Number(body.id) || 0).run();
+        await env.DB.batch([env.DB.prepare('DELETE FROM reqimgs WHERE req_id = ?').bind(Number(body.id) || 0), env.DB.prepare('DELETE FROM requests WHERE id = ?').bind(Number(body.id) || 0)]);
         return json({ ok: true });
       }
       if (url.pathname === '/api/admin/upload') {
