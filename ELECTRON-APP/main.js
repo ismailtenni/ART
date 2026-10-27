@@ -29,9 +29,20 @@ function createWindow() {
     title: 'ART-ISMAILTENNI',
     icon: path.join(__dirname, 'icon.png'),
     autoHideMenuBar: true,
-    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true }
+    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, devTools: false }
   });
   Menu.setApplicationMenu(null);
+
+  // protect the artwork: no screenshots or screen recording of this window, no right-click menu, no developer tools
+  try { win.setContentProtection(true); } catch (err) {}
+  win.webContents.on('context-menu', (ev) => ev.preventDefault());
+  win.webContents.on('devtools-opened', () => { try { win.webContents.closeDevTools(); } catch (err) {} });
+  // only files the site itself makes for the owner (backups, request photos, app files) may be downloaded; never artwork pictures
+  session.defaultSession.on('will-download', (ev, item) => {
+    const u = item.getURL() || '';
+    const ok = u.startsWith('blob:') || u.startsWith('data:') || /\/api\/(reqimg|msgimg|dl)\//.test(u);
+    if (!ok) ev.preventDefault();
+  });
 
   win.loadURL(SITE);
 
@@ -58,6 +69,8 @@ function createWindow() {
   // F11 = full screen, Ctrl+R = reload
   win.webContents.on('before-input-event', (e, input) => {
     if (input.type !== 'keyDown') return;
+    const k = (input.key || '').toLowerCase();
+    if (input.key === 'F12' || (input.control && input.shift && ['i', 'j', 'c'].includes(k)) || (input.control && ['s', 'u', 'p'].includes(k))) { e.preventDefault(); return; }
     if (input.key === 'F11') { win.setFullScreen(!win.isFullScreen()); e.preventDefault(); }
     if (input.control && input.key.toLowerCase() === 'r') { win.reload(); e.preventDefault(); }
   });

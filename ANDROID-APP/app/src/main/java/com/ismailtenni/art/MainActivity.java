@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.RenderProcessGoneDetail;
@@ -61,6 +62,12 @@ public class MainActivity extends AppCompatActivity {
         web.setBackgroundColor(0xFF050816);
         root.addView(web, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(root);
+        // protect the artwork: no screenshots, no screen recording, no long-press 'save image'
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
+        web.setOnLongClickListener(v -> {
+            int t = web.getHitTestResult().getType();
+            return t == WebView.HitTestResult.IMAGE_TYPE || t == WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE;
+        });
 
         WebSettings s = web.getSettings();
         s.setJavaScriptEnabled(true);

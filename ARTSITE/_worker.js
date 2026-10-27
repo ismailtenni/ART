@@ -187,6 +187,8 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS msgimgs (msg_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, data TEXT NOT NULL)',
   'CREATE TABLE IF NOT EXISTS reqimgs (id INTEGER PRIMARY KEY AUTOINCREMENT, req_id INTEGER NOT NULL, data TEXT NOT NULL)',
   'CREATE INDEX IF NOT EXISTS reqimgs_req ON reqimgs (req_id)',
+  'CREATE TABLE IF NOT EXISTS creplies (id INTEGER PRIMARY KEY AUTOINCREMENT, comment_id INTEGER NOT NULL, user_id INTEGER NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL)',
+  'CREATE INDEX IF NOT EXISTS creplies_c ON creplies (comment_id)',
   'CREATE TABLE IF NOT EXISTS bans (user_id INTEGER PRIMARY KEY, at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS content (k TEXT PRIMARY KEY, v TEXT NOT NULL, updated_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS media (id TEXT PRIMARY KEY, mime TEXT NOT NULL, n INTEGER NOT NULL, created_at INTEGER NOT NULL)',
@@ -342,7 +344,22 @@ async function injectContent(env, req, url) {
       if (sp && okUrl(sp)) share = sp.startsWith('/') ? sp : '/' + sp;
     }
   } catch (e) { /* if the database is not ready, show the normal page */ }
+  let ogTitle = '', ogDesc = '', ogUrl = url.origin + '/';
+  try {
+    const aid = url.searchParams.get('art') || '';
+    if (/^[A-Za-z0-9_-]{1,40}$/.test(aid)) {
+      const row2 = await env.DB.prepare("SELECT v FROM content WHERE k = 'site'").first();
+      const wk = row2 && row2.v ? (JSON.parse(row2.v).works || []).find((x) => x && x.id === aid) : null;
+      if (wk) {
+        if (wk.cover && okUrl(wk.cover)) share = wk.cover.startsWith('/') ? wk.cover : '/' + wk.cover;
+        ogTitle = String(wk.title || '').replace(/[<>"&]/g, '').slice(0, 120);
+        ogDesc = String(wk.meta || wk.desc || '').replace(/[<>"&]/g, '').slice(0, 160);
+        ogUrl = url.origin + '/?art=' + encodeURIComponent(aid);
+      }
+    }
+  } catch (e) {}
   html = html.split('{{ORIGIN}}').join(url.origin).split('{{SHARE}}').join(url.origin + share);
+  if (ogTitle) html = html.replace(/(<meta property="og:url" content=")[^"]*"/, '$1' + ogUrl + '"').replace(/(<meta property="og:title" content=")[^"]*"/, '$1' + ogTitle + ' - ISMAILTENNI ART"').replace(/(<meta property="og:description" content=")[^"]*"/, '$1' + (ogDesc || 'Original art by Ismail Tenni') + '"');
   return new Response(html, { status: 200, headers });
 }
 async function secretKey(env) {
@@ -540,8 +557,13 @@ const app = {
         const lk = await env.DB.prepare('SELECT COUNT(*) AS n FROM likes WHERE work_id = ?').bind(work).first();
         const mine = me ? await env.DB.prepare('SELECT 1 AS x FROM likes WHERE work_id = ? AND user_id = ?').bind(work, me.id).first() : null;
         const cm = await env.DB.prepare('SELECT c.id, c.text, c.created_at, u.name, c.user_id, (SELECT at FROM avatars a WHERE a.user_id = c.user_id) AS av FROM comments c JOIN users u ON u.id = c.user_id WHERE c.work_id = ? ORDER BY c.created_at DESC LIMIT 60').bind(work).all();
+        const cms = cm.results || [], byC = {};
+        if (cms.length) {
+          const rr = await env.DB.prepare('SELECT r.id, r.comment_id, r.text, r.created_at, r.user_id, u.name, u.email, (SELECT at FROM avatars a WHERE a.user_id = r.user_id) AS av FROM creplies r JOIN users u ON u.id = r.user_id WHERE r.comment_id IN (' + cms.map(() => '?').join(',') + ') ORDER BY r.created_at ASC LIMIT 300').bind(...cms.map((c) => c.id)).all();
+          for (const r of rr.results || []) (byC[r.comment_id] = byC[r.comment_id] || []).push({ id: r.id, name: r.name, text: r.text, at: r.created_at, uid: r.user_id, av: r.av || 0, owner: isAdmin(env, { email: String(r.email || '').toLowerCase() }), mine: !!me && (me.id === r.user_id || isAdmin(env, me)) });
+        }
         return json({ likes: lk ? lk.n : 0, liked: !!mine, me: me ? { name: me.name } : null,
-          comments: (cm.results || []).map((r) => ({ id: r.id, name: r.name, text: r.text, at: r.created_at, uid: r.user_id, av: r.av || 0, mine: !!me && (me.id === r.user_id || isAdmin(env, me)) })) });
+          comments: cms.map((r) => ({ id: r.id, name: r.name, text: r.text, at: r.created_at, uid: r.user_id, av: r.av || 0, replies: byC[r.id] || [], mine: !!me && (me.id === r.user_id || isAdmin(env, me)) })) });
       }
       if (url.pathname === '/api/order' && req.method === 'GET') {
         const code = String(url.searchParams.get('code') || '').trim().toUpperCase().slice(0, 30);
@@ -600,7 +622,15 @@ const app = {
         return new Response(arr, { headers: hh });
       }
       const mm = url.pathname.match(/^\/api\/media\/([a-f0-9]{8,32})$/);
-      if (mm && req.method === 'GET') return serveMedia(env, req, mm[1]);
+      if (mm && req.method === 'GET') {
+        // artwork pictures only load inside the site itself: not opened on their own, not embedded on other sites
+        const dest = (req.headers.get('sec-fetch-dest') || '').toLowerCase(), site = (req.headers.get('sec-fetch-site') || '').toLowerCase();
+        if (dest === 'document' || dest === 'iframe' || dest === 'embed' || dest === 'object' || (dest === 'image' && site === 'cross-site')) {
+          const me0 = await currentUser(env, req);
+          if (!isAdmin(env, me0)) return new Response('Not available.', { status: 403, headers: { 'cache-control': 'no-store' } });
+        }
+        return serveMedia(env, req, mm[1]);
+      }
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
       const origin = req.headers.get('origin');
       if (origin && new URL(origin).host !== url.host) return json({ error: 'Not allowed' }, 403);
@@ -819,13 +849,40 @@ const app = {
         await note(env, 'comment:' + me.id);
         const now = Date.now();
         const r = await env.DB.prepare('INSERT INTO comments (work_id, user_id, text, created_at) VALUES (?, ?, ?, ?)').bind(work, me.id, text, now).run();
-        return json({ comment: { id: r.meta.last_row_id, name: me.name, text, at: now, mine: true } });
+        const mav = await env.DB.prepare('SELECT at FROM avatars WHERE user_id = ?').bind(me.id).first();
+        return json({ comment: { id: r.meta.last_row_id, name: me.name, text, at: now, mine: true, uid: me.id, av: mav ? mav.at : 0, replies: [] } });
       }
       if (url.pathname === '/api/comment/delete') {
         const me = await currentUser(env, req);
         if (!me) return json({ error: 'Please log in.' }, 401);
-        if (isAdmin(env, me)) await env.DB.prepare('DELETE FROM comments WHERE id = ?').bind(Number(body.id) || 0).run();
-        else await env.DB.prepare('DELETE FROM comments WHERE id = ? AND user_id = ?').bind(Number(body.id) || 0, me.id).run();
+        const cid = Number(body.id) || 0;
+        const own = isAdmin(env, me) ? await env.DB.prepare('SELECT id FROM comments WHERE id = ?').bind(cid).first() : await env.DB.prepare('SELECT id FROM comments WHERE id = ? AND user_id = ?').bind(cid, me.id).first();
+        if (own) await env.DB.batch([env.DB.prepare('DELETE FROM creplies WHERE comment_id = ?').bind(cid), env.DB.prepare('DELETE FROM comments WHERE id = ?').bind(cid)]);
+        return json({ ok: true });
+      }
+      if (url.pathname === '/api/reply') {
+        const me = await currentUser(env, req);
+        if (!me) return json({ error: 'Please log in to reply.' }, 401);
+        const cid = Number(body.comment) || 0, text = String(body.text || '').trim().slice(0, 500);
+        if (!cid || !text) return json({ error: 'Write something first.' }, 400);
+        const cm = await env.DB.prepare('SELECT c.id, c.work_id, c.text, u.email, u.name FROM comments c JOIN users u ON u.id = c.user_id WHERE c.id = ?').bind(cid).first();
+        if (!cm) return json({ error: 'This comment no longer exists.' }, 404);
+        if (badText(text, BADX)) return json({ error: BAD_MSG }, 400);
+        if (await tooMany(env, 'comment:' + me.id)) return json({ error: 'Slow down a little, then try again.' }, 429);
+        await note(env, 'comment:' + me.id);
+        const now = Date.now();
+        const r = await env.DB.prepare('INSERT INTO creplies (comment_id, user_id, text, created_at) VALUES (?, ?, ?, ?)').bind(cid, me.id, text, now).run();
+        if (isAdmin(env, me) && cm.email && String(cm.email).toLowerCase() !== me.email && mailReady(env)) {
+          try { await sendMails(env, [{ to: cm.email, subject: 'Ismail replied to your comment', text: 'Ismail replied to your comment "' + String(cm.text).slice(0, 120) + '":\n\n' + text, html: '<p><b>Ismail</b> replied to your comment:</p><blockquote style="border-left:3px solid #7a5cff;margin:8px 0;padding:4px 12px;color:#555">' + String(cm.text).slice(0, 200).replace(/[<>&]/g, '') + '</blockquote><p>' + text.replace(/[<>&]/g, '') + '</p>' }]); } catch (e) {}
+        }
+        const mav = await env.DB.prepare('SELECT at FROM avatars WHERE user_id = ?').bind(me.id).first();
+        return json({ reply: { id: r.meta.last_row_id, name: me.name, text, at: now, uid: me.id, av: mav ? mav.at : 0, owner: isAdmin(env, me), mine: true } });
+      }
+      if (url.pathname === '/api/reply/delete') {
+        const me = await currentUser(env, req);
+        if (!me) return json({ error: 'Please log in.' }, 401);
+        if (isAdmin(env, me)) await env.DB.prepare('DELETE FROM creplies WHERE id = ?').bind(Number(body.id) || 0).run();
+        else await env.DB.prepare('DELETE FROM creplies WHERE id = ? AND user_id = ?').bind(Number(body.id) || 0, me.id).run();
         return json({ ok: true });
       }
       if (url.pathname === '/api/review') {
@@ -1093,7 +1150,7 @@ const app = {
         if (!u) return json({ error: 'Member not found.' }, 404);
         if (isAdmin(env, { email: String(u.email).toLowerCase() })) return json({ error: 'You cannot do that to the owner account.' }, 400);
         if (url.pathname.endsWith('/delete')) {
-          await env.DB.batch([env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM likes WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM comments WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM user_2fa WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM reset_tokens WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM bans WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM avatars WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM messages WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM msgimgs WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id)]);
+          await env.DB.batch([env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM likes WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM comments WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM user_2fa WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM reset_tokens WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM bans WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM avatars WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM messages WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM msgimgs WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM creplies WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM creplies WHERE comment_id IN (SELECT id FROM comments WHERE user_id = ?)').bind(id), env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id)]);
           return json({ ok: true });
         }
         if (body.ban === false) await env.DB.prepare('DELETE FROM bans WHERE user_id = ?').bind(id).run();
@@ -1121,6 +1178,8 @@ const app = {
           ev.push({ type: /^(Draw me|Order)$/.test(r.kind || '') ? 'order' : 'request', who: T(r.name, 60), text: T([r.kind || 'Request', r.size, r.budget].filter(Boolean).join(' · '), 120), at: r.created_at, tab: 'reqs' });
         for (const r of await q('SELECT c.text, c.work_id, c.created_at, u.name FROM comments c JOIN users u ON u.id = c.user_id WHERE lower(u.email) != ? ORDER BY c.created_at DESC LIMIT 25', adm))
           ev.push({ type: 'comment', who: T(r.name, 60), text: T(r.text, 140), work: T(r.work_id, 40), at: r.created_at });
+        for (const r of await q('SELECT r.text, c.work_id, r.created_at, u.name FROM creplies r JOIN users u ON u.id = r.user_id JOIN comments c ON c.id = r.comment_id WHERE lower(u.email) != ? ORDER BY r.created_at DESC LIMIT 25', adm))
+          ev.push({ type: 'comment', who: T(r.name, 60), text: T('\u21b3 reply: ' + r.text, 140), work: T(r.work_id, 40), at: r.created_at });
         for (const r of await q('SELECT l.work_id, l.created_at, u.name FROM likes l JOIN users u ON u.id = l.user_id WHERE lower(u.email) != ? ORDER BY l.created_at DESC LIMIT 25', adm))
           ev.push({ type: 'like', who: T(r.name, 60), text: T(r.work_id, 40), work: T(r.work_id, 40), at: r.created_at });
         for (const r of await q('SELECT m.text, m.created_at, u.name FROM messages m JOIN users u ON u.id = m.user_id WHERE m.from_owner = 0 ORDER BY m.created_at DESC LIMIT 20'))
