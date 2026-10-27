@@ -144,6 +144,35 @@ function parseFrom(f) {
   const m = String(f || '').match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
   return m ? { name: m[1].replace(/^"|"$/g, '') || 'ISMAILTENNI ART', email: m[2].trim() } : { name: 'ISMAILTENNI ART', email: String(f || '').trim() };
 }
+// ---------- automatic reply to people who send a request ----------
+function arBuild(st, o) {
+  st = st || {};
+  const fill = (t, v) => String(t).replace(/\{(name|kind|when|ref)\}/g, (m, k) => v[k] || '');
+  const kindTxt = o.kind === 'Draw me' ? 'Draw me request' : o.kind === 'Order' ? 'order' : 'request';
+  const v = { name: o.name || 'friend', kind: kindTxt, when: st.arWhen || 'within 48 hours', ref: o.ref || '' };
+  const defText = o.wl
+    ? 'Hi {name},\n\nThank you! I am fully booked right now, so you are on my waiting list. I will write to you as soon as a place opens.\n\n- Ismail, ISMAILTENNI ART'
+    : 'Hi {name},\n\nThank you for your {kind}! I received it and I will reply {when}.\n\nWhat happens next:\n1. I look at your idea and your photos.\n2. I write to you to confirm the details, the price and the time.\n3. When you have paid, I start drawing.\n\nYour reference: {ref}\n\n- Ismail, ISMAILTENNI ART';
+  let text = fill(o.wl ? defText : (st.arText || defText), v).split('\n').filter((l) => !/^\s*Your reference:\s*$/.test(l)).join('\n');
+  const subject = fill(st.arSubject || 'I received your {kind}, {name}!', v).slice(0, 150);
+  const esc = (x) => String(x).replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
+  const html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#111;line-height:1.6;font-size:16px">' + esc(text).replace(/\n/g, '<br>') + '</div>';
+  return { subject, text, html };
+}
+async function arSend(env, req, st, o, contact) {
+  if (!st || st.arOn === 'no') return;
+  const m = arBuild(st, o);
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact) && mailReady(env)) {
+    const k = 'ar:' + contact.toLowerCase();
+    const rr = await env.DB.prepare('SELECT COUNT(*) AS n FROM attempts WHERE key = ? AND at > ?').bind(k, Date.now() - 10 * 60 * 1000).first();
+    if (!(rr && rr.n >= 1)) {
+      await note(env, k);
+      await sendMails(env, [{ to: contact, subject: m.subject, text: m.text, html: m.html }]);
+    }
+  }
+  const me = await currentUser(env, req);
+  if (me) await env.DB.prepare('INSERT INTO messages (user_id, from_owner, text, created_at, read) VALUES (?, 1, ?, ?, 0)').bind(me.id, m.text.slice(0, 1500), Date.now()).run();
+}
 async function sendMails(env, mails) {
   // mails: [{ to, subject, html, text, headers }]  ->  true if the provider accepted them
   if (!mails.length) return true;
@@ -225,20 +254,20 @@ function cleanFilm(f) {
 }
 
 const SCH = {
-  shop: { name: 's80', price: 's40', photo: 'img', pay: 'url', edition: 'n', left: 'n', ends: 's10' },
-  prints: { name: 's60', price: 's20', pay: 'url' },
-  gifts: { name: 's80', price: 's40', pay: 'url' },
+  shop: { name: 's80', price: 's40', sale: 's6', photo: 'img', pay: 'url', edition: 'n', left: 'n', ends: 's10' },
+  prints: { name: 's60', price: 's20', sale: 's6', pay: 'url' },
+  gifts: { name: 's80', price: 's40', sale: 's6', pay: 'url' },
   reviews: { name: 's60', text: 's500', stars: 'n' },
   behind: { photo: 'img', caption: 's100' },
   wallpapers: { photo: 'img', title: 's80' },
-  spotlight: { on: 's3', title: 's100', text: 's800', image: 'img', price: 's40', pay: 'url' },
+  spotlight: { on: 's3', title: 's100', text: 's800', image: 'img', price: 's40', sale: 's6', pay: 'url' },
   ba: { before: 'img', after: 'img', caption: 's100' },
   about: { portrait: 'img', t1: 's700', t2: 's700', t3: 's700', p1: 'img', p2: 'img', p3: 'img', poster: 'img', vurl: 's300' },
-  settings: { curDef: 's20', curSize: 's6', curOff: 's3', coOff: 's3', payDefault: 'url', payLabel: 's30', noRooms: 's3', ghUser: 's40', ghRepo: 's60', apkUrl: 'url', exeUrl: 'url', secChk: 's40', giftOn: 's3', giftTitle: 's60', giftText: 's200', giftImg: 'img', giftCode: 's30' },
+  settings: { arOn: 's3', arSubject: 's100', arText: 's1200', arWhen: 's40', saleOn: 's3', salePct: 's6', saleLabel: 's60', saleEnd: 's10', saleNoP: 's3', saleNoS: 's3', saleNoA: 's3', saleNoG: 's3', curDef: 's20', curSize: 's6', curOff: 's3', coOff: 's3', payDefault: 'url', payLabel: 's30', noRooms: 's3', ghUser: 's40', ghRepo: 's60', apkUrl: 'url', exeUrl: 'url', secChk: 's40', giftOn: 's3', giftTitle: 's60', giftText: 's200', giftImg: 'img', giftCode: 's30' },
   buyers: { photo: 'img', name: 's40', place: 's40', size: 's30', text: 's200', toast: 's3' },
   rooms: { name: 's40', img: 'img', x: 'n', y: 'n', cm: 'n' },
   posts: { title: 's100', text: 's6000', image: 'img', date: 's10' },
-  draw: { on: 's3', title: 's80', text: 's500', img1: 'img', img2: 'img', img3: 'img', extra: 's20', days: 's40', cur: 's6', rates: 's200', origAdd: 's20', copyAdd: 's20' },
+  draw: { slots: 's4', slotsWhen: 's40', slotsAuto: 's3', on: 's3', title: 's80', text: 's500', img1: 'img', img2: 'img', img3: 'img', extra: 's20', days: 's40', cur: 's6', rates: 's200', origAdd: 's20', copyAdd: 's20' },
   drawimgs: { img: 'img' },
   drawsizes: { name: 's40', price: 's20' },
   wallets: { coin: 's20', network: 's30', addr: 's120' },
@@ -268,7 +297,7 @@ function cleanContent(b) {
     if (!WORK.test(id)) id = 'w' + Date.now().toString(36) + i;
     return { id, series: str(w.series, 40), title: str(w.title, 100), meta: str(w.meta, 100), desc: str(w.desc, 2000),
       ratio: RATIOS.includes(w.ratio) ? w.ratio : '3 / 4', status: str(w.status, 40), cover: w.cover,
-      price: str(w.price, 40).trim(), pay: (() => { const u = str(w.pay, 300).trim(); return /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : ''; })(),
+      price: str(w.price, 40).trim(), sale: str(w.sale, 6).trim(), pay: (() => { const u = str(w.pay, 300).trim(); return /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : ''; })(),
       shots: cleanShots(w.shots, 30), process: cleanShots(w.process, 30) };
   }).filter(Boolean);
   const photos = (Array.isArray(b.photos) ? b.photos : []).slice(0, 200).filter(okUrl);
@@ -977,6 +1006,24 @@ const app = {
         const rins = await env.DB.prepare('INSERT INTO requests (name, contact, kind, size, budget, idea, ref, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
           .bind(name, contact, str(body.kind, 40), str(body.size, 60), str(body.budget, 60), idea, str(body.ref, 300), Date.now()).run();
         for (const p of pics) await env.DB.prepare('INSERT INTO reqimgs (req_id, data) VALUES (?, ?)').bind(rins.meta.last_row_id, p.slice(23)).run();
+        try {
+          const arow = await env.DB.prepare("SELECT v FROM content WHERE k = 'site'").first();
+          const ast = arow && arow.v ? (JSON.parse(arow.v).settings || {}) : {};
+          const rf = (idea.match(/\b(?:DRW|ORD|ORDER)-[A-Z0-9]{3,10}\b/) || [''])[0];
+          await arSend(env, req, ast, { name, kind: str(body.kind, 40), ref: rf, wl: /^WAITING LIST/.test(idea) }, contact);
+        } catch (e) { /* the automatic reply is optional */ }
+        if (str(body.kind, 40) === 'Draw me' && !/^WAITING LIST/.test(idea)) {
+          try {
+            const crow = await env.DB.prepare("SELECT v FROM content WHERE k = 'site'").first();
+            if (crow && crow.v) {
+              const sv = JSON.parse(crow.v), dr = sv.draw;
+              if (dr && /^\d+$/.test(String(dr.slots || '')) && dr.slotsAuto !== 'no' && +dr.slots > 0) {
+                dr.slots = String(+dr.slots - 1);
+                await env.DB.prepare("UPDATE content SET v = ?, updated_at = ? WHERE k = 'site'").bind(JSON.stringify(sv), Date.now()).run();
+              }
+            }
+          } catch (e) { /* the counter is optional */ }
+        }
         try { const to = String(ADM || env.ADMIN_EMAIL || '').trim(); if (to && mailReady(env)) { const kd = str(body.kind, 40) || 'Request'; await sendMails(env, [{ to, subject: 'New ' + kd + ' from ' + name, text: kd + ' from ' + name + ' (' + contact + ')\n\n' + idea + (pics.length ? '\n\n[' + pics.length + ' photo(s) attached - download them in Edit my site, Requests]' : ''), html: '<p><b>' + kd.replace(/[<>&]/g, '') + '</b> from ' + name.replace(/[<>&]/g, '') + ' (' + contact.replace(/[<>&]/g, '') + ')</p><pre style="white-space:pre-wrap">' + idea.replace(/[<>&]/g, '') + '</pre>' }]); } } catch (e) {}
         return json({ ok: true });
       }
@@ -1239,6 +1286,16 @@ const app = {
         await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('orders', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at")
           .bind(JSON.stringify(list), Date.now()).run();
         return json({ ok: true, n: list.length });
+      }
+      if (url.pathname === '/api/admin/autoreply/test') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        if (!mailReady(env)) return json({ error: 'Email is not set up yet. Open the Email tab first.' }, 400);
+        const arow = await env.DB.prepare("SELECT v FROM content WHERE k = 'site'").first();
+        const ast = arow && arow.v ? (JSON.parse(arow.v).settings || {}) : {};
+        const m = arBuild(ast, { name: 'Sara', kind: 'Draw me', ref: 'DRW-TEST1' });
+        const ok = await sendMails(env, [{ to: me.email, subject: '[TEST] ' + m.subject, text: m.text, html: m.html }]);
+        return json({ ok, to: me.email });
       }
       if (url.pathname === '/api/admin/request/delete') {
         const me = await currentUser(env, req);
