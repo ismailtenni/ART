@@ -178,6 +178,7 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS subscribers (email TEXT PRIMARY KEY, created_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS avatars (user_id INTEGER PRIMARY KEY, data TEXT NOT NULL, at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, from_owner INTEGER NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL, read INTEGER NOT NULL DEFAULT 0)',
+  'CREATE TABLE IF NOT EXISTS msgimgs (msg_id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, data TEXT NOT NULL)',
   'CREATE TABLE IF NOT EXISTS bans (user_id INTEGER PRIMARY KEY, at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS content (k TEXT PRIMARY KEY, v TEXT NOT NULL, updated_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS media (id TEXT PRIMARY KEY, mime TEXT NOT NULL, n INTEGER NOT NULL, created_at INTEGER NOT NULL)',
@@ -461,11 +462,56 @@ const app = {
         const c = tscfg(env);
         return json({ ready: tsReady(env), site: c.site, hasSecret: !!c.secret });
       }
+      if (url.pathname.startsWith('/api/dl/') && req.method === 'GET') {
+        const which = url.pathname.slice(8);
+        const MAP = { apk: ['apk-latest', 'ART-ISMAILTENNI.apk'], exe: ['exe-latest', 'ART-ISMAILTENNI.exe'], setup: ['exe-latest', 'ART-ISMAILTENNI-Setup.exe'] };
+        const page = (msg) => new Response('<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Download</title><body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#070a1c;color:#fff;font:16px/1.6 system-ui;padding:20px"><div style="max-width:460px;text-align:center"><h2 style="font-weight:500">Download not ready yet</h2><p style="color:#b7c4dc">' + msg + '</p><p><a href="/" style="color:#9fd0ff">Back to the site</a></p></div>', { status: 404, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+        if (!MAP[which]) return page('Unknown file.');
+        let st = {};
+        try { const r0 = await env.DB.prepare("SELECT v FROM content WHERE k = 'site'").first(); st = (r0 && r0.v ? JSON.parse(r0.v).settings : {}) || {}; } catch (e) {}
+        const gu = String(st.ghUser || '').replace(/[^A-Za-z0-9-]/g, ''), gr = String(st.ghRepo || 'ART').replace(/[^A-Za-z0-9._-]/g, '') || 'ART';
+        if (!gu) return page('The owner has not entered the GitHub username yet.');
+        const tag = MAP[which][0], name = MAP[which][1], tok = env.GH_TOKEN || MC.gh || '';
+        const H = { 'user-agent': 'art-site', accept: 'application/vnd.github+json' };
+        if (tok) H.authorization = 'Bearer ' + tok;
+        const api = 'https://api.github.com/repos/' + gu + '/' + gr + '/releases';
+        const pick = (as) => {
+          as = as || [];
+          let m = as.find((x) => x.name === name);
+          if (m) return m;
+          if (which === 'apk') return as.find((x) => /\.apk$/i.test(x.name));
+          if (which === 'setup') return as.find((x) => /setup.*\.exe$/i.test(x.name)) || as.find((x) => /\.exe$/i.test(x.name));
+          return as.find((x) => /\.exe$/i.test(x.name) && !/setup/i.test(x.name)) || as.find((x) => /\.exe$/i.test(x.name));
+        };
+        try {
+          let asset = null, denied = false, seen = false;
+          const r1 = await fetch(api + '/tags/' + tag, { headers: H });
+          if (r1.status === 401 || r1.status === 403) denied = true;
+          if (r1.ok) { seen = true; asset = pick((await r1.json()).assets); }
+          if (!asset && !denied) {
+            const r2 = await fetch(api + '?per_page=30', { headers: H });
+            if (r2.status === 401 || r2.status === 403) denied = true;
+            else if (r2.ok) {
+              const list = await r2.json();
+              for (const rel of list || []) { if (rel.draft) continue; seen = true; const m = pick(rel.assets); if (m) { asset = m; break; } }
+            }
+          }
+          if (denied && tok) return page('The GitHub key saved by the owner is not accepted. The owner can paste a new one in Edit my site, Email.');
+          if (!asset) {
+            if (!seen && !tok) return page('The app file cannot be read. The GitHub repository is private, so the owner must paste a GitHub key in Edit my site, Email (or make the repository public).');
+            return page('The app file is not on GitHub yet. The owner needs to run the build (Actions page) or upload the file in the repository Releases page.');
+          }
+          const f = await fetch(tok ? asset.url : asset.browser_download_url, { redirect: 'manual', headers: tok ? { ...H, accept: 'application/octet-stream' } : { 'user-agent': 'art-site' } });
+          const loc = f.headers.get('location');
+          if (loc && /^https:\/\//.test(loc)) return new Response(null, { status: 302, headers: { location: loc, 'cache-control': 'no-store' } });
+          return page('GitHub did not give the file. Please try again in a minute.');
+        } catch (e) { return page('GitHub could not be reached. Please try again in a minute.'); }
+      }
       if (url.pathname === '/api/admin/mail' && req.method === 'GET') {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
         const c = mcfg(env);
-        return json({ ready: mailReady(env), via: c.brevo ? 'Brevo' : c.resend ? 'Resend' : '', from: c.from, hasKey: !!(c.brevo || c.resend), lockedByCloudflare: !!(env.BREVO_API_KEY || env.MAIL_FROM) });
+        return json({ ready: mailReady(env), via: c.brevo ? 'Brevo' : c.resend ? 'Resend' : '', from: c.from, hasKey: !!(c.brevo || c.resend), lockedByCloudflare: !!(env.BREVO_API_KEY || env.MAIL_FROM), hasGh: !!(env.GH_TOKEN || MC.gh) });
       }
       if (url.pathname === '/api/admin/subscribers' && req.method === 'GET') {
         const me = await currentUser(env, req);
@@ -520,6 +566,16 @@ const app = {
         const bin = atob(r.data), arr = new Uint8Array(bin.length);
         for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
         return new Response(arr, { headers: { 'content-type': 'image/jpeg', 'cache-control': 'public, max-age=600', 'x-content-type-options': 'nosniff' } });
+      }
+      const imm = url.pathname.match(/^\/api\/msgimg\/(\d{1,12})$/);
+      if (imm && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!me) return new Response('', { status: 401 });
+        const r = await env.DB.prepare('SELECT data, user_id FROM msgimgs WHERE msg_id = ?').bind(Number(imm[1])).first();
+        if (!r || (r.user_id !== me.id && !isAdmin(env, me))) return new Response('', { status: 404 });
+        const bin = atob(r.data), arr = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+        return new Response(arr, { headers: { 'content-type': 'image/jpeg', 'cache-control': 'private, max-age=3600', 'x-content-type-options': 'nosniff' } });
       }
       const mm = url.pathname.match(/^\/api\/media\/([a-f0-9]{8,32})$/);
       if (mm && req.method === 'GET') return serveMedia(env, req, mm[1]);
@@ -703,7 +759,9 @@ const app = {
         const key = String(body.key || '').trim().slice(0, 300);
         const from = String(body.from || '').trim().slice(0, 150);
         if (from && !/^[^<>@\s][^<>]*<[^<>@\s]+@[^<>@\s]+\.[^<>@\s]+>$|^[^<>@\s]+@[^<>@\s]+\.[^<>@\s]+$/.test(from)) return json({ error: 'The sender must look like name@gmail.com' }, 400);
-        const next = { key: key || MC.key || '', from: from || MC.from || '' };
+        const gh = String(body.gh || '').trim().replace(/[^A-Za-z0-9_\-]/g, '').slice(0, 300);
+        const next = { key: key || MC.key || '', from: from || MC.from || '', gh: gh || MC.gh || '' };
+        if (body.clearGh === true) next.gh = '';
         if (body.clear === true) { next.key = ''; }
         await env.DB.prepare("INSERT OR REPLACE INTO content (k, v, updated_at) VALUES ('mail', ?, ?)").bind(JSON.stringify(next), Date.now()).run();
         MC = next;
@@ -905,32 +963,49 @@ const app = {
         await env.DB.prepare('INSERT INTO avatars (user_id, data, at) VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, at = excluded.at').bind(me.id, b64, at).run();
         return json({ ok: true, avatar: at });
       }
+      const msgImg = async (uid, mid, d) => {
+        const b64 = d.slice('data:image/jpeg;base64,'.length);
+        await env.DB.prepare('INSERT OR REPLACE INTO msgimgs (msg_id, user_id, data) VALUES (?, ?, ?)').bind(mid, uid, b64).run();
+      };
+      const imgOk = (d) => {
+        d = String(d || '');
+        if (!d) return '';
+        if (!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(d) || d.length > 900000) return null;
+        let raw = ''; try { raw = atob(d.slice(23, 63)); } catch (e) { return null; }
+        if (raw.charCodeAt(0) !== 0xff || raw.charCodeAt(1) !== 0xd8) return null;
+        return d;
+      };
+      const mapMsg = (m) => ({ id: m.id, mine: !m.from_owner, text: m.text, at: m.created_at, img: m.img ? m.id : 0 });
       if (url.pathname === '/api/msg/list') {
         const me = await currentUser(env, req);
         if (!me) return json({ error: 'Please log in.' }, 401);
-        const r = (await env.DB.prepare('SELECT id, from_owner, text, created_at FROM messages WHERE user_id = ? ORDER BY id DESC LIMIT 150').bind(me.id).all()).results || [];
+        const r = (await env.DB.prepare('SELECT id, from_owner, text, created_at, (SELECT 1 FROM msgimgs i WHERE i.msg_id = messages.id) AS img FROM messages WHERE user_id = ? ORDER BY id DESC LIMIT 150').bind(me.id).all()).results || [];
         await env.DB.prepare('UPDATE messages SET read = 1 WHERE user_id = ? AND from_owner = 1 AND read = 0').bind(me.id).run();
-        return json({ items: r.reverse().map((m) => ({ id: m.id, mine: !m.from_owner, text: m.text, at: m.created_at })) });
+        const ow = await env.DB.prepare('SELECT u.id, u.name, (SELECT at FROM avatars a WHERE a.user_id = u.id) AS av FROM users u WHERE lower(u.email) = ?').bind(String(ADM || env.ADMIN_EMAIL || '').trim().toLowerCase()).first();
+        return json({ owner: { id: ow ? ow.id : 0, name: 'Ismail', av: ow && ow.av ? ow.av : 0 }, items: r.reverse().map(mapMsg) });
       }
       if (url.pathname === '/api/msg/send') {
         const me = await currentUser(env, req);
         if (!me) return json({ error: 'Please log in to send a message.' }, 401);
         const text = String(body.text || '').trim().slice(0, 800);
-        if (!text) return json({ error: 'Write something first.' }, 400);
-        if (badText(text, BADX)) return json({ error: BAD_MSG }, 400);
+        const img = imgOk(body.img);
+        if (img === null) return json({ error: 'Please choose a smaller photo.' }, 400);
+        if (!text && !img) return json({ error: 'Write something first.' }, 400);
+        if (text && badText(text, BADX)) return json({ error: BAD_MSG }, 400);
         if (await tooMany(env, 'msg:' + me.id)) return json({ error: 'Slow down a little, then try again.' }, 429);
         await note(env, 'msg:' + me.id);
         const now = Date.now();
-        await env.DB.prepare('INSERT INTO messages (user_id, from_owner, text, created_at, read) VALUES (?, 0, ?, ?, 0)').bind(me.id, text, now).run();
-        try { const to = String(ADM || env.ADMIN_EMAIL || '').trim(); if (to && mailReady(env)) await sendMails(env, [{ to, subject: 'New message from ' + me.name, text: me.name + ' (' + me.email + '):\n\n' + text, html: '<p><b>' + String(me.name).replace(/[<>&]/g, '') + '</b> wrote:</p><pre style="white-space:pre-wrap">' + text.replace(/[<>&]/g, '') + '</pre>' }]); } catch (e) {}
-        return json({ ok: true, item: { mine: true, text, at: now } });
+        const ins = await env.DB.prepare('INSERT INTO messages (user_id, from_owner, text, created_at, read) VALUES (?, 0, ?, ?, 0)').bind(me.id, text, now).run();
+        if (img) await msgImg(me.id, ins.meta.last_row_id, img);
+        try { const to = String(ADM || env.ADMIN_EMAIL || '').trim(); if (to && mailReady(env)) await sendMails(env, [{ to, subject: 'New message from ' + me.name, text: me.name + ' (' + me.email + '):\n\n' + (text || '[sent a photo]'), html: '<p><b>' + String(me.name).replace(/[<>&]/g, '') + '</b> wrote:</p><pre style="white-space:pre-wrap">' + (text || '[sent a photo - open the site to see it]').replace(/[<>&]/g, '') + '</pre>' }]); } catch (e) {}
+        return json({ ok: true, item: { mine: true, text, at: now, img: img ? ins.meta.last_row_id : 0 } });
       }
       if (url.pathname === '/api/admin/msg/threads') {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
-        const rows = (await env.DB.prepare('SELECT u.id, u.name, u.email, (SELECT at FROM avatars a WHERE a.user_id = u.id) AS av, m.text, m.created_at, m.from_owner, (SELECT COUNT(*) FROM messages x WHERE x.user_id = u.id AND x.from_owner = 0 AND x.read = 0) AS unread FROM users u JOIN messages m ON m.id = (SELECT MAX(id) FROM messages WHERE user_id = u.id) ORDER BY m.created_at DESC LIMIT 200').all()).results || [];
+        const rows = (await env.DB.prepare('SELECT u.id, u.name, u.email, (SELECT at FROM avatars a WHERE a.user_id = u.id) AS av, m.text, m.created_at, m.from_owner, (SELECT 1 FROM msgimgs i WHERE i.msg_id = m.id) AS img, (SELECT COUNT(*) FROM messages x WHERE x.user_id = u.id AND x.from_owner = 0 AND x.read = 0) AS unread FROM users u JOIN messages m ON m.id = (SELECT MAX(id) FROM messages WHERE user_id = u.id) ORDER BY m.created_at DESC LIMIT 200').all()).results || [];
         const tot = rows.reduce((a, r) => a + (r.unread || 0), 0);
-        return json({ unread: tot, threads: rows.map((r) => ({ id: r.id, name: r.name, email: r.email, av: r.av || 0, last: String(r.text).slice(0, 80), at: r.created_at, fromOwner: !!r.from_owner, unread: r.unread || 0 })) });
+        return json({ unread: tot, threads: rows.map((r) => ({ id: r.id, name: r.name, email: r.email, av: r.av || 0, last: r.img && !r.text ? '\ud83d\udcf7 Photo' : String(r.text).slice(0, 80), at: r.created_at, fromOwner: !!r.from_owner, unread: r.unread || 0 })) });
       }
       if (url.pathname === '/api/admin/msg/thread') {
         const me = await currentUser(env, req);
@@ -938,19 +1013,22 @@ const app = {
         const id = Number(body.id) || 0;
         const u = await env.DB.prepare('SELECT id, name, email FROM users WHERE id = ?').bind(id).first();
         if (!u) return json({ error: 'Member not found.' }, 404);
-        const r = (await env.DB.prepare('SELECT id, from_owner, text, created_at FROM messages WHERE user_id = ? ORDER BY id DESC LIMIT 200').bind(id).all()).results || [];
+        const r = (await env.DB.prepare('SELECT id, from_owner, text, created_at, (SELECT 1 FROM msgimgs i WHERE i.msg_id = messages.id) AS img FROM messages WHERE user_id = ? ORDER BY id DESC LIMIT 200').bind(id).all()).results || [];
         await env.DB.prepare('UPDATE messages SET read = 1 WHERE user_id = ? AND from_owner = 0 AND read = 0').bind(id).run();
         const av = await env.DB.prepare('SELECT at FROM avatars WHERE user_id = ?').bind(id).first();
-        return json({ user: { id: u.id, name: u.name, email: u.email, av: av ? av.at : 0 }, items: r.reverse().map((m) => ({ id: m.id, mine: !!m.from_owner, text: m.text, at: m.created_at })) });
+        return json({ user: { id: u.id, name: u.name, email: u.email, av: av ? av.at : 0 }, owner: { id: me.id, name: 'Ismail', av: ((await env.DB.prepare('SELECT at FROM avatars WHERE user_id = ?').bind(me.id).first()) || {}).at || 0 }, items: r.reverse().map((m) => ({ id: m.id, mine: !!m.from_owner, text: m.text, at: m.created_at, img: m.img ? m.id : 0 })) });
       }
       if (url.pathname === '/api/admin/msg/send') {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
         const id = Number(body.id) || 0, text = String(body.text || '').trim().slice(0, 1500);
-        if (!text) return json({ error: 'Write something first.' }, 400);
+        const img = imgOk(body.img);
+        if (img === null) return json({ error: 'Please choose a smaller photo.' }, 400);
+        if (!text && !img) return json({ error: 'Write something first.' }, 400);
         const u = await env.DB.prepare('SELECT id FROM users WHERE id = ?').bind(id).first();
         if (!u) return json({ error: 'Member not found.' }, 404);
-        await env.DB.prepare('INSERT INTO messages (user_id, from_owner, text, created_at, read) VALUES (?, 1, ?, ?, 0)').bind(id, text, Date.now()).run();
+        const ins = await env.DB.prepare('INSERT INTO messages (user_id, from_owner, text, created_at, read) VALUES (?, 1, ?, ?, 0)').bind(id, text, Date.now()).run();
+        if (img) await msgImg(id, ins.meta.last_row_id, img);
         return json({ ok: true });
       }
       if (url.pathname === '/api/admin/member/avatar') {
@@ -977,7 +1055,7 @@ const app = {
         if (!u) return json({ error: 'Member not found.' }, 404);
         if (isAdmin(env, { email: String(u.email).toLowerCase() })) return json({ error: 'You cannot do that to the owner account.' }, 400);
         if (url.pathname.endsWith('/delete')) {
-          await env.DB.batch([env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM likes WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM comments WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM user_2fa WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM reset_tokens WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM bans WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM avatars WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM messages WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id)]);
+          await env.DB.batch([env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM likes WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM comments WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM user_2fa WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM reset_tokens WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM bans WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM avatars WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM messages WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM msgimgs WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id)]);
           return json({ ok: true });
         }
         if (body.ban === false) await env.DB.prepare('DELETE FROM bans WHERE user_id = ?').bind(id).run();
@@ -1008,7 +1086,7 @@ const app = {
         for (const r of await q('SELECT l.work_id, l.created_at, u.name FROM likes l JOIN users u ON u.id = l.user_id WHERE lower(u.email) != ? ORDER BY l.created_at DESC LIMIT 25', adm))
           ev.push({ type: 'like', who: T(r.name, 60), text: T(r.work_id, 40), work: T(r.work_id, 40), at: r.created_at });
         for (const r of await q('SELECT m.text, m.created_at, u.name FROM messages m JOIN users u ON u.id = m.user_id WHERE m.from_owner = 0 ORDER BY m.created_at DESC LIMIT 20'))
-          ev.push({ type: 'message', who: T(r.name, 60), text: T(r.text, 140), at: r.created_at, tab: 'msg' });
+          ev.push({ type: 'message', who: T(r.name, 60), text: T(r.text || '\ud83d\udcf7 Photo', 140), at: r.created_at, tab: 'msg' });
         for (const r of await q('SELECT name, created_at FROM users ORDER BY created_at DESC LIMIT 15'))
           ev.push({ type: 'member', who: T(r.name, 60), text: 'New member', at: r.created_at });
         for (const r of await q('SELECT email, created_at FROM subscribers ORDER BY created_at DESC LIMIT 15'))
