@@ -1031,6 +1031,19 @@ const app = {
         if (img) await msgImg(id, ins.meta.last_row_id, img);
         return json({ ok: true });
       }
+      if (url.pathname === '/api/admin/msg/delete') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const mid = Number(body.id) || 0, uid = Number(body.user) || 0;
+        if (body.all === true) {
+          if (!uid) return json({ error: 'Member not found.' }, 404);
+          await env.DB.batch([env.DB.prepare('DELETE FROM msgimgs WHERE user_id = ?').bind(uid), env.DB.prepare('DELETE FROM messages WHERE user_id = ?').bind(uid)]);
+          return json({ ok: true });
+        }
+        if (!mid) return json({ error: 'Message not found.' }, 404);
+        await env.DB.batch([env.DB.prepare('DELETE FROM msgimgs WHERE msg_id = ?').bind(mid), env.DB.prepare('DELETE FROM messages WHERE id = ?').bind(mid)]);
+        return json({ ok: true });
+      }
       if (url.pathname === '/api/admin/member/avatar') {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
