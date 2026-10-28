@@ -267,7 +267,7 @@ const SCH = {
   spotlight: { on: 's3', title: 's100', text: 's800', image: 'img', price: 's40', sale: 's6', pay: 'url' },
   ba: { before: 'img', after: 'img', caption: 's100' },
   about: { portrait: 'img', t1: 's700', t2: 's700', t3: 's700', p1: 'img', p2: 'img', p3: 'img', poster: 'img', vurl: 's300' },
-  settings: { arOn: 's3', arSubject: 's100', arText: 's1200', arWhen: 's40', saleOn: 's3', salePct: 's6', saleLabel: 's60', saleEnd: 's10', saleNoP: 's3', saleNoS: 's3', saleNoA: 's3', saleNoG: 's3', curDef: 's20', curSize: 's6', curOff: 's3', coOff: 's3', coAddr: 's3', payDefault: 'url', payLabel: 's30', noRooms: 's3', ghUser: 's40', ghRepo: 's60', apkUrl: 'url', exeUrl: 'url', secChk: 's40', giftOn: 's3', giftTitle: 's60', giftText: 's200', giftImg: 'img', giftCode: 's30' },
+  settings: { arOn: 's3', arSubject: 's100', arText: 's1200', arWhen: 's40', tySubject: 's100', tyText: 's1200', saleOn: 's3', salePct: 's6', saleLabel: 's60', saleEnd: 's10', saleNoP: 's3', saleNoS: 's3', saleNoA: 's3', saleNoG: 's3', curDef: 's20', curSize: 's6', curOff: 's3', coOff: 's3', coAddr: 's3', payDefault: 'url', payLabel: 's30', noRooms: 's3', ghUser: 's40', ghRepo: 's60', apkUrl: 'url', exeUrl: 'url', secChk: 's40', giftOn: 's3', giftTitle: 's60', giftText: 's200', giftImg: 'img', giftCode: 's30', gateAll: 's3' },
   buyers: { photo: 'img', name: 's40', place: 's40', size: 's30', text: 's200', toast: 's3' },
   rooms: { name: 's40', img: 'img', x: 'n', y: 'n', cm: 'n' },
   posts: { title: 's100', text: 's6000', image: 'img', date: 's10' },
@@ -420,6 +420,42 @@ async function unsubToken(env, email) {
   const sig = await crypto.subtle.sign('HMAC', await secretKey(env), enc.encode(email));
   return [...new Uint8Array(sig)].slice(0, 16).map((x) => x.toString(16).padStart(2, '0')).join('');
 }
+// ---- whole-site "are you a bot" gate (uses the same Turnstile keys as the login/sign-up box) ----
+async function gateSig(env, p) {
+  const sig = await crypto.subtle.sign('HMAC', await secretKey(env), enc.encode('gate:' + p));
+  return [...new Uint8Array(sig)].slice(0, 16).map((x) => x.toString(16).padStart(2, '0')).join('');
+}
+async function mkGateProof(env) { const p = String(Date.now() + 20000); return p + '.' + (await gateSig(env, p)); }
+async function checkGateProof(env, t) {
+  const m = String(t || '').match(/^(\d+)\.([0-9a-f]+)$/);
+  if (!m || Number(m[1]) < Date.now()) return false;
+  return (await gateSig(env, m[1])) === m[2];
+}
+function gatePage(env, dest) {
+  const site = tscfg(env).site;
+  const destSafe = String(dest || '/').replace(/[<>"'\\]/g, '');
+  const html = '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<title>ISMAILTENNI ART</title><style>html,body{margin:0;min-height:100%;background:#04050f;color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}'
+    + 'body{display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}'
+    + '.box{max-width:420px;width:100%;padding:34px 28px;border-radius:20px;border:1px solid rgba(190,170,255,.35);background:rgba(10,14,40,.7);text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}'
+    + 'h1{font-size:20px;margin:16px 0 6px;font-weight:600}p{color:#9fb0c8;font-size:14px;line-height:1.5;margin:0 0 20px}'
+    + '#cf-ts{display:flex;justify-content:center;min-height:68px;align-items:center;flex-wrap:wrap;gap:8px}'
+    + '#cf-err{color:#ffb4b4;font-size:13px}'
+    + '.sp{width:26px;height:26px;border-radius:50%;border:3px solid rgba(190,170,255,.3);border-top-color:#b79cff;animation:sp .8s linear infinite;margin:0 auto}'
+    + '@keyframes sp{to{transform:rotate(360deg)}}.fo{margin-top:18px;font-size:11px;color:#5d6a8a}</style></head><body>'
+    + '<div class="box"><div class="sp" id="sp0"></div><h1>Checking you\'re human</h1>'
+    + '<p>This only takes a second. It keeps ISMAILTENNI ART safe from bots.</p>'
+    + '<div id="cf-ts"></div><div class="fo">Protected by Cloudflare Turnstile</div></div>'
+    + '<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></scr' + 'ipt>'
+    + '<script>var DEST=' + JSON.stringify(destSafe) + ',SITE=' + JSON.stringify(site) + ';'
+    + 'function go(tok){fetch("/api/gate/verify",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({ts:tok})}).then(function(r){return r.json()}).then(function(j){'
+    + 'if(j&&j.gk){var sep=DEST.indexOf("?")>-1?"&":"?";location.replace(DEST+sep+"gk="+encodeURIComponent(j.gk))}else{document.getElementById("cf-ts").innerHTML="<span id=cf-err>"+(j&&j.error?j.error:"Please try again.")+"</span>"}'
+    + '}).catch(function(){document.getElementById("cf-ts").innerHTML="<span id=cf-err>Could not verify. Please reload the page.</span>"})}'
+    + 'function boot(){var s=document.getElementById("sp0");if(s)s.style.display="none";try{window.turnstile.render("#cf-ts",{sitekey:SITE,theme:"dark",callback:go,"error-callback":function(){document.getElementById("cf-ts").innerHTML="<span id=cf-err>Could not load the check. Please reload the page.</span>"}})}catch(e){}}'
+    + '(function wait(n){if(window.turnstile)boot();else if(n<100)setTimeout(function(){wait(n+1)},120);else document.getElementById("cf-ts").innerHTML="<span id=cf-err>Could not load the check. Please reload the page.</span>"})(0);'
+    + '</script></body></html>';
+  return new Response(html, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+}
 const escH = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 function b64bytes(s) {
   const bin = atob(s); const out = new Uint8Array(bin.length);
@@ -550,18 +586,38 @@ async function pdfOwnerNotify(env, origin, row, tok, what) {
     const to = String(ADM || env.ADMIN_EMAIL || '').trim();
     if (!to || !mailReady(env)) return;
     const link = origin + '/api/pdf/get?t=' + tok, phone = row.email.indexOf('@') < 0;
-    const wa = phone ? 'https://wa.me/' + row.email.replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent('Hi! Thank you for your purchase. Here is your PDF (' + row.size + '): ' + link) : '';
+    const wa = phone ? 'https://wa.me/' + row.email.replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent(thanksBuild(await siteSettings(env), row, link).text) : '';
     const t = (what || 'PDF sold') + ': ' + (row.work_title || '') + ' / ' + row.size + ' - ' + row.amount + (row.currency ? ' ' + row.currency : '') + '\nBuyer: ' + (row.name || '') + ' ' + row.email + '\n' + (phone ? 'The buyer gave a WhatsApp number, so no email was sent. Send the PDF link on WhatsApp: ' + wa : 'The PDF link was sent to the buyer by email.');
     await sendMails(env, [{ to, subject: '\ud83d\udcb0 ' + (what || 'PDF sold') + ': ' + (row.work_title || '') + ' (' + row.size + ')', text: t, html: '<p>' + escH(t).replace(/\n/g, '<br>') + '</p>' }]);
   } catch (e) {}
 }
+// "Thank you for buying" text the owner can edit (settings tySubject / tyText). {name} {item} {amount} {link}
+function thanksBuild(st, row, link) {
+  st = st || {};
+  const item = (row.work_title || 'artwork') + ' (' + row.size + ')';
+  const amount = row.amount + (row.currency ? ' ' + row.currency : '');
+  const fill = (t) => String(t).replace(/\{(name|item|amount|link)\}/g, (m, k) => ({ name: row.name || 'friend', item, amount, link }[k]));
+  const defText = 'Hi {name},\n\nThank you so much for buying {item}! I hope you love it.\n\nYour PDF is ready here:\n{link}\n\nThe link works for 30 days. Keep this email.\n\n- Ismail, ISMAILTENNI ART';
+  let text = fill(st.tyText || defText);
+  if (!/\{link\}/.test(st.tyText || defText)) text += '\n\n' + link;
+  const subject = fill(st.tySubject || 'Thank you for your purchase, {name}! Your PDF is ready').slice(0, 150);
+  const bare = text.replace(link, '').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  const html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#111;line-height:1.6;font-size:16px">' + escH(text).replace(link, '<br><a href="' + escH(link) + '" style="display:inline-block;padding:12px 22px;background:#5b3df5;color:#fff;border-radius:999px;text-decoration:none">Download my PDF</a><br>').replace(/\n/g, '<br>') + '</div>';
+  return { subject, text, html, bare };
+}
+async function siteSettings(env) {
+  try { const r = await env.DB.prepare("SELECT v FROM content WHERE k = 'site'").first(); return (JSON.parse((r && r.v) || '{}').settings) || {}; } catch (e) { return {}; }
+}
 async function pdfMail(env, origin, row, tok) {
+  const link = origin + '/api/pdf/get?t=' + tok;
+  const m = thanksBuild(await siteSettings(env), row, link);
+  try {
+    const u = await env.DB.prepare('SELECT id FROM users WHERE lower(email) = ?').bind(String(row.email).toLowerCase()).first();
+    if (u) await env.DB.prepare('INSERT INTO messages (user_id, from_owner, text, created_at, read) VALUES (?, 1, ?, ?, 0)').bind(u.id, m.text.slice(0, 1500), Date.now()).run();
+  } catch (e) {}
   if (String(row.email).indexOf('@') < 0) return false;
   if (!mailReady(env)) return false;
-  const link = origin + '/api/pdf/get?t=' + tok;
-  const t = 'Hi ' + (row.name || 'friend') + ',\n\nThank you for your purchase! Here is your PDF (' + row.size + ') of "' + (row.work_title || 'artwork') + '":\n\n' + link + '\n\nThe link works for 30 days. Keep this email.\n\n- Ismail, ISMAILTENNI ART';
-  const html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#111;line-height:1.6;font-size:16px">Hi ' + escH(row.name || 'friend') + ',<br><br>Thank you for your purchase! Here is your PDF (' + escH(row.size) + ') of "' + escH(row.work_title || 'artwork') + '":<br><br><a href="' + escH(link) + '" style="display:inline-block;padding:12px 22px;background:#5b3df5;color:#fff;border-radius:999px;text-decoration:none">Download my PDF</a><br><br>The link works for 30 days. Keep this email.<br><br>- Ismail, ISMAILTENNI ART</div>';
-  return sendMails(env, [{ to: row.email, subject: 'Your PDF: ' + (row.work_title || 'artwork') + ' (' + row.size + ')', text: t, html }]);
+  return sendMails(env, [{ to: row.email, subject: m.subject, text: m.text, html: m.html }]);
 }
 function pdfPage(title, inner, status) {
   return new Response('<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>' + escH(title) + '</title><body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#070a1c;color:#fff;font:16px/1.6 system-ui;padding:20px"><div style="max-width:480px;text-align:center"><h2 style="font-weight:500">' + escH(title) + '</h2>' + inner + '<p><a href="/" style="color:#9fd0ff">Back to the site</a></p></div>', { status: status || 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
@@ -608,7 +664,21 @@ const app = {
     if (!url.pathname.startsWith('/api/')) {
       if (url.pathname === '/robots.txt') return new Response('User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: ' + url.origin + '/sitemap.xml\n', { headers: { 'content-type': 'text/plain; charset=utf-8' } });
       if (url.pathname === '/sitemap.xml') return new Response('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' + url.origin + '/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url><url><loc>' + url.origin + '/play</loc><changefreq>monthly</changefreq><priority>0.3</priority></url></urlset>\n', { headers: { 'content-type': 'application/xml; charset=utf-8' } });
-      if ((url.pathname === '/' || url.pathname === '/index.html') && req.method === 'GET') return injectContent(env, req, url);
+      if ((url.pathname === '/' || url.pathname === '/index.html') && req.method === 'GET') {
+        try {
+          await ensureSchema(env);
+          const srow = await env.DB.prepare("SELECT v FROM content WHERE k = 'site'").first();
+          const sset = srow && srow.v ? (JSON.parse(srow.v).settings || {}) : {};
+          const tr = await env.DB.prepare("SELECT v FROM content WHERE k = 'ts'").first();
+          TSC = tr && tr.v ? JSON.parse(tr.v) : {};
+          if (/^(y|yes|1|true|on)/i.test(String(sset.gateAll || '').trim()) && tsReady(env)) {
+            const gk = url.searchParams.get('gk');
+            const passed = gk ? await checkGateProof(env, gk) : false;
+            if (!passed) { const d = url.pathname + url.search.replace(/[?&]gk=[^&]*/, '').replace(/^&/, '?'); return gatePage(env, d || '/'); }
+          }
+        } catch (e) { /* if the gate check fails, show the site rather than locking everyone out */ }
+        return injectContent(env, req, url);
+      }
       return env.ASSETS.fetch(req);
     }
     if (!env.DB) return json({ error: 'The database is not connected yet.' }, 503);
@@ -784,7 +854,8 @@ const app = {
           if (!(up.meta && up.meta.changes === 0)) { await pdfMail(env, url.origin, row, tok); await pdfOwnerNotify(env, url.origin, row, tok, 'PDF sold'); }
         }
         const fresh = await env.DB.prepare('SELECT token FROM pdforders WHERE id = ?').bind(oid).first();
-        return pdfPage('Thank you! Payment received', '<p style="color:#b7c4dc">Your PDF (' + escH(row.size) + ') is ready.' + (row.email.indexOf('@') > -1 ? (mailReady(env) ? ' I also sent the link to <b>' + escH(row.email) + '</b>.' : '') : ' I will also send it to your WhatsApp.') + '</p><p><a href="/api/pdf/get?t=' + escH((fresh && fresh.token) || '') + '" style="display:inline-block;padding:14px 26px;background:#5b3df5;color:#fff;border-radius:999px;text-decoration:none">Download my PDF</a></p>');
+        const tkx = thanksBuild(await siteSettings(env), row, '').bare.split(/\n\n/).slice(0, 2).join('\n\n').replace(/[^\n.!?]{0,40}:\s*$/, '').trim();
+        return pdfPage('Thank you! Payment received', '<p style="color:#b7c4dc;white-space:pre-line">' + escH(tkx.slice(0, 600)) + '</p><p style="color:#b7c4dc">Your PDF (' + escH(row.size) + ') is ready.' + (row.email.indexOf('@') > -1 ? (mailReady(env) ? ' I also sent the link to <b>' + escH(row.email) + '</b>.' : '') : ' I will also send it to your WhatsApp.') + '</p><p><a href="/api/pdf/get?t=' + escH((fresh && fresh.token) || '') + '" style="display:inline-block;padding:14px 26px;background:#5b3df5;color:#fff;border-radius:999px;text-decoration:none">Download my PDF</a></p>');
       }
       if (url.pathname === '/api/pdf/get' && req.method === 'GET') {
         const t = String(url.searchParams.get('t') || '').replace(/[^a-f0-9]/g, '').slice(0, 64);
@@ -929,6 +1000,15 @@ const app = {
       if (['/api/signup', '/api/login', '/api/forgot', '/api/reset'].includes(url.pathname)) {
         const tbad = await tsCheck(env, req, body.ts);
         if (tbad) return json({ error: tbad, needTs: true }, 400);
+      }
+
+      if (url.pathname === '/api/gate/verify') {
+        const ip = req.headers.get('cf-connecting-ip') || 'x';
+        if (await tooMany(env, 'gate:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
+        await note(env, 'gate:' + ip);
+        const err = await tsCheck(env, req, body.ts);
+        if (err) return json({ error: err }, 400);
+        return json({ ok: true, gk: await mkGateProof(env) });
       }
 
       if (url.pathname === '/api/signup') {
@@ -1164,7 +1244,7 @@ const app = {
         } else return json({ error: 'Unknown action.' }, 400);
         const sent = await pdfMail(env, url.origin, row, tok);
         const lk2 = url.origin + '/api/pdf/get?t=' + tok;
-        return json({ ok: true, sent: !!sent, link: lk2, wa: row.email.indexOf('@') < 0 ? 'https://wa.me/' + row.email.replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent('Hi! Thank you for your purchase. Here is your PDF (' + row.size + '): ' + lk2) : '' });
+        return json({ ok: true, sent: !!sent, link: lk2, wa: row.email.indexOf('@') < 0 ? 'https://wa.me/' + row.email.replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent(thanksBuild(await siteSettings(env), row, lk2).text) : '' });
       }
       if (url.pathname === '/api/admin/paypal') {
         const me = await currentUser(env, req);
@@ -1413,7 +1493,8 @@ const app = {
       if (url.pathname === '/api/commission') {
         const name = str(body.name, 80).trim(), contact = str(body.contact, 120).trim(), idea = str(body.idea, 1500).trim();
         if (!name || !contact || !idea) return json({ error: 'Please fill in your name, how to reach you, and your idea.' }, 400);
-        if (badText(name + ' ' + idea, BADX)) return json({ error: BAD_MSG }, 400);
+        const ideaChk = contact ? idea.split(contact).join(' ') : idea;
+        if (badText(name, BADX) || badText(ideaChk, BADX)) return json({ error: BAD_MSG }, 400);
         const ip = req.headers.get('cf-connecting-ip') || 'x';
         if (await tooMany(env, 'req:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
         await note(env, 'req:' + ip);
@@ -1704,6 +1785,14 @@ const app = {
         await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('orders', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at")
           .bind(JSON.stringify(list), Date.now()).run();
         return json({ ok: true, n: list.length });
+      }
+      if (url.pathname === '/api/admin/thanks/test') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        if (!mailReady(env)) return json({ ok: false, error: 'Set up the Email tab first (Brevo), then try again.' });
+        const m = thanksBuild(await siteSettings(env), { name: 'Sara', work_title: 'Moon Girl', size: 'A4 PDF', amount: '18.00', currency: 'USD' }, url.origin + '/api/pdf/get?t=TEST');
+        const ok = await sendMails(env, [{ to: me.email, subject: '[TEST] ' + m.subject, text: m.text, html: m.html }]);
+        return json({ ok, to: me.email, error: ok ? '' : 'The email could not be sent.' });
       }
       if (url.pathname === '/api/admin/autoreply/test') {
         const me = await currentUser(env, req);
