@@ -218,6 +218,9 @@ const SCHEMA = [
   'CREATE INDEX IF NOT EXISTS reqimgs_req ON reqimgs (req_id)',
   'CREATE TABLE IF NOT EXISTS creplies (id INTEGER PRIMARY KEY AUTOINCREMENT, comment_id INTEGER NOT NULL, user_id INTEGER NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL)',
   'CREATE INDEX IF NOT EXISTS creplies_c ON creplies (comment_id)',
+  'CREATE TABLE IF NOT EXISTS pdfsrc (work_id TEXT PRIMARY KEY, w INTEGER NOT NULL, h INTEGER NOT NULL, comps INTEGER NOT NULL, bytes INTEGER NOT NULL, n INTEGER NOT NULL, created_at INTEGER NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS pdfchunks (work_id TEXT NOT NULL, i INTEGER NOT NULL, d TEXT NOT NULL, PRIMARY KEY (work_id, i))',
+  'CREATE TABLE IF NOT EXISTS pdforders (id TEXT PRIMARY KEY, work_id TEXT NOT NULL, work_title TEXT, size TEXT NOT NULL, paper TEXT NOT NULL, email TEXT NOT NULL, name TEXT, amount TEXT NOT NULL, currency TEXT NOT NULL, status TEXT NOT NULL, token TEXT, created_at INTEGER NOT NULL, paid_at INTEGER, downloads INTEGER NOT NULL DEFAULT 0)',
   'CREATE TABLE IF NOT EXISTS bans (user_id INTEGER PRIMARY KEY, at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS content (k TEXT PRIMARY KEY, v TEXT NOT NULL, updated_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS media (id TEXT PRIMARY KEY, mime TEXT NOT NULL, n INTEGER NOT NULL, created_at INTEGER NOT NULL)',
@@ -256,6 +259,7 @@ function cleanFilm(f) {
 const SCH = {
   shop: { name: 's80', price: 's40', sale: 's6', photo: 'img', pay: 'url', edition: 'n', left: 'n', ends: 's10' },
   prints: { name: 's60', price: 's20', sale: 's6', pay: 'url' },
+  pdfs: { name: 's60', size: 's12', price: 's20', sale: 's6' },
   gifts: { name: 's80', price: 's40', sale: 's6', pay: 'url' },
   reviews: { name: 's60', text: 's500', stars: 'n' },
   behind: { photo: 'img', caption: 's100' },
@@ -297,7 +301,7 @@ function cleanContent(b) {
     if (!WORK.test(id)) id = 'w' + Date.now().toString(36) + i;
     return { id, series: str(w.series, 40), title: str(w.title, 100), meta: str(w.meta, 100), desc: str(w.desc, 2000),
       ratio: RATIOS.includes(w.ratio) ? w.ratio : '3 / 4', status: str(w.status, 40), cover: w.cover,
-      price: str(w.price, 40).trim(), sale: str(w.sale, 6).trim(), pay: (() => { const u = str(w.pay, 300).trim(); return /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : ''; })(),
+      price: str(w.price, 40).trim(), sale: str(w.sale, 6).trim(), pdf: w.pdf === 'yes' ? 'yes' : '', pay: (() => { const u = str(w.pay, 300).trim(); return /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : ''; })(),
       shots: cleanShots(w.shots, 30), process: cleanShots(w.process, 30) };
   }).filter(Boolean);
   const photos = (Array.isArray(b.photos) ? b.photos : []).slice(0, 200).filter(okUrl);
@@ -325,6 +329,7 @@ function cleanContent(b) {
     imgs, pricing,
     shop: cleanList(b.shop, SCH.shop, 40, ['name', 'photo']),
     prints: cleanList(b.prints, SCH.prints, 12, ['name']),
+    pdfs: cleanList(b.pdfs, SCH.pdfs, 8, ['name']),
     gifts: cleanList(b.gifts, SCH.gifts, 12, ['name', 'price']),
     reviews: cleanList(b.reviews, SCH.reviews, 40, ['text']),
     behind: cleanList(b.behind, SCH.behind, 60, ['photo']),
@@ -428,6 +433,107 @@ async function serveMedia(env, req, id) {
   const res = new Response(all, { headers: { 'content-type': m.mime, 'cache-control': 'public, max-age=31536000, immutable' } });
   try { await cache.put(req, res.clone()); } catch (e) {}
   return res;
+}
+
+// ---------- PDF sales: PayPal checks the payment, the buyer gets a PDF in the paid size ----------
+const PAPER = { A0: [841, 1189], A1: [594, 841], A2: [420, 594], A3: [297, 420], A4: [210, 297], A5: [148, 210], A6: [105, 148], LETTER: [216, 279], TABLOID: [279, 432] };
+const PP_CUR = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'CHF', 'SEK', 'NOK', 'DKK', 'PLN', 'CZK', 'HKD', 'SGD', 'NZD'];
+function ppcfg(env) { return { id: env.PAYPAL_CLIENT_ID || MC.ppId || '', secret: env.PAYPAL_SECRET || MC.ppSecret || '', live: env.PAYPAL_MODE ? env.PAYPAL_MODE === 'live' : MC.ppLive === 'yes' }; }
+function ppReady(env) { const c = ppcfg(env); return !!(c.id && c.secret); }
+function ppBase(c) { return c.live ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com'; }
+async function ppApi(env, method, path, body, extra) {
+  const c = ppcfg(env);
+  const tr = await fetch(ppBase(c) + '/v1/oauth2/token', { method: 'POST', headers: { authorization: 'Basic ' + btoa(c.id + ':' + c.secret), 'content-type': 'application/x-www-form-urlencoded' }, body: 'grant_type=client_credentials' });
+  const tj = await tr.json().catch(() => ({}));
+  if (!tr.ok || !tj.access_token) throw new Error('PayPal did not accept the keys.');
+  if (path === 'token') return { status: 200, j: { ok: true } };
+  const r = await fetch(ppBase(c) + path, { method, headers: Object.assign({ authorization: 'Bearer ' + tj.access_token, 'content-type': 'application/json' }, extra || {}), body: body ? JSON.stringify(body) : (method === 'POST' ? '{}' : undefined) });
+  return { status: r.status, j: await r.json().catch(() => ({})) };
+}
+// "$18", "18 USD", "€12.50 · -25% · was ..." -> { value: '18.00', cur: 'USD' }   (applies the sale % like the website does)
+function ppPrice(it, st) {
+  const raw = String(it && it.price || '').split(' · ')[0];
+  const RX = /\d{1,3}(?:[,\s]\d{3})+(?:\.\d{1,2})?|\d+(?:[.,]\d{1,2})?/, TH = /^\d{1,3}(?:[,\s]\d{3})+/;
+  const m = raw.match(RX); if (!m) return null;
+  let cur = ''; const cm = raw.match(/\b(USD|EUR|GBP|CAD|AUD|CHF|SEK|NOK|DKK|PLN|CZK|HKD|SGD|NZD)\b/i);
+  if (cm) cur = cm[1].toUpperCase(); else if (/€/.test(raw)) cur = 'EUR'; else if (/£/.test(raw)) cur = 'GBP'; else if (/\$/.test(raw)) cur = 'USD';
+  if (!PP_CUR.includes(cur)) return null;
+  const tok = m[0], th = TH.test(tok), v = th ? parseFloat(tok.replace(/[,\s]/g, '')) : parseFloat(tok.replace(',', '.'));
+  if (!(v > 0)) return null;
+  st = st || {};
+  const num = (x) => { const k = String(x || '').match(/\d+(?:[.,]\d+)?/); return k ? parseFloat(k[0].replace(',', '.')) : 0; };
+  const end = /^\d{4}-\d{2}-\d{2}$/.test(st.saleEnd || '') ? Date.parse(st.saleEnd + 'T23:59:59') : 0;
+  const gPct = Math.min(90, Math.max(0, num(st.salePct)));
+  const live = /^y/i.test(String(st.saleOn || '')) && gPct > 0 && (!end || Date.now() <= end);
+  let p = 0; const own = String(it.sale == null ? '' : it.sale).trim();
+  if (own) { if (/^(0|no|off)/i.test(own)) p = 0; else p = Math.min(90, Math.max(0, num(own))); }
+  if (!p && !own) p = (live && !/^y/i.test(String(st.saleNoP || ''))) ? gPct : 0;
+  let n = v;
+  if (p > 0) { n = v * (1 - p / 100); const dec = !th && /[.,]\d{1,2}$/.test(tok); n = (Math.abs(n - Math.round(n)) < 0.005 || (n >= 100 && !dec)) ? Math.round(n) : Math.round(n * 100) / 100; }
+  if (!(n >= 1) || n > 5000) return null;
+  return { value: n.toFixed(2), cur };
+}
+function jpegInfo(u8) {
+  if (u8.length < 200 || u8[0] !== 0xFF || u8[1] !== 0xD8) return null;
+  let i = 2;
+  while (i + 9 < u8.length) {
+    if (u8[i] !== 0xFF) { i++; continue; }
+    const mk = u8[i + 1];
+    if (mk === 0xFF) { i++; continue; }
+    if (mk === 0xD8 || mk === 0x01 || (mk >= 0xD0 && mk <= 0xD7)) { i += 2; continue; }
+    const len = (u8[i + 2] << 8) | u8[i + 3];
+    if (mk >= 0xC0 && mk <= 0xCF && mk !== 0xC4 && mk !== 0xC8 && mk !== 0xCC) {
+      const prec = u8[i + 4], h = (u8[i + 5] << 8) | u8[i + 6], w = (u8[i + 7] << 8) | u8[i + 8], comps = u8[i + 9];
+      if (prec !== 8 || !w || !h || (comps !== 1 && comps !== 3)) return null;
+      return { w, h, comps };
+    }
+    i += 2 + len;
+  }
+  return null;
+}
+// One-page PDF with the picture inside, same proportions (never stretched), page in the paid size.
+// pdfFrame gives the bytes before and after the JPEG, so a big file can be streamed through without loading it in memory.
+function pdfFrame(jlen, iw, ih, comps, paper, title) {
+  const dim = PAPER[paper] || PAPER.A4; let Wm = dim[0], Hm = dim[1];
+  if (iw > ih) { Wm = dim[1]; Hm = dim[0]; }
+  const PW = +(Wm * 72 / 25.4).toFixed(2), PH = +(Hm * 72 / 25.4).toFixed(2);
+  const k = Math.min(PW / iw, PH / ih), dw = +(iw * k).toFixed(2), dh = +(ih * k).toFixed(2), x = +((PW - dw) / 2).toFixed(2), y = +((PH - dh) / 2).toFixed(2);
+  const enc = new TextEncoder(), L = (t) => enc.encode(t).length, offs = [];
+  const safe = String(title || 'Artwork').replace(/[^A-Za-z0-9 ._-]/g, '').slice(0, 80) || 'Artwork';
+  let head = '%PDF-1.4\n%âãÏÓ\n', pos = L(head);
+  const obj = (n, body) => { offs[n] = pos; const t = n + ' 0 obj\n' + body + '\nendobj\n'; head += t; pos += L(t); };
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>');
+  obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  obj(3, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + PW + ' ' + PH + '] /Resources << /XObject << /Im0 5 0 R >> >> /Contents 4 0 R >>');
+  const cs = 'q ' + dw + ' 0 0 ' + dh + ' ' + x + ' ' + y + ' cm /Im0 Do Q';
+  obj(4, '<< /Length ' + cs.length + ' >>\nstream\n' + cs + '\nendstream');
+  offs[5] = pos;
+  const h5 = '5 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + iw + ' /Height ' + ih + ' /ColorSpace /' + (comps === 1 ? 'DeviceGray' : 'DeviceRGB') + ' /BitsPerComponent 8 /Filter /DCTDecode /Length ' + jlen + ' >>\nstream\n';
+  head += h5; pos += L(h5);
+  let tail = '\nendstream\nendobj\n'; pos += jlen + L(tail);
+  offs[6] = pos; const o6 = '6 0 obj\n<< /Title (' + safe + ') /Producer (ISMAILTENNI ART) >>\nendobj\n'; tail += o6; pos += L(o6);
+  const xr = pos; let xt = 'xref\n0 7\n0000000000 65535 f \n';
+  for (let n = 1; n <= 6; n++) xt += String(offs[n]).padStart(10, '0') + ' 00000 n \n';
+  tail += xt + 'trailer\n<< /Size 7 /Root 1 0 R /Info 6 0 R >>\nstartxref\n' + xr + '\n%%EOF\n';
+  return { head: enc.encode(head), tail: enc.encode(tail) };
+}
+function buildPdf(jpg, iw, ih, comps, paper, title) {
+  const f = pdfFrame(jpg.length, iw, ih, comps, paper, title);
+  const out = new Uint8Array(f.head.length + jpg.length + f.tail.length);
+  out.set(f.head, 0); out.set(jpg, f.head.length); out.set(f.tail, f.head.length + jpg.length);
+  return out;
+}
+async function pdfSource(env, wid) {
+  const m = await env.DB.prepare('SELECT w, h, comps, bytes, n FROM pdfsrc WHERE work_id = ?').bind(wid).first();
+  if (!m) return null;
+  if (m.n === -1) return { r2: true, w: m.w, h: m.h, comps: m.comps, bytes: m.bytes };
+  const rows = await env.DB.prepare('SELECT d FROM pdfchunks WHERE work_id = ? ORDER BY i').bind(wid).all();
+  const ps = (rows.results || []).map((r) => b64bytes(r.d)); let t = 0; ps.forEach((q) => { t += q.length; });
+  const all = new Uint8Array(t); let o = 0; ps.forEach((q) => { all.set(q, o); o += q.length; });
+  return { jpg: all, w: m.w, h: m.h, comps: m.comps };
+}
+function pdfPage(title, inner, status) {
+  return new Response('<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>' + escH(title) + '</title><body style="margin:0;min-height:100vh;display:grid;place-items:center;background:#070a1c;color:#fff;font:16px/1.6 system-ui;padding:20px"><div style="max-width:480px;text-align:center"><h2 style="font-weight:500">' + escH(title) + '</h2>' + inner + '<p><a href="/" style="color:#9fd0ff">Back to the site</a></p></div>', { status: status || 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
 }
 
 let schemaReady = null;
@@ -594,6 +700,79 @@ const app = {
         return json({ likes: lk ? lk.n : 0, liked: !!mine, me: me ? { name: me.name } : null,
           comments: cms.map((r) => ({ id: r.id, name: r.name, text: r.text, at: r.created_at, uid: r.user_id, av: r.av || 0, replies: byC[r.id] || [], mine: !!me && (me.id === r.user_id || isAdmin(env, me)) })) });
       }
+      if (url.pathname === '/api/pdf/return' && req.method === 'GET') {
+        const oid = String(url.searchParams.get('token') || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 40);
+        const ip0 = req.headers.get('cf-connecting-ip') || 'x';
+        if (await tooMany(env, 'pdfret:' + ip0)) return pdfPage('Please wait', '<p style="color:#b7c4dc">Too many tries. Please wait a few minutes and open the link again.</p>', 429);
+        await note(env, 'pdfret:' + ip0);
+        const row = oid ? await env.DB.prepare('SELECT * FROM pdforders WHERE id = ?').bind(oid).first() : null;
+        if (!row) return pdfPage('Order not found', '<p style="color:#b7c4dc">I could not find this order. If you paid, write to me on WhatsApp and I will send your PDF.</p>', 404);
+        if (row.status !== 'paid') {
+          if (!ppReady(env)) return pdfPage('Not ready', '<p style="color:#b7c4dc">PayPal is not connected. Write to me on WhatsApp.</p>', 503);
+          let ok = false, why = '';
+          try {
+            let g = await ppApi(env, 'GET', '/v2/checkout/orders/' + oid);
+            if (g.j && g.j.status === 'APPROVED') g = await ppApi(env, 'POST', '/v2/checkout/orders/' + oid + '/capture', null, { 'PayPal-Request-Id': 'cap-' + oid });
+            const j = g.j || {};
+            const cap = j.purchase_units && j.purchase_units[0] && j.purchase_units[0].payments && j.purchase_units[0].payments.captures && j.purchase_units[0].payments.captures[0];
+            if (j.status === 'COMPLETED' && cap && cap.status === 'COMPLETED' && cap.amount && cap.amount.value === row.amount && cap.amount.currency_code === row.currency) ok = true;
+            else why = j.status === 'COMPLETED' ? 'The amount did not match.' : 'The payment is not finished yet.';
+          } catch (e) { why = 'PayPal could not be reached. Please open this page again in a minute.'; }
+          if (!ok) return pdfPage('Payment not confirmed', '<p style="color:#b7c4dc">' + escH(why) + ' You were not charged for anything that is not finished. If money left your account, write to me on WhatsApp with your PayPal receipt.</p>', 402);
+          const tok = Array.from(crypto.getRandomValues(new Uint8Array(24)), (b) => b.toString(16).padStart(2, '0')).join('');
+          const up = await env.DB.prepare("UPDATE pdforders SET status = 'paid', token = ?, paid_at = ? WHERE id = ? AND status = 'pending'").bind(tok, Date.now(), oid).run();
+          if (!(up.meta && up.meta.changes === 0) && mailReady(env)) {
+            const link = url.origin + '/api/pdf/get?t=' + tok;
+            const t = 'Hi ' + (row.name || 'friend') + ',\n\nThank you for your purchase! Here is your PDF (' + row.size + ') of "' + (row.work_title || 'artwork') + '":\n\n' + link + '\n\nThe link works for 30 days. Keep this email.\n\n- Ismail, ISMAILTENNI ART';
+            const html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#111;line-height:1.6;font-size:16px">Hi ' + escH(row.name || 'friend') + ',<br><br>Thank you for your purchase! Here is your PDF (' + escH(row.size) + ') of "' + escH(row.work_title || 'artwork') + '":<br><br><a href="' + escH(link) + '" style="display:inline-block;padding:12px 22px;background:#5b3df5;color:#fff;border-radius:999px;text-decoration:none">Download my PDF</a><br><br>The link works for 30 days. Keep this email.<br><br>- Ismail, ISMAILTENNI ART</div>';
+            await sendMails(env, [{ to: row.email, subject: 'Your PDF: ' + (row.work_title || 'artwork') + ' (' + row.size + ')', text: t, html }]);
+          }
+        }
+        const fresh = await env.DB.prepare('SELECT token FROM pdforders WHERE id = ?').bind(oid).first();
+        return pdfPage('Thank you! Payment received', '<p style="color:#b7c4dc">Your PDF (' + escH(row.size) + ') is ready.' + (mailReady(env) ? ' I also sent the link to <b>' + escH(row.email) + '</b>.' : '') + '</p><p><a href="/api/pdf/get?t=' + escH((fresh && fresh.token) || '') + '" style="display:inline-block;padding:14px 26px;background:#5b3df5;color:#fff;border-radius:999px;text-decoration:none">Download my PDF</a></p>');
+      }
+      if (url.pathname === '/api/pdf/get' && req.method === 'GET') {
+        const t = String(url.searchParams.get('t') || '').replace(/[^a-f0-9]/g, '').slice(0, 64);
+        const ip1 = req.headers.get('cf-connecting-ip') || 'x';
+        if (await tooMany(env, 'pdfget:' + ip1)) return pdfPage('Please wait', '<p style="color:#b7c4dc">Too many downloads. Try again in a few minutes.</p>', 429);
+        await note(env, 'pdfget:' + ip1);
+        const row = t.length === 48 ? await env.DB.prepare("SELECT * FROM pdforders WHERE token = ? AND status = 'paid'").bind(t).first() : null;
+        if (!row) return pdfPage('Link not valid', '<p style="color:#b7c4dc">This download link is not valid. Write to me on WhatsApp and I will help.</p>', 404);
+        if (Date.now() - (row.paid_at || 0) > 30 * 24 * 3600 * 1000 || row.downloads >= 10) return pdfPage('Link finished', '<p style="color:#b7c4dc">This link was used 10 times or is older than 30 days. Write to me on WhatsApp and I will send a new one.</p>', 410);
+        const src = await pdfSource(env, row.work_id);
+        if (!src) return pdfPage('File missing', '<p style="color:#b7c4dc">I could not find the file. Write to me on WhatsApp and I will send it.</p>', 404);
+        await env.DB.prepare('UPDATE pdforders SET downloads = downloads + 1 WHERE id = ?').bind(row.id).run();
+        const fn = String((row.work_title || 'artwork') + '-' + row.paper).replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'artwork';
+        if (src.r2) {
+          const obj = env.PDFS ? await env.PDFS.get('src/' + row.work_id) : null;
+          if (!obj) return pdfPage('File missing', '<p style="color:#b7c4dc">I could not find the file. Write to me on WhatsApp and I will send it.</p>', 404);
+          const fr = pdfFrame(src.bytes, src.w, src.h, src.comps, row.paper, row.work_title);
+          const ts = new TransformStream();
+          (async () => { try { const wr = ts.writable.getWriter(); await wr.write(fr.head); wr.releaseLock(); await obj.body.pipeTo(ts.writable, { preventClose: true }); const w2 = ts.writable.getWriter(); await w2.write(fr.tail); await w2.close(); } catch (e) { try { await ts.writable.abort(e); } catch (x) {} } })();
+          return new Response(ts.readable, { headers: { 'content-type': 'application/pdf', 'content-length': String(fr.head.length + src.bytes + fr.tail.length), 'content-disposition': 'attachment; filename="' + fn + '.pdf"', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
+        }
+        const bytes = buildPdf(src.jpg, src.w, src.h, src.comps, row.paper, row.work_title);
+        return new Response(bytes, { headers: { 'content-type': 'application/pdf', 'content-disposition': 'attachment; filename="' + fn + '.pdf"', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
+      }
+      if (url.pathname === '/api/admin/paypal' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const c = ppcfg(env);
+        return json({ ready: ppReady(env), live: c.live, idTail: c.id ? c.id.slice(-4) : '', hasSecret: !!c.secret, r2: !!env.PDFS, lockedByCloudflare: !!(env.PAYPAL_CLIENT_ID || env.PAYPAL_SECRET) });
+      }
+      if (url.pathname === '/api/admin/pdfsrc' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const rows = await env.DB.prepare('SELECT work_id, w, h, bytes FROM pdfsrc').all();
+        const files = {}; (rows.results || []).forEach((r) => { files[r.work_id] = { w: r.w, h: r.h, bytes: r.bytes }; });
+        return json({ files });
+      }
+      if (url.pathname === '/api/admin/pdforders' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const rows = await env.DB.prepare("SELECT id, work_title, size, email, name, amount, currency, paid_at, downloads FROM pdforders WHERE status = 'paid' ORDER BY paid_at DESC LIMIT 100").all();
+        return json({ orders: rows.results || [] });
+      }
       if (url.pathname === '/api/order' && req.method === 'GET') {
         const code = String(url.searchParams.get('code') || '').trim().toUpperCase().slice(0, 30);
         const ip = req.headers.get('cf-connecting-ip') || 'x';
@@ -659,6 +838,26 @@ const app = {
           if (!isAdmin(env, me0)) return new Response('Not available.', { status: 403, headers: { 'cache-control': 'no-store' } });
         }
         return serveMedia(env, req, mm[1]);
+      }
+      if (url.pathname === '/api/admin/pdfsrc/raw' && req.method === 'PUT') {
+        const origin2 = req.headers.get('origin');
+        if (origin2 && new URL(origin2).host !== url.host) return json({ error: 'Not allowed' }, 403);
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        if (!env.PDFS) return json({ error: 'Big files need the R2 storage. See the steps on the PDF sales tab.' }, 400);
+        const wid = String(url.searchParams.get('work') || '').slice(0, 40);
+        if (!WORK.test(wid)) return json({ error: 'Save the artwork first, then add its PDF file.' }, 400);
+        const len = Number(req.headers.get('content-length') || 0);
+        if (!(len > 1000)) return json({ error: 'The file is empty.' }, 400);
+        if (len > 100 * 1024 * 1024) return json({ error: 'The file is bigger than 100 MB.' }, 413);
+        await env.PDFS.put('src/' + wid, req.body, { httpMetadata: { contentType: 'image/jpeg' } });
+        const head = await env.PDFS.get('src/' + wid, { range: { offset: 0, length: Math.min(len, 1048576) } });
+        const hb = head ? new Uint8Array(await head.arrayBuffer()) : new Uint8Array(0);
+        const info = jpegInfo(hb);
+        if (!info) { await env.PDFS.delete('src/' + wid); return json({ error: 'Please use a normal JPEG picture (RGB or black and white).' }, 400); }
+        await env.DB.batch([env.DB.prepare('DELETE FROM pdfchunks WHERE work_id = ?').bind(wid), env.DB.prepare('DELETE FROM pdfsrc WHERE work_id = ?').bind(wid)]);
+        await env.DB.prepare('INSERT INTO pdfsrc (work_id, w, h, comps, bytes, n, created_at) VALUES (?, ?, ?, ?, ?, -1, ?)').bind(wid, info.w, info.h, info.comps, len, Date.now()).run();
+        return json({ ok: true, w: info.w, h: info.h, bytes: len });
       }
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
       const origin = req.headers.get('origin');
@@ -834,6 +1033,79 @@ const app = {
         TSC = next;
         return json({ ok: true, ready: tsReady(env) });
       }
+      if (url.pathname === '/api/pdf/start') {
+        const ip = req.headers.get('cf-connecting-ip') || 'x';
+        if (await tooMany(env, 'pdfstart:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
+        await note(env, 'pdfstart:' + ip);
+        if (!ppReady(env)) return json({ error: 'PDF sales are not open yet. Please write to me on WhatsApp.' }, 503);
+        const email = str(body.email, 120).trim().toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'Please write your email. I send the PDF there.' }, 400);
+        const wid = str(body.work, 40);
+        const crow = await env.DB.prepare("SELECT v FROM content WHERE k = 'site'").first();
+        let site = {}; try { site = JSON.parse((crow && crow.v) || '{}'); } catch (e) {}
+        const wk = (site.works || []).find((x) => x && x.id === wid);
+        const item = (site.pdfs || []).find((x) => x && x.name === str(body.size, 60));
+        if (!wk || wk.pdf !== 'yes' || !item) return json({ error: 'This PDF is not for sale.' }, 404);
+        const paper = String(item.size || 'A4').trim().toUpperCase();
+        if (!PAPER[paper]) return json({ error: 'This PDF size is not ready yet. Please write to me on WhatsApp.' }, 400);
+        const have = await env.DB.prepare('SELECT work_id FROM pdfsrc WHERE work_id = ?').bind(wid).first();
+        if (!have) return json({ error: 'This PDF is not ready yet. Please write to me on WhatsApp.' }, 404);
+        const pr = ppPrice(item, site.settings);
+        if (!pr) return json({ error: 'The price of this PDF is not set for PayPal yet. Please write to me on WhatsApp.' }, 400);
+        const title = (str(wk.title, 100) + ' - ' + str(item.name, 60)).replace(/[^\x20-\x7E]/g, '').slice(0, 120) || 'PDF';
+        let r;
+        try {
+          r = await ppApi(env, 'POST', '/v2/checkout/orders', {
+            intent: 'CAPTURE',
+            purchase_units: [{ reference_id: wid.slice(0, 40), description: title, amount: { currency_code: pr.cur, value: pr.value } }],
+            payment_source: { paypal: { experience_context: { brand_name: 'ISMAILTENNI ART', user_action: 'PAY_NOW', shipping_preference: 'NO_SHIPPING', return_url: url.origin + '/api/pdf/return', cancel_url: url.origin + '/?pdf=cancel' } } },
+          }, { 'PayPal-Request-Id': 'pdf-' + Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => b.toString(16).padStart(2, '0')).join('') });
+        } catch (e) { return json({ error: 'PayPal could not be reached. Please try again in a minute.' }, 502); }
+        const j = r.j || {};
+        const lk = (j.links || []).find((x) => x.rel === 'payer-action' || x.rel === 'approve');
+        if (!j.id || !lk || !/^https:\/\/[a-z0-9.-]*paypal\.com\//i.test(lk.href)) return json({ error: 'PayPal did not accept the order. Please try again later.' }, 502);
+        await env.DB.prepare("INSERT INTO pdforders (id, work_id, work_title, size, paper, email, name, amount, currency, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)")
+          .bind(j.id, wid, str(wk.title, 100), str(item.name, 60), paper, email, str(body.name, 60).trim(), pr.value, pr.cur, Date.now()).run();
+        return json({ url: lk.href });
+      }
+      if (url.pathname === '/api/admin/paypal') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const idn = String(body.id || '').trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 200);
+        const sec = String(body.secret || '').trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 200);
+        const next = { ...MC, ppId: idn || MC.ppId || '', ppSecret: sec || MC.ppSecret || '', ppLive: body.live ? 'yes' : '' };
+        if (body.clear === true) { next.ppId = ''; next.ppSecret = ''; }
+        if (body.test !== true) { await env.DB.prepare("INSERT OR REPLACE INTO content (k, v, updated_at) VALUES ('mail', ?, ?)").bind(JSON.stringify(next), Date.now()).run(); MC = next; }
+        if (body.test === true || body.save === true) {
+          if (!ppReady(env)) return json({ ok: false, error: 'Add the Client ID and the Secret first.' });
+          try { await ppApi(env, 'GET', 'token'); } catch (e) { return json({ ok: false, error: 'PayPal did not accept these keys. Check that you copied the ' + (ppcfg(env).live ? 'LIVE' : 'SANDBOX (test)') + ' Client ID and Secret.' }); }
+        }
+        return json({ ok: true, ready: ppReady(env), live: ppcfg(env).live });
+      }
+      if (url.pathname === '/api/admin/pdfsrc') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const wid = str(body.work, 40), data = String(body.data || '');
+        if (!WORK.test(wid)) return json({ error: 'Save the artwork first, then add its PDF file.' }, 400);
+        if (!/^[A-Za-z0-9+/=]+$/.test(data) || data.length < 1000 || data.length > 12000000) return json({ error: 'The file is too big (maximum about 8 MB) or is not a JPEG picture.' }, 400);
+        const bytes = b64bytes(data), info = jpegInfo(bytes);
+        if (!info) return json({ error: 'Please use a normal JPEG picture (RGB or black and white).' }, 400);
+        const SZ = 48000, parts = [];
+        for (let i = 0; i < data.length; i += SZ) parts.push(data.slice(i, i + SZ));
+        if (env.PDFS) { try { await env.PDFS.delete('src/' + wid); } catch (e) {} }
+        await env.DB.batch([env.DB.prepare('DELETE FROM pdfchunks WHERE work_id = ?').bind(wid), env.DB.prepare('DELETE FROM pdfsrc WHERE work_id = ?').bind(wid)]);
+        for (let i = 0; i < parts.length; i += 40) await env.DB.batch(parts.slice(i, i + 40).map((q, k) => env.DB.prepare('INSERT INTO pdfchunks (work_id, i, d) VALUES (?, ?, ?)').bind(wid, i + k, q)));
+        await env.DB.prepare('INSERT INTO pdfsrc (work_id, w, h, comps, bytes, n, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)').bind(wid, info.w, info.h, info.comps, bytes.length, parts.length, Date.now()).run();
+        return json({ ok: true, w: info.w, h: info.h, bytes: bytes.length });
+      }
+      if (url.pathname === '/api/admin/pdfsrc/delete') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const wid = str(body.work, 40);
+        if (env.PDFS) { try { await env.PDFS.delete('src/' + wid); } catch (e) {} }
+        await env.DB.batch([env.DB.prepare('DELETE FROM pdfchunks WHERE work_id = ?').bind(wid), env.DB.prepare('DELETE FROM pdfsrc WHERE work_id = ?').bind(wid)]);
+        return json({ ok: true });
+      }
       if (url.pathname === '/api/admin/mail') {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
@@ -841,7 +1113,7 @@ const app = {
         const from = String(body.from || '').trim().slice(0, 150);
         if (from && !/^[^<>@\s][^<>]*<[^<>@\s]+@[^<>@\s]+\.[^<>@\s]+>$|^[^<>@\s]+@[^<>@\s]+\.[^<>@\s]+$/.test(from)) return json({ error: 'The sender must look like name@gmail.com' }, 400);
         const gh = String(body.gh || '').trim().replace(/[^A-Za-z0-9_\-]/g, '').slice(0, 300);
-        const next = { key: key || MC.key || '', from: from || MC.from || '', gh: gh || MC.gh || '' };
+        const next = { ...MC, key: key || MC.key || '', from: from || MC.from || '', gh: gh || MC.gh || '' };
         if (body.clearGh === true) next.gh = '';
         if (body.clear === true) { next.key = ''; }
         await env.DB.prepare("INSERT OR REPLACE INTO content (k, v, updated_at) VALUES ('mail', ?, ?)").bind(JSON.stringify(next), Date.now()).run();

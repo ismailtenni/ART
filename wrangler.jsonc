@@ -14,6 +14,9 @@
       "database_name": "ismailtenni-art-site"
     }
   ],
+  // BIG PDF FILES (up to 100 MB): create an R2 bucket named art-pdf-files in Cloudflare,
+  // then remove the // at the start of the next line and deploy again.
+  // "r2_buckets": [{ "binding": "PDFS", "bucket_name": "art-pdf-files" }],
   "vars": {
     "ADMIN_EMAIL": "ismailtenni6@gmail.com"
   }

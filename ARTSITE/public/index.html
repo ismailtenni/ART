@@ -498,7 +498,7 @@ function cut(price,p){var s=String(price||''),m=s.match(RX);if(!m||!p)return '';
  if(th){var sep=tok.indexOf(',')>-1?',':' ',pp=out.split('.');out=pp[0].replace(/\B(?=(\d{3})+(?!\d))/g,sep)+(pp[1]?'.'+pp[1]:'')}else if(/,/.test(tok))out=out.replace('.',',');
  return s.replace(tok,out)+' · -'+Math.round(p*10)/10+'% · was '+s}
 function ap(list,no){(list||[]).forEach(function(it){if(!it||!it.price||it._p0!=null)return;var p=pct(it,no),r=p?cut(it.price,p):'';if(r){it._p0=it.price;it.price=r}})}
-ap(C.prints,S.saleNoP);ap(C.shop,S.saleNoS);ap(C.works,S.saleNoA);ap(C.gifts,S.saleNoG);if(C.spotlight)ap([C.spotlight],S.saleNoA);
+ap(C.prints,S.saleNoP);ap(C.pdfs,S.saleNoP);ap(C.shop,S.saleNoS);ap(C.works,S.saleNoA);ap(C.gifts,S.saleNoG);if(C.spotlight)ap([C.spotlight],S.saleNoA);
 if(live){
  var dis=false;try{dis=sessionStorage.getItem('sale-x')==='1'}catch(e){}
  if(!dis){
@@ -970,12 +970,12 @@ function init(){
   var O=w.__C0||w.C;
   var data={works:clone(O&&O.works),photos:clone(O&&O.photos),films:clone(O&&O.films),texts:JSON.parse(JSON.stringify((O&&O.texts)||{}))};
   var textsInfo=null;
-  ['shop','gifts','reviews','behind','wallpapers','timelapse','prints','bamore','buyers','drawopts','drawsizes','drawimgs','wallets'].forEach(function(k){data[k]=clone(O&&O[k])});
+  ['shop','gifts','reviews','behind','wallpapers','timelapse','prints','pdfs','bamore','buyers','drawopts','drawsizes','drawimgs','wallets'].forEach(function(k){data[k]=clone(O&&O[k])});
   data.pricing=JSON.parse(JSON.stringify((O&&O.pricing)||{}));data.pricing.sizes=data.pricing.sizes||[];data.pricing.styles=data.pricing.styles||[];
   data.imgs=JSON.parse(JSON.stringify((O&&O.imgs)||{}));data.rooms=JSON.parse(JSON.stringify((O&&O.rooms)||[]));if(w.C){w.C.layout=(w.C.layout&&typeof w.C.layout==='object')?w.C.layout:{};w.C.layout.order=w.C.layout.order||[];w.C.layout.hidden=w.C.layout.hidden||[];data.layout=w.C.layout}else data.layout={order:[],hidden:[]};
   data.posts=JSON.parse(JSON.stringify((O&&O.posts)||[]));
   ['spotlight','ba','about','settings','challenge','draw'].forEach(function(k){data[k]=JSON.parse(JSON.stringify((O&&O[k])||{}))});
-  data.orders=[];var ordersLoaded=false,reqList=null;
+  data.orders=[];var ordersLoaded=false,reqList=null,pdfSt=null,pdfFiles={},pdfOrders=[];
   var tab='works',editing=null,cur=null,busy=0,msg='';
   var btn=h('button',{id:'ed-btn',type:'button',style:'position:fixed;left:18px;bottom:82px;z-index:950;'+BTN2+';box-shadow:0 8px 26px rgba(70,50,200,.55)',text:'✎ Edit my site'});
   var box=h('div',{id:'ed',role:'dialog','aria-modal':'true',style:'display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:2500;overflow-y:auto;background:#04050f;color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:18px clamp(14px,3vw,40px) 90px;box-sizing:border-box'});
@@ -1235,11 +1235,11 @@ function init(){
     box.appendChild(h('div',{id:'ed-msg',style:'margin-top:12px;min-height:20px;color:#a8d6ff;font-size:14px',text:msg}));
     if(cur){box.appendChild(workForm(cur.o,cur.n));return}
     var tabs=h('div',{style:'display:flex;gap:10px;margin:18px 0;flex-wrap:wrap'});
-    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['buyers','Real walls'],['gift','Free gift'],['draw','Draw me'],['msg','Messages'],['mem','Members'],['cur','Mouse cursor'],['pay','Checkout and crypto'],['sec','Security checklist'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
+    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['buyers','Real walls'],['gift','Free gift'],['draw','Draw me'],['msg','Messages'],['mem','Members'],['cur','Mouse cursor'],['pay','Checkout and crypto'],['sec','Security checklist'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['pdf','PDF sales'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
       tabs.appendChild(h('button',{type:'button',style:(tab===t[0]?BTN2:BTN),text:t[1],on:{click:function(){tab=t[0];render()}}}));
     });
     box.appendChild(tabs);
-    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='buyers')renderBuyersTab();else if(tab==='gift')renderGiftTab();else if(tab==='draw')renderDrawTab();else if(tab==='mem')renderMemTab();else if(tab==='msg')renderMsgTab();else if(tab==='cur')renderCurTab();else if(tab==='pay')renderPayTab();else if(tab==='sec')renderSecTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
+    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='buyers')renderBuyersTab();else if(tab==='gift')renderGiftTab();else if(tab==='draw')renderDrawTab();else if(tab==='mem')renderMemTab();else if(tab==='msg')renderMsgTab();else if(tab==='cur')renderCurTab();else if(tab==='pay')renderPayTab();else if(tab==='sec')renderSecTab();else if(tab==='pdf')renderPdfTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
   }
   function renderWorks(){
     box.appendChild(h('button',{type:'button',style:BTN2,text:'+ Add new artwork',on:{click:function(){editing='new';cur={n:true,o:{id:'',title:'',meta:'',series:'',status:'',ratio:'3 / 4',desc:'',cover:'',shots:[],process:[]}};render()}}}));
@@ -1676,6 +1676,76 @@ function init(){
     box.appendChild(listEd(data.reviews,[{k:'name',l:'Client name'},{k:'text',l:'What they said',t:'area'},{k:'stars',l:'Stars (1 to 5)',p:'5'}],'+ Add review'));
   }
   var STAGES=['1 - Idea','2 - Sketch','3 - Coloring','4 - Final touches','5 - Done'];
+  var PAPERMM={A0:[841,1189],A1:[594,841],A2:[420,594],A3:[297,420],A4:[210,297],A5:[148,210],A6:[105,148],LETTER:[216,279],TABLOID:[279,432]};
+  function pdfDpi(f,size){var d0=PAPERMM[String(size||'').trim().toUpperCase()];if(!d0||!f)return 0;var W=d0[0],H=d0[1];if(f.w>f.h){W=d0[1];H=d0[0]}
+    var PW=W*72/25.4,PH=H*72/25.4,k=Math.min(PW/f.w,PH/f.h);return Math.round(72/k)}
+  function pdfUp(x,file){
+    if(!file)return;
+    if(!x.id){say('Save the artwork first (press Save and publish), then add its PDF file.');return}
+    if(!/jpe?g/i.test(file.type||file.name)){say('Please choose a JPEG file (.jpg).');return}
+    var big=!!(pdfSt&&pdfSt.r2),MAXB=big?100*1024*1024:8500000;
+    if(file.size>MAXB){say(big?'That file is bigger than 100 MB.':'That file is too big (maximum 8 MB). To send files up to 100 MB, turn on the big file storage (see the blue box on this tab).');return}
+    if(big){
+      var xh=new XMLHttpRequest();xh.open('PUT','/api/admin/pdfsrc/raw?work='+encodeURIComponent(x.id));xh.withCredentials=true;xh.setRequestHeader('content-type','image/jpeg');
+      xh.upload.onprogress=function(e){if(e.lengthComputable)say('Uploading ... '+Math.round(e.loaded/e.total*100)+'%  (keep this window open)')};
+      xh.onerror=function(){say('Upload stopped. Check your internet and try again.')};
+      xh.onload=function(){var r={};try{r=JSON.parse(xh.responseText)}catch(e){}if(xh.status===200&&r.ok){pdfFiles[x.id]={w:r.w,h:r.h,bytes:r.bytes};x.pdf='yes';say('File saved. Now press Save and publish.');render()}else say('Problem: '+(r.error||('error '+xh.status)))};
+      say('Uploading ... 0%  (keep this window open)');xh.send(file);return;
+    }
+    say('Uploading ... please wait');
+    var fr=new FileReader();fr.onerror=function(){say('Could not read that file.')};
+    fr.onload=function(){var b=String(fr.result).split(',')[1]||'';
+      post('/api/admin/pdfsrc',{work:x.id,data:b}).then(function(r){pdfFiles[x.id]={w:r.w,h:r.h,bytes:r.bytes};x.pdf='yes';say('File saved. Now press Save and publish.');render()}).catch(function(e){say('Problem: '+e.message)})};
+    fr.readAsDataURL(file);
+  }
+  function renderPdfTab(){
+    box.appendChild(note1('Sell your artwork as a PDF. The buyer picks a size (for example A4 for $18), pays with PayPal, and PayPal tells your site the payment is real. Then your site makes a PDF in THAT size only and sends the download link to the buyer email. Nothing is sent before the payment is confirmed.'));
+    if(!pdfSt){
+      box.appendChild(h('p',{style:'color:#9fb0c8',text:'Loading ...'}));
+      Promise.all([get('/api/admin/paypal'),get('/api/admin/pdfsrc'),get('/api/admin/pdforders')]).then(function(a){pdfSt=a[0];pdfFiles=a[1].files||{};pdfOrders=a[2].orders||[];render()}).catch(function(e){say('Problem: '+e.message)});return;
+    }
+    box.appendChild(sub('1. Connect PayPal'));
+    box.appendChild(h('div',{style:'margin:8px 0;font-size:16px;color:'+(pdfSt.ready?'#7be0a6':'#ffb0b8'),text:pdfSt.ready?('Connected - '+(pdfSt.live?'LIVE (real money)':'TEST mode (no real money)')+', key ending '+pdfSt.idTail):'Not connected yet'}));
+    box.appendChild(note1('Go to developer.paypal.com and log in with your PayPal business account. Open "Apps and credentials", choose LIVE, press "Create app", then copy the Client ID and the Secret and paste them here. To practise first, choose Sandbox, tick "Test mode" below and use the sandbox keys. Nobody else ever sees these keys.'));
+    if(pdfSt.lockedByCloudflare)box.appendChild(note1('Your keys are set in the Cloudflare settings, so they cannot be changed here.'));
+    var idv={id:'',secret:''};
+    box.appendChild(field1(idv,'id','PayPal Client ID',pdfSt.ready?'(already saved - leave empty to keep it)':'AaBb...'));
+    var sf=h('input',{type:'password',style:INP,placeholder:pdfSt.hasSecret?'(already saved - leave empty to keep it)':'Secret',autocomplete:'off'});sf.addEventListener('input',function(){idv.secret=sf.value});
+    box.appendChild(h('div',{style:'max-width:760px'},[h('label',{style:LAB,text:'PayPal Secret'}),sf]));
+    var lv=h('input',{type:'checkbox'});lv.checked=!!pdfSt.live;
+    box.appendChild(h('label',{style:'display:flex;gap:10px;align-items:center;margin:14px 0;font-size:16px'},[lv,'LIVE mode (real money). Untick for TEST mode with sandbox keys.']));
+    var pm=h('div',{style:'margin:10px 0;font-size:14px;min-height:20px;color:#9fb0c8'});
+    var sb=h('button',{type:'button',style:BTN2,text:'Save and test the keys'});
+    sb.addEventListener('click',function(){pm.style.color='#9fb0c8';pm.textContent='Checking with PayPal ...';
+      post('/api/admin/paypal',{id:idv.id,secret:idv.secret,live:lv.checked,save:true}).then(function(r){pm.style.color=r.ok?'#7be0a6':'#ffb0b8';pm.textContent=r.ok?'PayPal accepted the keys.':(r.error||'Problem');if(r.ok){pdfSt.ready=true;pdfSt.live=lv.checked;if(idv.id)pdfSt.idTail=idv.id.slice(-4);pdfSt.hasSecret=true}}).catch(function(e){pm.style.color='#ffb0b8';pm.textContent='Problem: '+e.message})});
+    box.appendChild(h('div',{style:'margin:8px 0'},[sb]));box.appendChild(pm);
+    box.appendChild(sub('2. PDF sizes and prices'));
+    box.appendChild(note1('One line per size. "Paper size" can be A6, A5, A4, A3, A2, A1, A0, Letter or Tabloid. The PDF page has exactly that size and your artwork keeps its own proportions (it is never stretched). PayPal needs a price in USD ($), EUR, GBP, CAD, AUD or CHF, for example $18 or 15 EUR. Prices in MAD cannot be paid with PayPal.'));
+    if(!data.pdfs.length)box.appendChild(h('button',{type:'button',style:BTN2,text:'Add A5, A4 and A3 (then type your prices)',on:{click:function(){data.pdfs.push({name:'A5 PDF',size:'A5',price:''},{name:'A4 PDF',size:'A4',price:''},{name:'A3 PDF',size:'A3',price:''});render()}}}));
+    box.appendChild(listEd(data.pdfs,[{k:'name',l:'Name the buyer sees',p:'A4 PDF'},{k:'size',l:'Paper size',p:'A4'},{k:'price',l:'Price',p:'$18'},{k:'sale',l:'Sale % for this size only (optional, 0 = never on sale)',p:'0'}],'+ Add size',function(){return {name:'',size:'A4',price:''}}));
+    box.appendChild(sub('3. Choose the artworks'));
+    if(!pdfSt.r2)box.appendChild(h('div',{style:'margin:10px 0;padding:14px;border:1px solid rgba(92,188,255,.6);border-radius:14px;background:rgba(40,100,180,.15);max-width:760px;line-height:1.6;font-size:14px;color:#cfe6ff',text:'Big files (up to 100 MB) are OFF. Right now the maximum is 8 MB. To turn them on: 1) In Cloudflare open R2 and create a bucket named art-pdf-files (R2 has a free plan). 2) Open the file wrangler.jsonc, remove the // at the start of the r2_buckets line, and deploy again. After that, this box disappears.'}));
+    box.appendChild(note1('For each artwork you sell as a PDF, add a HIGH quality JPEG (maximum '+(pdfSt.r2?'100':'8')+' MB). The buyer never sees this file, only the PDF made from it after paying. For a sharp A4 print the picture should be about 2480 x 3508 pixels (300 dpi). Below you see the quality for each size. Then press Save and publish.'));
+    if(!data.works.length)box.appendChild(h('p',{style:'color:#9fb0c8',text:'Add an artwork first.'}));
+    data.works.forEach(function(x){
+      var f=x.id?pdfFiles[x.id]:null;
+      var card=h('div',{style:'display:flex;gap:12px;align-items:flex-start;margin:12px 0;padding:12px;border:1px solid rgba(190,170,255,.3);border-radius:14px;background:rgba(20,26,66,.45);flex-wrap:wrap;max-width:780px'});
+      card.appendChild(thumb(x.cover,64));
+      var mid=h('div',{style:'flex:1 1 220px;min-width:0'},[h('div',{style:'font-size:16px',text:x.title||'Untitled'})]);
+      if(f){mid.appendChild(h('div',{style:'font-size:13px;color:#9fb0c8;margin-top:4px',text:'File: '+f.w+' x '+f.h+' pixels, '+(Math.round(f.bytes/1000)/1000).toFixed(1)+' MB'}));
+        data.pdfs.forEach(function(q){if(!q.name)return;var dp=pdfDpi(f,q.size);if(!dp)return;var good=dp>=250,mid2=dp>=150;mid.appendChild(h('div',{style:'font-size:13px;margin-top:2px;color:'+(good?'#7be0a6':mid2?'#ffd98a':'#ffb0b8'),text:q.name+': '+dp+' dpi - '+(good?'sharp':mid2?'ok, a bit soft when printed big':'too small for this size, use a bigger picture')}))})}
+      else mid.appendChild(h('div',{style:'font-size:13px;color:#ffb0b8;margin-top:4px',text:'No file yet'}));
+      var inp=h('input',{type:'file',accept:'image/jpeg',style:'display:none'});inp.addEventListener('change',function(){pdfUp(x,inp.files&&inp.files[0])});
+      var chk=h('input',{type:'checkbox'});chk.checked=x.pdf==='yes';chk.disabled=!f;chk.addEventListener('change',function(){x.pdf=chk.checked?'yes':''});
+      mid.appendChild(h('label',{style:'display:flex;gap:8px;align-items:center;margin-top:8px;font-size:14px'},[chk,'Sell this artwork as a PDF']));
+      card.appendChild(mid);
+      card.appendChild(h('div',{style:'display:flex;gap:8px;flex-wrap:wrap'},[h('button',{type:'button',style:BTN,text:f?'Change file':'Add file',on:{click:function(){inp.click()}}}),inp].concat(f?[h('button',{type:'button',style:BTNR,text:'Remove',on:{click:function(){post('/api/admin/pdfsrc/delete',{work:x.id}).then(function(){delete pdfFiles[x.id];x.pdf='';render()}).catch(function(e){say('Problem: '+e.message)})}}})]:[])));
+      box.appendChild(card);
+    });
+    box.appendChild(sub('4. PDF sales'));
+    if(!pdfOrders.length)box.appendChild(h('p',{style:'color:#9fb0c8',text:'No PDF sold yet.'}));
+    pdfOrders.forEach(function(o){box.appendChild(h('div',{style:'margin:8px 0;padding:10px 14px;border:1px solid rgba(190,170,255,.25);border-radius:12px;max-width:780px;font-size:14px;line-height:1.6'},[h('b',{text:(o.work_title||'')+' - '+o.size}),h('span',{text:'  ·  '+o.amount+' '+o.currency+'  ·  '+(o.name?o.name+', ':'')+o.email+'  ·  '+new Date(o.paid_at).toLocaleString()+'  ·  downloads: '+o.downloads})]))});
+  }
   function renderOrdersTab(){
     box.appendChild(note1('Give each client a code. They type it in "Where is my drawing?" on your site and see the stage and your note. Only the person with the code can see their order.'));
     if(!ordersLoaded){
@@ -2694,7 +2764,47 @@ function buyBlock(by,wk){
       box.appendChild(r);
     });
   }
+  var pdfs=(C.pdfs||[]).filter(function(x){return x&&x.name&&x.price});
+  if(wk.pdf==='yes'&&pdfs.length){
+    box.appendChild(el('div',{style:'margin-top:30px;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:#5cbcff',text:PD('h')}));
+    box.appendChild(el('div',{style:'margin-top:6px;font-size:13px;color:#9fb0c8;line-height:1.5',text:PD('p')}));
+    pdfs.forEach(function(x){
+      var r=el('div',{style:'display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;padding:12px;border:1px solid rgba(190,170,255,.3);border-radius:14px;background:rgba(20,26,66,.35)'});
+      r.appendChild(el('div',{style:'flex:1 1 120px;font-size:15px',text:x.name+'  ·  '+x.price}));
+      var pb=el('button',{type:'button','class':'mx-btn v',text:PD('buy')});pb.addEventListener('click',function(){pdfBuy(wk,x)});
+      r.appendChild(pb);box.appendChild(r);
+    });
+  }
   if(box.childNodes.length)by.appendChild(box);
+}
+var PDT={en:{h:'Digital PDF',p:'Print it yourself at home or at a print shop. After you pay with PayPal, I send the PDF to your email and you can download it at once.',buy:'Buy PDF',em:'Your email (I send the PDF here)',nm:'Your name',go:'Pay with PayPal',x:'Cancel',wait:'Opening PayPal ...',bad:'Please write a correct email.',tt:'Buy the PDF'},
+ fr:{h:'PDF numérique',p:'Imprimez-le chez vous ou chez un imprimeur. Après le paiement PayPal, je vous envoie le PDF par email et vous pouvez le télécharger tout de suite.',buy:'Acheter le PDF',em:'Votre email (j’y envoie le PDF)',nm:'Votre nom',go:'Payer avec PayPal',x:'Annuler',wait:'Ouverture de PayPal ...',bad:'Écrivez un email correct.',tt:'Acheter le PDF'},
+ ar:{h:'ملف PDF رقمي',p:'اطبعه بنفسك في البيت أو عند مطبعة. بعد الدفع عبر باي بال أرسل لك الملف على بريدك ويمكنك تحميله فورا.',buy:'اشتر ملف PDF',em:'بريدك الإلكتروني (أرسل الملف إليه)',nm:'اسمك',go:'ادفع عبر باي بال',x:'إلغاء',wait:'جاري فتح باي بال ...',bad:'اكتب بريدا صحيحا.',tt:'شراء ملف PDF'}};
+function PD(k){var l=root.getAttribute('lang')||'en';return (PDT[l]&&PDT[l][k])||PDT.en[k]||''}
+function pdfBuy(wk,x){
+  var old=d.getElementById('pdf-ov');if(old)old.remove();
+  var ov=el('div',{id:'pdf-ov',style:'position:fixed;inset:0;z-index:4100;background:rgba(3,5,18,.85);display:flex;align-items:center;justify-content:center;padding:16px'});
+  var bx=el('div',{style:'width:100%;max-width:420px;background:#0b1030;border:1px solid rgba(190,170,255,.5);border-radius:18px;padding:22px;color:#e8eefc;font-family:Sora,Inter,system-ui,sans-serif'});
+  var IN='width:100%;box-sizing:border-box;margin:6px 0 14px;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.06);color:#fff;font-family:inherit;font-size:16px';
+  bx.appendChild(el('div',{style:'font-size:20px',text:PD('tt')}));
+  bx.appendChild(el('div',{style:'margin:6px 0 16px;color:#ffd98a',text:(wk.title||'')+' - '+x.name+'  ·  '+x.price}));
+  bx.appendChild(el('label',{style:'font-size:13px;color:#9fb0c8',text:PD('nm')}));var nm=el('input',{type:'text',maxlength:'60',style:IN});bx.appendChild(nm);
+  bx.appendChild(el('label',{style:'font-size:13px;color:#9fb0c8',text:PD('em')}));var em=el('input',{type:'email',autocomplete:'email',style:IN});bx.appendChild(em);
+  var er=el('div',{style:'min-height:20px;color:#ffb0b8;font-size:14px;margin-bottom:8px'});bx.appendChild(er);
+  var go=el('button',{type:'button','class':'mx-btn v',style:'width:100%;justify-content:center',text:PD('go')});
+  var cx=el('button',{type:'button',style:'width:100%;margin-top:10px;padding:10px;border-radius:999px;border:1px solid rgba(255,255,255,.3);background:none;color:#cfd8ee;font-family:inherit;font-size:15px;cursor:pointer',text:PD('x')});
+  bx.appendChild(go);bx.appendChild(cx);ov.appendChild(bx);d.body.appendChild(ov);
+  try{fetch('/api/me',{credentials:'same-origin'}).then(function(r){return r.json()}).then(function(j){if(j&&j.user){if(!em.value)em.value=j.user.email||'';if(!nm.value)nm.value=j.user.name||''}}).catch(function(){})}catch(e){}
+  cx.addEventListener('click',function(){ov.remove()});ov.addEventListener('click',function(e){if(e.target===ov)ov.remove()});
+  go.addEventListener('click',function(){
+    er.textContent='';var m=em.value.trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)){er.textContent=PD('bad');return}
+    go.disabled=true;go.textContent=PD('wait');
+    fetch('/api/pdf/start',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({work:wk.id,size:x.name,email:m,name:nm.value.trim()})})
+      .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})}).then(function(r){
+        if(r.ok&&r.j.url&&/^https:\/\/[a-z0-9.-]*paypal\.com\//i.test(r.j.url)){w.location.href=r.j.url;return}
+        go.disabled=false;go.textContent=PD('go');er.textContent=(r.j&&r.j.error)||'Problem. Please try again.'})
+      .catch(function(){go.disabled=false;go.textContent=PD('go');er.textContent='Problem. Please try again.'});
+  });
 }
 function renderRating(){
   var all=(C.reviews||[]).concat(w.__cr||[]).filter(function(r){return +r.stars>0});
