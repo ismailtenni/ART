@@ -1235,11 +1235,11 @@ function init(){
     box.appendChild(h('div',{id:'ed-msg',style:'margin-top:12px;min-height:20px;color:#a8d6ff;font-size:14px',text:msg}));
     if(cur){box.appendChild(workForm(cur.o,cur.n));return}
     var tabs=h('div',{style:'display:flex;gap:10px;margin:18px 0;flex-wrap:wrap'});
-    [['works','Artwork'],['photos','Photos'],['films','Videos'],['shop','Shop and payments'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['buyers','Real walls'],['gift','Free gift'],['draw','Draw me'],['msg','Messages'],['mem','Members'],['cur','Mouse cursor'],['pay','Checkout and crypto'],['sec','Security checklist'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['pdf','PDF sales'],['ask','AI assistant'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
+    [['works','Artwork'],['photos','Photos'],['films','Videos'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['buyers','Real walls'],['gift','Free gift'],['draw','Draw me'],['msg','Messages'],['mem','Members'],['cur','Mouse cursor'],['sec','Security checklist'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['pdf','PDF sales'],['ask','AI assistant'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
       tabs.appendChild(h('button',{type:'button',style:(tab===t[0]?BTN2:BTN),text:t[1],on:{click:function(){tab=t[0];render()}}}));
     });
     box.appendChild(tabs);
-    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='shop')renderShopTab();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='buyers')renderBuyersTab();else if(tab==='gift')renderGiftTab();else if(tab==='draw')renderDrawTab();else if(tab==='mem')renderMemTab();else if(tab==='msg')renderMsgTab();else if(tab==='cur')renderCurTab();else if(tab==='pay')renderPayTab();else if(tab==='sec')renderSecTab();else if(tab==='pdf')renderPdfTab();else if(tab==='ask')renderAskTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
+    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='buyers')renderBuyersTab();else if(tab==='gift')renderGiftTab();else if(tab==='draw')renderDrawTab();else if(tab==='mem')renderMemTab();else if(tab==='msg')renderMsgTab();else if(tab==='cur')renderCurTab();else if(tab==='sec')renderSecTab();else if(tab==='pdf')renderPdfTab();else if(tab==='ask')renderAskTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
   }
   function renderWorks(){
     box.appendChild(h('button',{type:'button',style:BTN2,text:'+ Add new artwork',on:{click:function(){editing='new';cur={n:true,o:{id:'',title:'',meta:'',series:'',status:'',ratio:'3 / 4',desc:'',cover:'',shots:[],process:[]}};render()}}}));
@@ -1423,14 +1423,34 @@ function init(){
     box.appendChild(note1('When someone presses Buy, a checkout box opens. They type their name and shipping address, then choose how to pay. You see every order in the Requests tab (kind: Order) with the full address.'));
     box.appendChild(field1(S,'coOff','Turn the checkout box OFF? (type yes)','no'));
     box.appendChild(field1(S,'coAddr','Ask for the full shipping address in the checkout box? (type yes). Normally NO: the box only asks the name and where to send the PDF. The full address is asked only in Draw me.','no'));
+    box.appendChild(sub('Online payments (card, Visa, Mastercard, PayPal, Stripe...)'));
+    box.appendChild(note1('Paste your PayPal.me link (for example https://paypal.me/yourname) or any payment link from PayPal or Stripe. A "Pay online" button then appears next to "Buy on WhatsApp" on every product, and as an extra way to pay for your PDFs. For an exact amount, paste a payment link with that amount inside the product below. For PDFs, the built-in "Card or PayPal" button already accepts Visa and Mastercard in many countries, so this is an extra option, not a replacement.'));
+    box.appendChild(field1(S,'payDefault','My payment link (https://...)','https://paypal.me/yourname'));
+    box.appendChild(field1(S,'payLabel','Text on the pay button (optional)','Pay online'));
     box.appendChild(sub('Crypto wallets'));
     box.appendChild(note1('Add the coins you accept. Buyers see your address with a Copy button and then send you the transaction ID on WhatsApp. IMPORTANT: copy the address from your wallet app, send a tiny test payment first, and check it twice. Crypto payments cannot be reversed, and only YOU should ever type these addresses here.'));
     box.appendChild(listEd(data.wallets,[{k:'coin',l:'Coin',p:'USDT'},{k:'network',l:'Network',p:'TRC20'},{k:'addr',l:'Wallet address',p:'paste your address'}],'+ Add coin',function(){return {coin:'',network:'',addr:''}}));
     box.appendChild(sub('Bank transfer'));
     box.appendChild(note1('Add your bank account (for example CIH Bank). Buyers see the details with a Copy button, pay by bank transfer, and send you the receipt on WhatsApp. Only add accounts that are really yours.'));
     box.appendChild(listEd(data.banks,[{k:'bank',l:'Bank name',p:'CIH Bank'},{k:'holder',l:'Account holder name',p:'Ismail Tenni'},{k:'iban',l:'Account number / RIB / IBAN',p:'MA64 ...'},{k:'swift',l:'SWIFT / BIC (optional, for payments from abroad)',p:'CIHMMAMC'},{k:'note',l:'Note for the buyer (optional)',p:'Write your order code in the transfer note'}],'+ Add bank',function(){return {bank:'',holder:'',iban:'',swift:'',note:''}}));
-    box.appendChild(h('div',{style:'margin:14px 0;padding:14px;border:1px solid rgba(92,188,255,.5);border-radius:14px;max-width:760px;line-height:1.6;font-size:14px;color:#cfe6ff',text:'Cards (Visa and Mastercard): in the Shop and payments tab, paste a payment link from Stripe, PayPal or your card provider in "My payment link". Buyers then see a "Pay online" button. For PDFs, the "Card or PayPal" button uses PayPal, which accepts Visa and Mastercard in many countries.'}));
-    box.appendChild(note1('Online payment link: set it in the Shop and payments tab. Press Save and publish at the top.'));
+    box.appendChild(sub('Sale (percent off)'));
+    box.appendChild(note1('Put your artworks, prints, products and gift cards on sale. Visitors see the new price, the percent off and the old price, and a sale bar shows at the top of your site. You can also give one item its own percent in its own "Sale %" box below (0 = never on sale). If a product has its own payment link with a fixed amount, make a new link for the sale price. Press Save and publish at the top.'));
+    var so=h('input',{type:'checkbox'});so.checked=/^y/i.test(String(S.saleOn||''));so.addEventListener('change',function(){S.saleOn=so.checked?'yes':''});
+    box.appendChild(h('label',{style:'display:flex;gap:10px;align-items:center;margin:14px 0;font-size:16px'},[so,'Sale is ON']));
+    box.appendChild(field1(S,'salePct','Percent off (example: 25)','25'));
+    box.appendChild(field1(S,'saleLabel','Name of the sale (optional)','Autumn sale'));
+    box.appendChild(field1(S,'saleEnd','Last day (YYYY-MM-DD, optional: the sale stops by itself)','2026-11-05'));
+    [['saleNoP','Prints'],['saleNoS','Products'],['saleNoA','Artworks and Art of the month'],['saleNoG','Gift cards']].forEach(function(x){
+      var c=h('input',{type:'checkbox'});c.checked=/^y/i.test(String(S[x[0]]||''));c.addEventListener('change',function(){S[x[0]]=c.checked?'yes':''});
+      box.appendChild(h('label',{style:'display:flex;gap:10px;align-items:center;margin:8px 0;font-size:15px;color:#c4d0e6'},[c,'Do NOT put on sale: '+x[1]]))});
+    box.appendChild(sub('Prints (offered under every artwork)'));
+    box.appendChild(note1('Add print sizes with a price. They appear under every artwork, each with a Buy button. Even a sold original can sell prints.'));
+    if(!data.prints.length)box.appendChild(h('button',{type:'button',style:BTN2,text:'Add sizes S, M and L (then type your prices)',on:{click:function(){
+      data.prints.push({name:'S print - 30 cm',price:''},{name:'M print - 50 cm',price:''},{name:'L print - 70 cm',price:''});render()}}}));
+    box.appendChild(listEd(data.prints,[{k:'name',l:'Size',p:'A4 print'},{k:'price',l:'Price',p:'$25'},{k:'sale',l:'Sale % for this size only (optional, 0 = never on sale)',p:'25'},{k:'pay',l:'Payment link (optional)',p:'https://...'}],'+ Add print size'));
+    box.appendChild(sub('Products'));
+    box.appendChild(note1('Limited edition: write how many exist in total and how many are left. When "left" is 0 the product shows Sold out. Leave total empty if the product is not limited.'));
+    box.appendChild(listEd(data.shop,[{k:'name',l:'Product name',p:'Art print A4'},{k:'photo',l:'Product photo',t:'img',max:1200},{k:'price',l:'Price (written as you want it shown)',p:'$25'},{k:'sale',l:'Sale % for this product only (optional, 0 = never on sale)',p:'25'},{k:'pay',l:'Payment link for this product (optional)',p:'https://...'},{k:'edition',l:'Limited edition: total made',p:'20'},{k:'left',l:'Limited edition: how many left',p:'7'},{k:'ends',l:'Offer last day (YYYY-MM-DD, optional)',p:'2026-12-31'}],'+ Add product'));
   }
   var msgSel=0,msgList=null,msgTh=null;
   function avatarEl(id,av,name,px){
@@ -1711,22 +1731,26 @@ function init(){
   function pdfUp(x,file){
     if(!file)return;
     if(!x.id){say('Save the artwork first (press Save and publish), then add its PDF file.');return}
-    if(!/jpe?g/i.test(file.type||file.name)){say('Please choose a JPEG file (.jpg).');return}
+    var isPdfFile=/pdf/i.test(file.type||'')||/\.pdf$/i.test(file.name||'');
+    if(isPdfFile){say('That is a .pdf file. Please upload the PICTURE of your artwork instead (a JPEG or PNG photo or export) — your site makes the PDF for you automatically from that picture.');return}
+    var isImage=/^image\//.test(file.type||'')||/\.(jpe?g|png|webp)$/i.test(file.name||'');
+    if(!isImage){say('Please choose a picture file (JPEG, PNG or WEBP).');return}
     if(file.size>100*1024*1024){say('That file is bigger than 100 MB.');return}
+    var isJpeg=/jpe?g/i.test(file.type||'')||/\.jpe?g$/i.test(file.name||'');
     var big=!!(pdfSt&&pdfSt.r2);
-    if(big){
+    if(big&&isJpeg){
       var xh=new XMLHttpRequest();xh.open('PUT','/api/admin/pdfsrc/raw?work='+encodeURIComponent(x.id));xh.withCredentials=true;xh.setRequestHeader('content-type','image/jpeg');
       xh.upload.onprogress=function(e){if(e.lengthComputable)say('Uploading ... '+Math.round(e.loaded/e.total*100)+'%  (keep this window open)')};
       xh.onerror=function(){say('Upload stopped. Check your internet and try again.')};
       xh.onload=function(){var r={};try{r=JSON.parse(xh.responseText)}catch(e){}if(xh.status===200&&r.ok){pdfFiles[x.id]={w:r.w,h:r.h,bytes:r.bytes};x.pdf='yes';say('File saved. Now press Save and publish.');render()}else say('Problem: '+(r.error||('error '+xh.status)))};
       say('Uploading ... 0%  (keep this window open)');xh.send(file);return;
     }
-    if(file.size<=8200000){say('Uploading ... please wait');pdfSend(x,file,'');return}
+    if(isJpeg&&file.size<=8200000){say('Uploading ... please wait');pdfSend(x,file,'');return}
     var maxLong=0;(data.pdfs||[]).forEach(function(q){var m=PAPERMM[String(q.size||'').trim().toUpperCase()];if(m)maxLong=Math.max(maxLong,Math.round(Math.max(m[0],m[1])*300/25.4))});
     if(!maxLong)maxLong=4961;maxLong=Math.min(maxLong,12000);
-    say('Your file is '+(file.size/1048576).toFixed(0)+' MB. Preparing it for your site ... please wait (up to a minute)');
+    say((isJpeg?'Your file is '+(file.size/1048576).toFixed(0)+' MB':'Converting your picture to JPEG')+'. Preparing it for your site ... please wait (up to a minute)');
     setTimeout(function(){pdfShrink(file,maxLong,function(r){
-      if(!r){say('Could not prepare this picture. Please export it again as a smaller JPEG (for example 6000 pixels on the long side) and try again.');return}
+      if(!r){say('Could not prepare this picture. Please export it again as a JPEG or PNG (for example 6000 pixels on the long side) and try again.');return}
       say('Uploading ... please wait');pdfSend(x,r.blob,' (made '+(r.blob.size/1048576).toFixed(1)+' MB, '+r.w+' x '+r.h+' pixels)');
     })},60);
   }
@@ -1751,10 +1775,17 @@ function init(){
     sb.addEventListener('click',function(){pm.style.color='#9fb0c8';pm.textContent='Checking with PayPal ...';
       post('/api/admin/paypal',{id:idv.id,secret:idv.secret,live:lv.checked,save:true}).then(function(r){pm.style.color=r.ok?'#7be0a6':'#ffb0b8';pm.textContent=r.ok?'PayPal accepted the keys.':(r.error||'Problem');if(r.ok){pdfSt.ready=true;pdfSt.live=lv.checked;if(idv.id)pdfSt.idTail=idv.id.slice(-4);pdfSt.hasSecret=true}}).catch(function(e){pm.style.color='#ffb0b8';pm.textContent='Problem: '+e.message})});
     box.appendChild(h('div',{style:'margin:8px 0'},[sb]));box.appendChild(pm);
+    box.appendChild(note1('Visa and Mastercard already work through the PayPal keys above (buyers can pay by card without a PayPal account). The extra ways to pay below — online payment link, crypto and bank transfer — are used here for the PDF, and also for the checkout box when someone buys a print, a product or a Draw me, so you only set them up once.'));
+    renderPayTab();
     box.appendChild(sub('2. PDF sizes and prices'));
     box.appendChild(note1('One line per size. "Paper size" can be A6, A5, A4, A3, A2, A1, A0, Letter or Tabloid. The PDF page has exactly that size and your artwork keeps its own proportions (it is never stretched). PayPal needs a price in USD ($), EUR, GBP, CAD, AUD or CHF, for example $18 or 15 EUR. Prices in MAD cannot be paid with PayPal.'));
     if(!data.pdfs.length)box.appendChild(h('button',{type:'button',style:BTN2,text:'Add A5, A4 and A3 (then type your prices)',on:{click:function(){data.pdfs.push({name:'A5 PDF',size:'A5',price:''},{name:'A4 PDF',size:'A4',price:''},{name:'A3 PDF',size:'A3',price:''});render()}}}));
     box.appendChild(listEd(data.pdfs,[{k:'name',l:'Name the buyer sees',p:'A4 PDF'},{k:'size',l:'Paper size',p:'A4'},{k:'price',l:'Price',p:'$18'},{k:'sale',l:'Sale % for this size only (optional, 0 = never on sale)',p:'0'}],'+ Add size',function(){return {name:'',size:'A4',price:''}}));
+    (function(){var okPdfs=(data.pdfs||[]).filter(function(x){return x&&x.name&&x.price});
+      if(!okPdfs.length)box.appendChild(h('div',{style:'margin:10px 0;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,176,184,.6);background:rgba(255,176,184,.1);color:#ffb0b8;font-size:14px;line-height:1.5',text:'No size above has BOTH a name and a price yet. Until one does, the PDF option will not appear on any artwork on your site, even for artworks with the checkbox ticked below.'}))
+      else{var bad=(data.pdfs||[]).filter(function(x){return x&&(x.name||x.price)&&!(x.name&&x.price)});
+        if(bad.length)box.appendChild(h('div',{style:'margin:10px 0;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,217,138,.6);background:rgba(255,217,138,.1);color:#ffe9b8;font-size:14px;line-height:1.5',text:bad.length+' size(s) above are missing a name or a price, so they will not be sold.'}))}
+    })();
     box.appendChild(sub('Thank-you message after a purchase'));
     box.appendChild(note1('When someone buys (and the payment is confirmed), they automatically get this message by email, together with their PDF download button. If they have an account on your site, it also appears in their Messages. You can use {name} (the buyer), {item} (artwork and size), {amount} and {link} (the PDF link). Leave the boxes empty to use the standard text.'));
     box.appendChild(field1(data.settings,'tySubject','Email subject (optional)','Thank you for your purchase, {name}! Your PDF is ready'));
@@ -1762,7 +1793,7 @@ function init(){
     var tym=h('div',{style:'margin:8px 0;min-height:20px;font-size:14px;color:#9fb0c8'});
     box.appendChild(h('div',{style:'margin:8px 0'},[h('button',{type:'button',style:BTN,text:'Send me a test email',on:{click:function(){tym.style.color='#9fb0c8';tym.textContent='Sending ...';post('/api/admin/thanks/test',{}).then(function(r){tym.style.color=r.ok?'#7be0a6':'#ffb0b8';tym.textContent=r.ok?('Test sent to '+r.to+' (uses the last saved text: press Save and publish first).'):(r.error||'Could not send.')}).catch(function(e){tym.style.color='#ffb0b8';tym.textContent='Problem: '+e.message})}}})]));box.appendChild(tym);
     box.appendChild(sub('3. Choose the artworks'));
-    box.appendChild(note1('You can choose a JPEG up to 100 MB. Pictures bigger than 8 MB are made smaller automatically, in your browser, to the size your biggest PDF needs (up to 300 dpi) and the quality stays high. Nothing to set up. Below you see the real quality for each size. Then press Save and publish.'));
+    box.appendChild(note1('Upload the PICTURE of your artwork here (a JPEG or PNG photo or export, up to 100 MB) — not a .pdf file. Your site makes the PDF automatically from this picture. Pictures bigger than 8 MB, or not already a JPEG, are converted and made smaller automatically, in your browser, to the size your biggest PDF needs (up to 300 dpi) and the quality stays high. Nothing to set up. Below you see the real quality for each size. Then press Save and publish.'));
     if(pdfSt.r2)box.appendChild(note1('Big file storage (R2) is ON: your original file is kept as it is.'));
     data.works.forEach(function(x){
       var f=x.id?pdfFiles[x.id]:null;
@@ -1772,15 +1803,16 @@ function init(){
       if(f){mid.appendChild(h('div',{style:'font-size:13px;color:#9fb0c8;margin-top:4px',text:'File: '+f.w+' x '+f.h+' pixels, '+(Math.round(f.bytes/1000)/1000).toFixed(1)+' MB'}));
         data.pdfs.forEach(function(q){if(!q.name)return;var dp=pdfDpi(f,q.size);if(!dp)return;var good=dp>=250,mid2=dp>=150;mid.appendChild(h('div',{style:'font-size:13px;margin-top:2px;color:'+(good?'#7be0a6':mid2?'#ffd98a':'#ffb0b8'),text:q.name+': '+dp+' dpi - '+(good?'sharp':mid2?'ok, a bit soft when printed big':'too small for this size, use a bigger picture')}))})}
       else mid.appendChild(h('div',{style:'font-size:13px;color:#ffb0b8;margin-top:4px',text:'No file yet'}));
-      var inp=h('input',{type:'file',accept:'image/jpeg',style:'display:none'});inp.addEventListener('change',function(){pdfUp(x,inp.files&&inp.files[0])});
+      var inp=h('input',{type:'file',accept:'image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp',style:'display:none'});inp.addEventListener('change',function(){pdfUp(x,inp.files&&inp.files[0])});
       var chk=h('input',{type:'checkbox'});chk.checked=x.pdf==='yes';chk.disabled=!f;chk.addEventListener('change',function(){x.pdf=chk.checked?'yes':''});
       mid.appendChild(h('label',{style:'display:flex;gap:8px;align-items:center;margin-top:8px;font-size:14px'},[chk,'Sell this artwork as a PDF']));
+      if(x.pdf==='yes'&&!(data.pdfs||[]).some(function(q){return q&&q.name&&q.price}))mid.appendChild(h('div',{style:'margin-top:6px;font-size:12.5px;color:#ffb0b8',text:'⚠ Add a priced size in step 2 above, or this will not show on your site.'}));
       card.appendChild(mid);
       card.appendChild(h('div',{style:'display:flex;gap:8px;flex-wrap:wrap'},[h('button',{type:'button',style:BTN,text:f?'Change file':'Add file',on:{click:function(){inp.click()}}}),inp].concat(f?[h('button',{type:'button',style:BTNR,text:'Remove',on:{click:function(){post('/api/admin/pdfsrc/delete',{work:x.id}).then(function(){delete pdfFiles[x.id];x.pdf='';render()}).catch(function(e){say('Problem: '+e.message)})}}})]:[])));
       box.appendChild(card);
     });
     box.appendChild(sub('4. Orders waiting for payment'));
-    box.appendChild(note1('When a buyer chooses crypto or bank transfer, the order appears here. When the money is really in your wallet or bank, press Approve and the PDF link is sent to the buyer by email. Check the amount first.'));
+    box.appendChild(note1('When a buyer chooses crypto, bank transfer or your online payment link, the order appears here. When the money really arrives, press Approve and the PDF link is sent to the buyer by email. Check the amount first.'));
     var wt=pdfOrders.filter(function(o){return o.status==='awaiting'});
     if(!wt.length)box.appendChild(h('p',{style:'color:#9fb0c8',text:'Nothing is waiting.'}));
     wt.forEach(function(o){
@@ -2355,7 +2387,7 @@ if(vb&&img){
       hb.addEventListener('click',function(){
         var vx=d.getElementById('vw-x');if(vx)vx.click();
         d.getElementById('ed-btn').click();
-        setTimeout(function(){var bs=d.querySelectorAll('#ed button');for(var i=0;i<bs.length;i++){if(bs[i].textContent==='Shop and payments'){bs[i].click();break}}},250);
+        setTimeout(function(){var bs=d.querySelectorAll('#ed button');for(var i=0;i<bs.length;i++){if(bs[i].textContent==='PDF sales'){bs[i].click();break}}},250);
       });
       info.appendChild(hb);
     }
@@ -2868,9 +2900,9 @@ function buyBlock(by,wk){
   }
   if(box.childNodes.length)by.appendChild(box);
 }
-var PDT={en:{h:'Digital PDF',p:'Print it yourself at home or at a print shop. After you pay with PayPal, I send the PDF to your email and you can download it at once.',buy:'Buy PDF',em:'Your email or WhatsApp number (I send the PDF here)',nm:'Your name',go:'Pay by card or PayPal',cry:'Pay with crypto',bnk:'Pay by bank transfer',ref:'Your order code',amt:'Amount to pay',stp:'After you pay, send me the proof (a screenshot or receipt) on WhatsApp with your order code. I check it and the PDF link arrives by email.',pw:'Send the proof on WhatsApp',cp:'Copy',cd:'Copied',hol:'Account holder',acc:'Account / RIB / IBAN',swf:'SWIFT',net:'Network',wrn:'Send only on the network shown and check the first and last letters of the address.',x:'Cancel',wait:'Opening PayPal ...',bad:'Please write a correct email or WhatsApp number.',tt:'Buy the PDF'},
- fr:{h:'PDF numérique',p:'Imprimez-le chez vous ou chez un imprimeur. Après le paiement PayPal, je vous envoie le PDF par email et vous pouvez le télécharger tout de suite.',buy:'Acheter le PDF',em:'Votre email ou numéro WhatsApp (j’y envoie le PDF)',nm:'Votre nom',go:'Payer par carte ou PayPal',cry:'Payer en crypto',bnk:'Payer par virement bancaire',ref:'Votre code de commande',amt:'Montant à payer',stp:'Après le paiement, envoyez-moi la preuve (capture ou reçu) sur WhatsApp avec votre code. Je vérifie et le lien du PDF arrive par email.',pw:'Envoyer la preuve sur WhatsApp',cp:'Copier',cd:'Copié',hol:'Titulaire du compte',acc:'Compte / RIB / IBAN',swf:'SWIFT',net:'Réseau',wrn:'Envoyez uniquement sur le réseau indiqué et vérifiez le début et la fin de l’adresse.',x:'Annuler',wait:'Ouverture de PayPal ...',bad:'Écrivez un email ou un numéro WhatsApp correct.',tt:'Acheter le PDF'},
- ar:{h:'ملف PDF رقمي',p:'اطبعه بنفسك في البيت أو عند مطبعة. بعد الدفع عبر باي بال أرسل لك الملف على بريدك ويمكنك تحميله فورا.',buy:'اشتر ملف PDF',em:'بريدك الإلكتروني أو رقم واتساب (أرسل الملف إليه)',nm:'اسمك',go:'ادفع بالبطاقة أو باي بال',cry:'ادفع بالعملات الرقمية',bnk:'ادفع بتحويل بنكي',ref:'رمز طلبك',amt:'المبلغ المطلوب',stp:'بعد الدفع أرسل لي الإثبات (صورة أو وصل) على واتساب مع رمز طلبك. أتحقق وسيصلك رابط الملف بالبريد.',pw:'أرسل الإثبات على واتساب',cp:'نسخ',cd:'تم النسخ',hol:'اسم صاحب الحساب',acc:'رقم الحساب / RIB / IBAN',swf:'SWIFT',net:'الشبكة',wrn:'أرسل فقط عبر الشبكة المذكورة وتحقق من أول وآخر أحرف العنوان.',x:'إلغاء',wait:'جاري فتح باي بال ...',bad:'اكتب بريدا أو رقم واتساب صحيحا.',tt:'شراء ملف PDF'}};
+var PDT={en:{h:'Digital PDF',p:'Print it yourself at home or at a print shop. After you pay with PayPal, I send the PDF to your email and you can download it at once.',buy:'Buy PDF',em:'Your email or WhatsApp number (I send the PDF here)',nm:'Your name',go:'Pay by card or PayPal',cry:'Pay with crypto',bnk:'Pay by bank transfer',onl:'Pay online',ref:'Your order code',amt:'Amount to pay',stp:'After you pay, send me the proof (a screenshot or receipt) on WhatsApp with your order code. I check it and the PDF link arrives by email.',pw:'Send the proof on WhatsApp',cp:'Copy',cd:'Copied',hol:'Account holder',acc:'Account / RIB / IBAN',swf:'SWIFT',net:'Network',wrn:'Send only on the network shown and check the first and last letters of the address.',x:'Cancel',wait:'Opening PayPal ...',bad:'Please write a correct email or WhatsApp number.',tt:'Buy the PDF',gol:'Go to the payment page'},
+ fr:{h:'PDF numérique',p:'Imprimez-le chez vous ou chez un imprimeur. Après le paiement PayPal, je vous envoie le PDF par email et vous pouvez le télécharger tout de suite.',buy:'Acheter le PDF',em:'Votre email ou numéro WhatsApp (j’y envoie le PDF)',nm:'Votre nom',go:'Payer par carte ou PayPal',cry:'Payer en crypto',bnk:'Payer par virement bancaire',onl:'Payer en ligne',ref:'Votre code de commande',amt:'Montant à payer',stp:'Après le paiement, envoyez-moi la preuve (capture ou reçu) sur WhatsApp avec votre code. Je vérifie et le lien du PDF arrive par email.',pw:'Envoyer la preuve sur WhatsApp',cp:'Copier',cd:'Copié',hol:'Titulaire du compte',acc:'Compte / RIB / IBAN',swf:'SWIFT',net:'Réseau',wrn:'Envoyez uniquement sur le réseau indiqué et vérifiez le début et la fin de l’adresse.',x:'Annuler',wait:'Ouverture de PayPal ...',bad:'Écrivez un email ou un numéro WhatsApp correct.',tt:'Acheter le PDF',gol:'Aller à la page de paiement'},
+ ar:{h:'ملف PDF رقمي',p:'اطبعه بنفسك في البيت أو عند مطبعة. بعد الدفع عبر باي بال أرسل لك الملف على بريدك ويمكنك تحميله فورا.',buy:'اشتر ملف PDF',em:'بريدك الإلكتروني أو رقم واتساب (أرسل الملف إليه)',nm:'اسمك',go:'ادفع بالبطاقة أو باي بال',cry:'ادفع بالعملات الرقمية',bnk:'ادفع بتحويل بنكي',onl:'ادفع عبر الإنترنت',ref:'رمز طلبك',amt:'المبلغ المطلوب',stp:'بعد الدفع أرسل لي الإثبات (صورة أو وصل) على واتساب مع رمز طلبك. أتحقق وسيصلك رابط الملف بالبريد.',pw:'أرسل الإثبات على واتساب',cp:'نسخ',cd:'تم النسخ',hol:'اسم صاحب الحساب',acc:'رقم الحساب / RIB / IBAN',swf:'SWIFT',net:'الشبكة',wrn:'أرسل فقط عبر الشبكة المذكورة وتحقق من أول وآخر أحرف العنوان.',x:'إلغاء',wait:'جاري فتح باي بال ...',bad:'اكتب بريدا أو رقم واتساب صحيحا.',tt:'شراء ملف PDF',gol:'اذهب إلى صفحة الدفع'}};
 function PD(k){var l=root.getAttribute('lang')||'en';return (PDT[l]&&PDT[l][k])||PDT.en[k]||''}
 function pdfBuy(wk,x){
   var old=d.getElementById('pdf-ov');if(old)old.remove();
@@ -2884,10 +2916,11 @@ function pdfBuy(wk,x){
   var er=el('div',{style:'min-height:20px;color:#ffb0b8;font-size:14px;margin-bottom:8px'});bx.appendChild(er);
   var BS='width:100%;justify-content:center;margin-top:8px';
   var go=el('button',{type:'button','class':'mx-btn v',style:BS,text:PD('go')});
-  var gc=(C.wallets||[]).some(function(x){return x&&x.coin&&x.addr}),gb=(C.banks||[]).some(function(x){return x&&x.bank&&x.iban});
+  var gc=(C.wallets||[]).some(function(x){return x&&x.coin&&x.addr}),gb=(C.banks||[]).some(function(x){return x&&x.bank&&x.iban}),gl=/^https:\/\//i.test((C.settings&&C.settings.payDefault)||'');
   var bc=gc?el('button',{type:'button','class':'mx-btn',style:BS,text:PD('cry')}):null,bb=gb?el('button',{type:'button','class':'mx-btn',style:BS,text:PD('bnk')}):null;
+  var bl2=gl?el('button',{type:'button','class':'mx-btn',style:BS,text:(C.settings&&C.settings.payLabel)||PD('onl')}):null;
   var cx=el('button',{type:'button',style:'width:100%;margin-top:14px;padding:10px;border-radius:999px;border:1px solid rgba(255,255,255,.3);background:none;color:#cfd8ee;font-family:inherit;font-size:15px;cursor:pointer',text:PD('x')});
-  bx.appendChild(go);if(bc)bx.appendChild(bc);if(bb)bx.appendChild(bb);bx.appendChild(cx);ov.appendChild(bx);d.body.appendChild(ov);
+  bx.appendChild(go);if(bl2)bx.appendChild(bl2);if(bc)bx.appendChild(bc);if(bb)bx.appendChild(bb);bx.appendChild(cx);ov.appendChild(bx);d.body.appendChild(ov);
   try{fetch('/api/me',{credentials:'same-origin'}).then(function(r){return r.json()}).then(function(j){if(j&&j.user){if(!em.value)em.value=j.user.email||'';if(!nm.value)nm.value=j.user.name||''}}).catch(function(){})}catch(e){}
   cx.addEventListener('click',function(){ov.remove()});ov.addEventListener('click',function(e){if(e.target===ov)ov.remove()});
   function copyTo(btn,t){function ok(){btn.textContent=PD('cd')}try{navigator.clipboard.writeText(t).then(ok,function(){})}catch(e){var ta=el('textarea',{style:'position:fixed;opacity:0'});ta.value=t;d.body.appendChild(ta);ta.select();try{d.execCommand('copy');ok()}catch(x){}ta.remove()}}
@@ -2897,6 +2930,7 @@ function pdfBuy(wk,x){
     bx.appendChild(el('div',{style:'margin:6px 0 14px;color:#ffd98a',text:(wk.title||'')+' - '+x.name}));
     bx.appendChild(el('div',{style:'padding:12px;border-radius:12px;border:1px solid rgba(255,217,138,.6);background:rgba(255,217,138,.08);line-height:1.7'},[el('div',{text:PD('amt')+': '+j.amount}),el('div',{style:'font-size:20px;letter-spacing:.06em',text:PD('ref')+': '+j.ref})]));
     function line(lab,val){var r=el('div',{style:'margin-top:10px;padding:10px 12px;border:1px solid rgba(190,170,255,.3);border-radius:10px;font-size:14px;line-height:1.5;word-break:break-all'});r.appendChild(el('div',{style:'color:#9fb0c8;font-size:12px',text:lab}));var row=el('div',{style:'display:flex;gap:8px;align-items:center;justify-content:space-between'});row.appendChild(el('code',{style:'font-size:15px;color:#fff',text:val}));var cb=el('button',{type:'button',style:'flex:none;padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:none;color:#fff;font-family:inherit;cursor:pointer',text:PD('cp')});cb.addEventListener('click',function(){copyTo(cb,val)});row.appendChild(cb);r.appendChild(row);bx.appendChild(r)}
+    if(j.payLink){bx.appendChild(el('a',{'class':'mx-btn v',href:j.payLink,target:'_blank',rel:'noopener noreferrer',style:'margin-top:12px;display:flex;justify-content:center;text-decoration:none'},[el('span',{text:j.payLabel||PD('gol')})]))}
     (j.wallets||[]).forEach(function(q){line(q.coin+(q.network?' · '+PD('net')+': '+q.network:''),q.addr)});
     (j.banks||[]).forEach(function(q){bx.appendChild(el('div',{style:'margin-top:14px;font-size:16px;color:#fff',text:q.bank}));if(q.holder)line(PD('hol'),q.holder);line(PD('acc'),q.iban);if(q.swift)line(PD('swf'),q.swift);if(q.note)bx.appendChild(el('div',{style:'margin-top:6px;font-size:13px;color:#9fb0c8',text:q.note}))});
     if((j.wallets||[]).length)bx.appendChild(el('div',{style:'margin-top:12px;color:#ffd98a;font-size:13px;line-height:1.5',text:'⚠ '+PD('wrn')}));
@@ -2916,6 +2950,7 @@ function pdfBuy(wk,x){
       .catch(function(){btn.disabled=false;btn.textContent=old;er.textContent='Problem. Please try again.'});
   }
   go.addEventListener('click',function(){start('paypal',go)});
+  if(bl2)bl2.addEventListener('click',function(){start('online',bl2)});
   if(bc)bc.addEventListener('click',function(){start('crypto',bc)});
   if(bb)bb.addEventListener('click',function(){start('bank',bb)});
 }

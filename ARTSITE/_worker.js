@@ -1180,7 +1180,7 @@ const app = {
         const ip = req.headers.get('cf-connecting-ip') || 'x';
         if (await tooMany(env, 'pdfstart:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
         await note(env, 'pdfstart:' + ip);
-        const method = ['crypto', 'bank'].includes(body.method) ? body.method : 'paypal';
+        const method = ['crypto', 'bank', 'online'].includes(body.method) ? body.method : 'paypal';
         if (method === 'paypal' && !ppReady(env)) return json({ error: 'Card and PayPal payment is not open yet. Please choose another way or write to me on WhatsApp.' }, 503);
         const email = pdfContact(body.email);
         if (!email) return json({ error: 'Please write your email or your WhatsApp number. I send the PDF there.' }, 400);
@@ -1196,18 +1196,20 @@ const app = {
         if (!have) return json({ error: 'This PDF is not ready yet. Please write to me on WhatsApp.' }, 404);
         if (method !== 'paypal') {
           const wl = (site.wallets || []).filter((x) => x && x.coin && x.addr), bl = (site.banks || []).filter((x) => x && x.bank && x.iban);
+          const payLink = String((site.settings || {}).payDefault || '');
           if (method === 'crypto' && !wl.length) return json({ error: 'Crypto payment is not open yet.' }, 400);
           if (method === 'bank' && !bl.length) return json({ error: 'Bank transfer is not open yet.' }, 400);
+          if (method === 'online' && !/^https:\/\//i.test(payLink)) return json({ error: 'Online payment is not open yet.' }, 400);
           const pm = ppPrice(item, site.settings, true);
           if (!pm) return json({ error: 'The price of this PDF is not set yet. Please write to me on WhatsApp.' }, 400);
           const many = await env.DB.prepare("SELECT COUNT(*) AS n FROM pdforders WHERE email = ? AND status = 'awaiting'").bind(email).first();
           if (many && many.n >= 3) return json({ error: 'You already have 3 orders waiting for payment. Please pay one or write to me on WhatsApp.' }, 429);
           const AL = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-          const ref = (method === 'crypto' ? 'CRY-' : 'BNK-') + Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => AL[b % AL.length]).join('');
+          const ref = (method === 'crypto' ? 'CRY-' : method === 'bank' ? 'BNK-' : 'PAY-') + Array.from(crypto.getRandomValues(new Uint8Array(6)), (b) => AL[b % AL.length]).join('');
           await env.DB.prepare("INSERT INTO pdforders (id, work_id, work_title, size, paper, email, name, amount, currency, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, '', 'awaiting', ?)")
             .bind(ref, wid, str(wk.title, 100), str(item.name, 60), paper, email, str(body.name, 60).trim(), pm.label.slice(0, 40), Date.now()).run();
           try { const to = String(ADM || env.ADMIN_EMAIL || '').trim(); if (to && mailReady(env)) await sendMails(env, [{ to, subject: 'PDF order waiting for payment: ' + ref, text: ref + ' - ' + (wk.title || '') + ' / ' + item.name + ' - ' + pm.label + ' (' + method + ') - ' + email + '\nWhen the money arrives, open Edit my site > PDF sales and press Approve.', html: '<p>' + escH(ref) + ' - ' + escH(wk.title || '') + ' / ' + escH(item.name) + ' - ' + escH(pm.label) + ' (' + method + ') - ' + escH(email) + '</p><p>When the money arrives, open Edit my site &gt; PDF sales and press Approve.</p>' }]); } catch (e) {}
-          return json({ manual: true, method, ref, amount: pm.label, wallets: method === 'crypto' ? wl.slice(0, 8).map((x) => ({ coin: x.coin, network: x.network || '', addr: x.addr })) : [], banks: method === 'bank' ? bl.slice(0, 6).map((x) => ({ bank: x.bank, holder: x.holder || '', iban: x.iban, swift: x.swift || '', note: x.note || '' })) : [] });
+          return json({ manual: true, method, ref, amount: pm.label, wallets: method === 'crypto' ? wl.slice(0, 8).map((x) => ({ coin: x.coin, network: x.network || '', addr: x.addr })) : [], banks: method === 'bank' ? bl.slice(0, 6).map((x) => ({ bank: x.bank, holder: x.holder || '', iban: x.iban, swift: x.swift || '', note: x.note || '' })) : [], payLink: method === 'online' ? payLink : '', payLabel: method === 'online' ? String((site.settings || {}).payLabel || 'Pay online').slice(0, 30) : '' });
         }
         const pr = ppPrice(item, site.settings);
         if (!pr) return json({ error: 'The price of this PDF is not set for card or PayPal yet. Please choose another way or write to me on WhatsApp.' }, 400);
