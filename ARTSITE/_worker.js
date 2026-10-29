@@ -1506,12 +1506,14 @@ const app = {
         const rins = await env.DB.prepare('INSERT INTO requests (name, contact, kind, size, budget, idea, ref, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
           .bind(name, contact, str(body.kind, 40), str(body.size, 60), str(body.budget, 60), idea, str(body.ref, 300), Date.now()).run();
         for (const p of pics) await env.DB.prepare('INSERT INTO reqimgs (req_id, data) VALUES (?, ?)').bind(rins.meta.last_row_id, p.slice(23)).run();
-        try {
-          const arow = await env.DB.prepare("SELECT v FROM content WHERE k = 'site'").first();
-          const ast = arow && arow.v ? (JSON.parse(arow.v).settings || {}) : {};
-          const rf = (idea.match(/\b(?:DRW|ORD|ORDER)-[A-Z0-9]{3,10}\b/) || [''])[0];
-          await arSend(env, req, ast, { name, kind: str(body.kind, 40), ref: rf, wl: /^WAITING LIST/.test(idea) }, contact);
-        } catch (e) { /* the automatic reply is optional */ }
+        if (str(body.kind, 40) === 'Draw me') {
+          try {
+            const arow = await env.DB.prepare("SELECT v FROM content WHERE k = 'site'").first();
+            const ast = arow && arow.v ? (JSON.parse(arow.v).settings || {}) : {};
+            const rf = (idea.match(/\b(?:DRW|ORD|ORDER)-[A-Z0-9]{3,10}\b/) || [''])[0];
+            await arSend(env, req, ast, { name, kind: str(body.kind, 40), ref: rf, wl: /^WAITING LIST/.test(idea) }, contact);
+          } catch (e) { /* the automatic reply is optional */ }
+        }
         if (str(body.kind, 40) === 'Draw me' && !/^WAITING LIST/.test(idea)) {
           try {
             const crow = await env.DB.prepare("SELECT v FROM content WHERE k = 'site'").first();

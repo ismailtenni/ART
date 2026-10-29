@@ -1880,7 +1880,7 @@ function init(){
   }
   function renderReqsTab(){
     box.appendChild(sub('Automatic reply'));
-    box.appendChild(note1('When someone sends a Draw me request or an order, they get a thank-you message at once. If they wrote an email address, they get it by email (needs the Email tab to be set up). If they are logged in, it also appears in their Messages on your site. Write your own text below, or leave the boxes empty to use the standard text. You can use {name}, {kind}, {when} and {ref} (their name, the type of request, your answer time and their reference). Press Save and publish after any change.'));
+    box.appendChild(note1('When someone sends a Draw me request (a hand-drawn commission), they get a thank-you message at once. It does NOT send for a regular Buy now order or a PDF purchase — those have their own separate thank-you message (PDF sales tab). If they wrote an email address, they get it by email (needs the Email tab to be set up). If they are logged in, it also appears in their Messages on your site. Write your own text below, or leave the boxes empty to use the standard text. You can use {name}, {kind}, {when} and {ref} (their name, the type of request, your answer time and their reference). Press Save and publish after any change.'));
     var ao=h('input',{type:'checkbox'});ao.checked=data.settings.arOn!=='no';ao.addEventListener('change',function(){data.settings.arOn=ao.checked?'':'no'});
     box.appendChild(h('label',{style:'display:flex;gap:10px;align-items:center;margin:14px 0;font-size:16px'},[ao,'Send an automatic reply']));
     box.appendChild(field1(data.settings,'arWhen','When will you answer? (shown as {when})','within 48 hours'));
@@ -2272,7 +2272,13 @@ if(vb&&img){
     return null;
   }
   var sizes=[],fb=[30,50,70,90],nfb=0;
-  (WCx.prints||[]).forEach(function(p){if(p&&p.name){var c=cmOf(p.name);if(!c){c=fb[Math.min(nfb,3)];nfb++}sizes.push({n:p.name,p:p.price||'',dim:dimOf(p.name),cm:Math.min(Math.max(c,8),150)})}});
+  var pdfList=(WCx.pdfs||[]).filter(function(p){return p&&p.name&&p.price});
+  var usePdf=!!pdfList.length;
+  if(usePdf){
+    pdfList.forEach(function(p){var c=cmOf(p.size||p.name);if(!c){c=fb[Math.min(nfb,3)];nfb++}sizes.push({n:p.name,p:p.price||'',dim:dimOf(p.size||p.name),cm:Math.min(Math.max(c,8),150),obj:p})});
+  }else{
+    (WCx.prints||[]).forEach(function(p){if(p&&p.name){var c=cmOf(p.name);if(!c){c=fb[Math.min(nfb,3)];nfb++}sizes.push({n:p.name,p:p.price||'',dim:dimOf(p.name),cm:Math.min(Math.max(c,8),150)})}});
+  }
   var noPrints=!sizes.length;
   if(noPrints)sizes=[{n:'S',p:'',dim:'30 cm',cm:30},{n:'M',p:'',dim:'50 cm',cm:50},{n:'L',p:'',dim:'70 cm',cm:70}];
   var ri=0,si=Math.floor((sizes.length-1)/2),R=4/3,on=false;
@@ -2379,9 +2385,15 @@ if(vb&&img){
     var a2=d.createElement('span');a2.className='pr';
     if(s.p)a2.textContent=s.p;else{a2.className='';a2.textContent=t2('wl_ask','Price: ask me')}
     line.appendChild(a2);info.appendChild(line);
-    var a=d.createElement('a');a.className='mx-btn';a.target='_blank';a.rel='noopener noreferrer';
-    a.href='https://wa.me/212651543275?text='+encodeURIComponent('Hi! I want a print'+(title?' of "'+title+'"':'')+' in size '+s.n+(s.p?' ('+s.p+')':'')+'.');
-    a.textContent=t2('wl_buy','Buy now');info.appendChild(a);
+    if(usePdf&&s.obj&&wk&&wk.pdf==='yes'){
+      var a3=d.createElement('button');a3.type='button';a3.className='mx-btn';a3.textContent=t2('wl_buy','Buy now');
+      a3.addEventListener('click',function(){if(window.__pdfBuy)window.__pdfBuy(wk,s.obj)});
+      info.appendChild(a3);
+    }else if(!usePdf){
+      var a=d.createElement('a');a.className='mx-btn';a.target='_blank';a.rel='noopener noreferrer';
+      a.href='https://wa.me/212651543275?text='+encodeURIComponent('Hi! I want a print'+(title?' of "'+title+'"':'')+' in size '+s.n+(s.p?' ('+s.p+')':'')+'.');
+      a.textContent=t2('wl_buy','Buy now');info.appendChild(a);
+    }
     if(!s.p&&d.getElementById('ed-btn')){
       var hb=d.createElement('button');hb.type='button';hb.className='mx-btn v';hb.textContent='✎ Set the price for '+s.n+' (only you see this)';
       hb.addEventListener('click',function(){
@@ -2874,8 +2886,10 @@ function buyBlock(by,wk){
     var pay=safeHttps(wk.pay)||def;if(pay&&wk.price)wb.setAttribute('data-pay',pay);row.appendChild(wb);
     box.appendChild(row);
   }
+  var pdfs=(C.pdfs||[]).filter(function(x){return x&&x.name&&x.price});
+  var sellsPdf=(wk.pdf==='yes'&&pdfs.length>0);
   var pr=(C.prints||[]).filter(function(x){return x&&x.name});
-  if(pr.length){
+  if(pr.length&&!sellsPdf){
     box.appendChild(el('div',{style:'margin-top:26px;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:#5cbcff','data-z':'by_prints',text:T('by_prints')}));
     box.appendChild(el('div',{style:'margin-top:6px;font-size:13px;color:#9fb0c8','data-z':'by_tap',text:T('by_tap')}));
     pr.forEach(function(x,pi){
@@ -2887,8 +2901,7 @@ function buyBlock(by,wk){
       box.appendChild(r);
     });
   }
-  var pdfs=(C.pdfs||[]).filter(function(x){return x&&x.name&&x.price});
-  if(wk.pdf==='yes'&&pdfs.length){
+  if(sellsPdf){
     box.appendChild(el('div',{style:'margin-top:30px;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:#5cbcff',text:PD('h')}));
     box.appendChild(el('div',{style:'margin-top:6px;font-size:13px;color:#9fb0c8;line-height:1.5',text:PD('p')}));
     pdfs.forEach(function(x){
@@ -2954,6 +2967,7 @@ function pdfBuy(wk,x){
   if(bc)bc.addEventListener('click',function(){start('crypto',bc)});
   if(bb)bb.addEventListener('click',function(){start('bank',bb)});
 }
+window.__pdfBuy=pdfBuy;
 function renderRating(){
   var all=(C.reviews||[]).concat(w.__cr||[]).filter(function(r){return +r.stars>0});
   var top=d.getElementById('top'),old=d.getElementById('rate-strip');if(old)old.remove();
