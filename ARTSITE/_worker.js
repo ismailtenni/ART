@@ -1841,6 +1841,8 @@ const app = {
           ev.push({ type: 'wait', who: T(r.email, 80), text: 'Waiting list: ' + T(r.product, 60), at: r.created_at });
         for (const r of await q('SELECT name, stars, text, created_at FROM client_reviews ORDER BY created_at DESC LIMIT 10'))
           ev.push({ type: 'review', who: T(r.name, 60), text: T(r.stars + ' stars · ' + r.text, 140), at: r.created_at, tab: 'rev' });
+        for (const r of await q('SELECT name, work_title, stars, text, photo, created_at FROM proofsub ORDER BY created_at DESC LIMIT 20'))
+          ev.push({ type: 'proof', who: T(r.name, 60) || 'A buyer', text: T('On "' + (r.work_title || 'an artwork') + '": ' + (r.stars ? r.stars + ' stars' : '') + (r.text ? ' · ' + r.text : (r.photo ? ' · sent a photo' : '')), 140), at: r.created_at, tab: 'works' });
         ev.sort((a, b) => b.at - a.at);
         const items = ev.slice(0, 60);
         return json({ seen, unread: items.filter((x) => x.at > seen).length, items });
