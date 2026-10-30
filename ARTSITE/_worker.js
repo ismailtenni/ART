@@ -269,6 +269,7 @@ const SCH = {
   about: { portrait: 'img', t1: 's700', t2: 's700', t3: 's700', p1: 'img', p2: 'img', p3: 'img', poster: 'img', vurl: 's300' },
   settings: { arOn: 's3', arSubject: 's100', arText: 's1200', arWhen: 's40', tySubject: 's100', tyText: 's1200', saleOn: 's3', salePct: 's6', saleLabel: 's60', saleEnd: 's10', saleNoP: 's3', saleNoS: 's3', saleNoA: 's3', saleNoG: 's3', curDef: 's20', curSize: 's6', curOff: 's3', coOff: 's3', coAddr: 's3', payDefault: 'url', payLabel: 's30', noRooms: 's3', ghUser: 's40', ghRepo: 's60', apkUrl: 'url', exeUrl: 'url', secChk: 's40', giftOn: 's3', giftTitle: 's60', giftText: 's200', giftImg: 'img', giftCode: 's30', gateAll: 's3' },
   buyers: { photo: 'img', name: 's40', place: 's40', size: 's30', text: 's200', toast: 's3' },
+  proof: { photo: 'img', name: 's40', place: 's40', stars: 'n', text: 's300' },
   rooms: { name: 's40', img: 'img', x: 'n', y: 'n', cm: 'n' },
   posts: { title: 's100', text: 's6000', image: 'img', date: 's10' },
   draw: { slots: 's4', slotsWhen: 's40', slotsAuto: 's3', on: 's3', title: 's80', text: 's500', img1: 'img', img2: 'img', img3: 'img', extra: 's20', days: 's40', cur: 's6', rates: 's200', origAdd: 's20', copyAdd: 's20' },
@@ -305,7 +306,7 @@ function cleanContent(b) {
     return { id, series: str(w.series, 40), title: str(w.title, 100), meta: str(w.meta, 100), desc: str(w.desc, 2000),
       ratio: RATIOS.includes(w.ratio) ? w.ratio : '3 / 4', status: str(w.status, 40), cover: w.cover,
       price: str(w.price, 40).trim(), sale: str(w.sale, 6).trim(), pdf: w.pdf === 'yes' ? 'yes' : '', pay: (() => { const u = str(w.pay, 300).trim(); return /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : ''; })(),
-      shots: cleanShots(w.shots, 30), process: cleanShots(w.process, 30) };
+      shots: cleanShots(w.shots, 30), process: cleanShots(w.process, 30), proof: cleanList(w.proof, SCH.proof, 60, ['photo', 'text']) };
   }).filter(Boolean);
   const photos = (Array.isArray(b.photos) ? b.photos : []).slice(0, 200).filter(okUrl);
   const films = (Array.isArray(b.films) ? b.films : []).slice(0, 40).map(cleanFilm).filter(Boolean);

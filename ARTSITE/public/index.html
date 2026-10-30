@@ -1211,6 +1211,10 @@ function init(){
     o.shots=o.shots||[];o.process=o.process||[];
     f.appendChild(picList(o.shots,'Detail pictures (zoom in on parts of the artwork)',1800,true));
     f.appendChild(picList(o.process,'Process pictures (how you drew it)',1600,true));
+    f.appendChild(sub('Buyers of this artwork'));
+    f.appendChild(note1('When someone buys this artwork (a print, a copy or a PDF), you can show them off here: a photo of it on their wall, their rating and what they said. It appears on this artwork\'s own page, under the Buy button — real proof that people buy and love it. Add as many as you want; if you add a lot, they are shown a handful at a time with page numbers (1, 2, 3 ...) so the page does not get too long.'));
+    o.proof=o.proof||[];
+    f.appendChild(listEd(o.proof,[{k:'photo',l:'Photo (the artwork on their wall, or a photo they sent)',t:'img',max:1400},{k:'name',l:'First name (optional)',p:'Sara'},{k:'place',l:'City or country (optional)',p:'Paris'},{k:'stars',l:'Rating (1 to 5, optional)',p:'5'},{k:'text',l:'What they said (optional)',p:'It looks amazing in my living room.',t:'area'}],'+ Add a buyer',function(){return {photo:'',name:'',place:'',stars:'5',text:''}}));
     var bar=h('div',{style:'display:flex;gap:12px;margin-top:30px;flex-wrap:wrap'},[
       h('button',{type:'button',style:BTNG,text:'Done',on:{click:function(){
         if(!o.cover){say('Please choose a main picture first.');return}
@@ -2910,6 +2914,39 @@ function buyBlock(by,wk){
       var pb=el('button',{type:'button','class':'mx-btn v',text:PD('buy')});pb.addEventListener('click',function(){pdfBuy(wk,x)});
       r.appendChild(pb);box.appendChild(r);
     });
+  }
+  var proof=(wk.proof||[]).filter(function(x){return x&&(x.photo||x.text)});
+  if(proof.length){
+    var PPT={en:{h:'Buyers of this artwork',p:'Photos and feedback from people who already bought it.',pg:'Page'},fr:{h:'Acheteurs de cette œuvre',p:'Photos et avis de personnes qui l’ont déjà achetée.',pg:'Page'},ar:{h:'مشترو هذا العمل',p:'صور وآراء ممن اشتروه بالفعل.',pg:'الصفحة'}};
+    var ppl=root.getAttribute('lang')||'en',PP=PPT[ppl]||PPT.en;
+    box.appendChild(el('div',{style:'margin-top:30px;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:#5cbcff',text:PP.h}));
+    box.appendChild(el('div',{style:'margin-top:6px;font-size:13px;color:#9fb0c8;line-height:1.5',text:PP.p}));
+    var pfGrid=el('div',{style:'display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:14px'});
+    var pfPg=el('div',{style:'display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;align-items:center'});
+    box.appendChild(pfGrid);box.appendChild(pfPg);
+    var PFSIZE=6,pfPage=0,pfTot=Math.max(1,Math.ceil(proof.length/PFSIZE));
+    function starsEl(n){var s=Math.min(5,Math.max(0,parseInt(n,10)||0));var e=el('div',{style:'color:#ffd98a;font-size:14px;letter-spacing:2px'});e.textContent=(s?'★'.repeat(s)+'☆'.repeat(5-s):'');return e}
+    function pfDraw(){
+      pfGrid.innerHTML='';
+      proof.slice(pfPage*PFSIZE,pfPage*PFSIZE+PFSIZE).forEach(function(x){
+        var card=el('div',{style:'padding:14px;border:1px solid rgba(190,170,255,.3);border-radius:14px;background:rgba(20,26,66,.4);display:flex;flex-direction:column;gap:8px'});
+        if(x.photo)card.appendChild(el('img',{src:x.photo,alt:'',loading:'lazy',decoding:'async',style:'width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:10px;background:#07091a'}));
+        if(x.stars)card.appendChild(starsEl(x.stars));
+        if(x.text)card.appendChild(el('div',{style:'font-size:14px;color:#e8eefc;line-height:1.5',text:'“'+x.text+'”'}));
+        var who=[x.name,x.place].filter(Boolean).join(', ');
+        if(who)card.appendChild(el('div',{style:'font-size:12.5px;color:#9fb0c8',text:'— '+who}));
+        pfGrid.appendChild(card);
+      });
+      pfPg.innerHTML='';
+      if(pfTot>1){
+        for(var i=0;i<pfTot;i++){(function(i){
+          var pb=el('button',{type:'button',style:'min-width:36px;padding:8px 12px;border-radius:10px;border:1px solid rgba(190,170,255,.4);background:'+(i===pfPage?'rgba(120,90,230,.5)':'rgba(10,14,40,.7)')+';color:#fff;cursor:pointer;font:inherit',text:String(i+1)});
+          pb.addEventListener('click',function(){pfPage=i;pfDraw()});
+          pfPg.appendChild(pb);
+        })(i)}
+      }
+    }
+    pfDraw();
   }
   if(box.childNodes.length)by.appendChild(box);
 }
