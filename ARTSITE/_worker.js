@@ -231,6 +231,7 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS client_reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, stars INTEGER NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL, approved INTEGER NOT NULL DEFAULT 0)',
   'CREATE TABLE IF NOT EXISTS waitlist (product TEXT NOT NULL, email TEXT NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (product, email))',
   'CREATE TABLE IF NOT EXISTS media_chunks (id TEXT NOT NULL, i INTEGER NOT NULL, d TEXT NOT NULL, PRIMARY KEY (id, i))',
+  'CREATE TABLE IF NOT EXISTS proofsub (token TEXT PRIMARY KEY, work_id TEXT NOT NULL, work_title TEXT, photo TEXT, name TEXT, place TEXT, stars INTEGER, text TEXT, created_at INTEGER NOT NULL)',
 ];
 
 // ---------- site content (editable by the owner) ----------
@@ -458,6 +459,45 @@ function gatePage(env, dest) {
     + '</script></body></html>';
   return new Response(html, { status: 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
 }
+// ---- buyer self-service "share your wall photo + feedback" page (linked from the PDF thank-you email / success page) ----
+function reviewPage(opts) {
+  const html = '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+    + '<title>ISMAILTENNI ART</title><style>html,body{margin:0;min-height:100%;background:#04050f;color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}'
+    + 'body{display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}'
+    + '.box{max-width:440px;width:100%;padding:30px 26px;border-radius:20px;border:1px solid rgba(190,170,255,.35);background:rgba(10,14,40,.7);box-shadow:0 20px 60px rgba(0,0,0,.5)}'
+    + 'h1{font-size:19px;margin:0 0 4px;font-weight:600;text-align:center}p.sub{color:#9fb0c8;font-size:13px;line-height:1.5;margin:0 0 20px;text-align:center}'
+    + 'label{display:block;font-size:12px;color:#9fb0c8;letter-spacing:.06em;text-transform:uppercase;margin:14px 0 6px}'
+    + 'input[type=text],textarea{width:100%;box-sizing:border-box;padding:11px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff;font:14px/1.4 inherit}'
+    + 'textarea{min-height:88px;resize:vertical}.stars{display:flex;gap:6px;font-size:28px;cursor:pointer;user-select:none}.stars span{opacity:.3}.stars span.on{opacity:1}'
+    + '.pic{display:flex;align-items:center;gap:12px;margin-top:6px}.pic img{width:56px;height:56px;object-fit:cover;border-radius:10px;display:none}'
+    + '.btn{display:inline-block;width:100%;box-sizing:border-box;margin-top:20px;padding:13px;border-radius:999px;border:0;background:#5b3df5;color:#fff;font-size:15px;font-weight:600;cursor:pointer}'
+    + '.btn:disabled{opacity:.5}.pk{padding:10px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;font-size:13px;cursor:pointer}'
+    + '#err{color:#ffb4b4;font-size:13px;margin-top:10px;display:none}#ok{display:none;text-align:center}#ok h1{margin-bottom:10px}#ok p{color:#9fb0c8;font-size:14px;line-height:1.6}'
+    + 'a.back{color:#9fd0ff;font-size:13px}</style></head><body>'
+    + (opts.error ? '<div class="box" style="text-align:center"><h1>' + escH(opts.error) + '</h1><p class="sub">If you think this is a mistake, write to me on WhatsApp.</p><a class="back" href="/">Back to the site</a></div>'
+    : '<div class="box" id="form-box"><h1>Share your photo &amp; feedback</h1><p class="sub">For <b>' + escH(opts.title) + '</b> &mdash; Ismail may add this to the artwork page.</p>'
+      + '<label>Your photo (optional) &mdash; the artwork on your wall, or any photo you like</label><div class="pic"><button type="button" class="pk" id="pk">+ Add a photo</button><img id="pv"><input type="file" id="fl" accept="image/*" style="display:none"></div>'
+      + '<label>Rating</label><div class="stars" id="st">' + [1, 2, 3, 4, 5].map((n) => '<span data-n="' + n + '">★</span>').join('') + '</div>'
+      + '<label>Your name</label><input type="text" id="nm" maxlength="40" value="' + escH(opts.name || '') + '">'
+      + '<label>City or country (optional)</label><input type="text" id="pl" maxlength="40">'
+      + '<label>What you think (optional)</label><textarea id="tx" maxlength="300" placeholder="It looks amazing on my wall!"></textarea>'
+      + '<div id="err"></div><button class="btn" id="sb">Send</button></div>'
+      + '<div class="box" id="ok"><h1>Thank you! 🎉</h1><p>Your photo and feedback were sent. Ismail will take a look and may add them to the artwork page.</p><p><a class="back" href="/">Back to the site</a></p></div>')
+    + '<script>var TOK=' + JSON.stringify(opts.token || '') + ',ST=5,PH="";'
+    + 'function paintStars(){var s=document.querySelectorAll("#st span");for(var i=0;i<s.length;i++)s[i].className=(i<ST?"on":"")}paintStars();'
+    + 'document.getElementById("st").addEventListener("click",function(e){var n=e.target.getAttribute("data-n");if(n){ST=parseInt(n,10);paintStars()}});'
+    + 'if(document.getElementById("pk"))document.getElementById("pk").addEventListener("click",function(){document.getElementById("fl").click()});'
+    + 'if(document.getElementById("fl"))document.getElementById("fl").addEventListener("change",function(){var f=this.files&&this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){var img=new Image();img.onload=function(){var mx=1200,w=img.width,h=img.height;if(w>h){if(w>mx){h=Math.round(h*mx/w);w=mx}}else{if(h>mx){w=Math.round(w*mx/h);h=mx}}var c=document.createElement("canvas");c.width=w;c.height=h;c.getContext("2d").drawImage(img,0,0,w,h);PH=c.toDataURL("image/jpeg",.82);var pv=document.getElementById("pv");pv.src=PH;pv.style.display="inline-block"};img.src=r.result};r.readAsDataURL(f)});'
+    + 'if(document.getElementById("sb"))document.getElementById("sb").addEventListener("click",function(){var b=this;b.disabled=true;b.textContent="Sending...";var e=document.getElementById("err");e.style.display="none";'
+    + 'var body={t:TOK,name:document.getElementById("nm").value,place:document.getElementById("pl").value,stars:ST,text:document.getElementById("tx").value};'
+    + 'if(PH){body.mime="image/jpeg";body.data=PH.split(",")[1]}'
+    + 'fetch("/api/proof/submit",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)}).then(function(r){return r.json().then(function(j){return {s:r.status,j:j}})}).then(function(res){'
+    + 'if(res.s===200&&res.j&&res.j.ok){document.getElementById("form-box").style.display="none";document.getElementById("ok").style.display="block"}'
+    + 'else{e.textContent=(res.j&&res.j.error)||"Something went wrong. Please try again.";e.style.display="block";b.disabled=false;b.textContent="Send"}'
+    + '}).catch(function(){e.textContent="Could not reach the site. Please try again.";e.style.display="block";b.disabled=false;b.textContent="Send"})});'
+    + '</script></body></html>';
+  return new Response(html, { status: opts.error ? 404 : 200, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+}
 const escH = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 function b64bytes(s) {
   const bin = atob(s); const out = new Uint8Array(bin.length);
@@ -594,7 +634,7 @@ async function pdfOwnerNotify(env, origin, row, tok, what) {
   } catch (e) {}
 }
 // "Thank you for buying" text the owner can edit (settings tySubject / tyText). {name} {item} {amount} {link}
-function thanksBuild(st, row, link) {
+function thanksBuild(st, row, link, reviewLink) {
   st = st || {};
   const item = (row.work_title || 'artwork') + ' (' + row.size + ')';
   const amount = row.amount + (row.currency ? ' ' + row.currency : '');
@@ -604,7 +644,11 @@ function thanksBuild(st, row, link) {
   if (!/\{link\}/.test(st.tyText || defText)) text += '\n\n' + link;
   const subject = fill(st.tySubject || 'Thank you for your purchase, {name}! Your PDF is ready').slice(0, 150);
   const bare = text.replace(link, '').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
-  const html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#111;line-height:1.6;font-size:16px">' + escH(text).replace(link, '<br><a href="' + escH(link) + '" style="display:inline-block;padding:12px 22px;background:#5b3df5;color:#fff;border-radius:999px;text-decoration:none">Download my PDF</a><br>').replace(/\n/g, '<br>') + '</div>';
+  let html = '<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#111;line-height:1.6;font-size:16px">' + escH(text).replace(link, '<br><a href="' + escH(link) + '" style="display:inline-block;padding:12px 22px;background:#5b3df5;color:#fff;border-radius:999px;text-decoration:none">Download my PDF</a><br>').replace(/\n/g, '<br>') + '</div>';
+  if (reviewLink) {
+    text += '\n\nShare a photo of it on your wall and your feedback (optional): ' + reviewLink;
+    html = html.replace('</div>', '<p style="margin-top:14px"><a href="' + escH(reviewLink) + '" style="display:inline-block;padding:10px 20px;background:#eee;color:#333;border-radius:999px;text-decoration:none;font-size:14px">Share a photo &amp; your feedback (optional)</a></p></div>');
+  }
   return { subject, text, html, bare };
 }
 async function siteSettings(env) {
@@ -612,7 +656,7 @@ async function siteSettings(env) {
 }
 async function pdfMail(env, origin, row, tok) {
   const link = origin + '/api/pdf/get?t=' + tok;
-  const m = thanksBuild(await siteSettings(env), row, link);
+  const m = thanksBuild(await siteSettings(env), row, link, origin + '/review?t=' + tok);
   try {
     const u = await env.DB.prepare('SELECT id FROM users WHERE lower(email) = ?').bind(String(row.email).toLowerCase()).first();
     if (u) await env.DB.prepare('INSERT INTO messages (user_id, from_owner, text, created_at, read) VALUES (?, 1, ?, ?, 0)').bind(u.id, m.text.slice(0, 1500), Date.now()).run();
@@ -681,6 +725,15 @@ const app = {
         } catch (e) { /* if the gate check fails, show the site rather than locking everyone out */ }
         return injectContent(env, req, url);
       }
+      if (url.pathname === '/review' && req.method === 'GET') {
+        try {
+          await ensureSchema(env);
+          const t = String(url.searchParams.get('t') || '').replace(/[^a-f0-9]/g, '').slice(0, 64);
+          const row = t.length === 48 ? await env.DB.prepare("SELECT work_id, work_title, name FROM pdforders WHERE token = ? AND status = 'paid'").bind(t).first() : null;
+          if (!row) return reviewPage({ error: 'This link is not valid or has expired.' });
+          return reviewPage({ token: t, title: row.work_title || 'your artwork', name: row.name || '' });
+        } catch (e) { return reviewPage({ error: 'Something went wrong. Please try again.' }); }
+      }
       return env.ASSETS.fetch(req);
     }
     if (!env.DB) return json({ error: 'The database is not connected yet.' }, 503);
@@ -711,6 +764,12 @@ const app = {
         const r = await env.DB.prepare('SELECT name FROM review_links WHERE token = ? AND used = 0').bind(t).first();
         if (!r) return json({ error: 'This review link is not valid or was already used.' }, 404);
         return json({ name: r.name });
+      }
+      if (url.pathname === '/api/admin/proof/pending' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const r = await env.DB.prepare('SELECT token, work_id, work_title, photo, name, place, stars, text, created_at FROM proofsub ORDER BY created_at DESC LIMIT 200').all();
+        return json({ pending: r.results || [] });
       }
       if (url.pathname === '/api/admin/reviews' && req.method === 'GET') {
         const me = await currentUser(env, req);
@@ -857,7 +916,7 @@ const app = {
         }
         const fresh = await env.DB.prepare('SELECT token FROM pdforders WHERE id = ?').bind(oid).first();
         const tkx = thanksBuild(await siteSettings(env), row, '').bare.split(/\n\n/).slice(0, 2).join('\n\n').replace(/[^\n.!?]{0,40}:\s*$/, '').trim();
-        return pdfPage('Thank you! Payment received', '<p style="color:#b7c4dc;white-space:pre-line">' + escH(tkx.slice(0, 600)) + '</p><p style="color:#b7c4dc">Your PDF (' + escH(row.size) + ') is ready.' + (row.email.indexOf('@') > -1 ? (mailReady(env) ? ' I also sent the link to <b>' + escH(row.email) + '</b>.' : '') : ' I will also send it to your WhatsApp.') + '</p><p><a href="/api/pdf/get?t=' + escH((fresh && fresh.token) || '') + '" style="display:inline-block;padding:14px 26px;background:#5b3df5;color:#fff;border-radius:999px;text-decoration:none">Download my PDF</a></p>');
+        return pdfPage('Thank you! Payment received', '<p style="color:#b7c4dc;white-space:pre-line">' + escH(tkx.slice(0, 600)) + '</p><p style="color:#b7c4dc">Your PDF (' + escH(row.size) + ') is ready.' + (row.email.indexOf('@') > -1 ? (mailReady(env) ? ' I also sent the link to <b>' + escH(row.email) + '</b>.' : '') : ' I will also send it to your WhatsApp.') + '</p><p><a href="/api/pdf/get?t=' + escH((fresh && fresh.token) || '') + '" style="display:inline-block;padding:14px 26px;background:#5b3df5;color:#fff;border-radius:999px;text-decoration:none">Download my PDF</a></p><p><a href="/review?t=' + escH((fresh && fresh.token) || '') + '" style="display:inline-block;padding:11px 22px;background:transparent;border:1px solid rgba(255,255,255,.3);color:#e4ecff;border-radius:999px;text-decoration:none;font-size:14px">Share a photo &amp; your feedback (optional)</a></p>');
       }
       if (url.pathname === '/api/pdf/get' && req.method === 'GET') {
         const t = String(url.searchParams.get('t') || '').replace(/[^a-f0-9]/g, '').slice(0, 64);
@@ -1414,6 +1473,44 @@ const app = {
         else await env.DB.prepare('DELETE FROM creplies WHERE id = ? AND user_id = ?').bind(Number(body.id) || 0, me.id).run();
         return json({ ok: true });
       }
+      if (url.pathname === '/api/proof/submit' && req.method === 'POST') {
+        const ip = req.headers.get('cf-connecting-ip') || 'x';
+        if (await tooMany(env, 'proof:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
+        await note(env, 'proof:' + ip);
+        const t = String(body.t || '').replace(/[^a-f0-9]/g, '').slice(0, 64);
+        const row = t.length === 48 ? await env.DB.prepare("SELECT work_id, work_title FROM pdforders WHERE token = ? AND status = 'paid'").bind(t).first() : null;
+        if (!row) return json({ error: 'This link is not valid or has expired.' }, 404);
+        const name = str(body.name, 40).trim(), place = str(body.place, 40).trim(), text = str(body.text, 300).trim();
+        const stars = Math.min(5, Math.max(1, parseInt(body.stars, 10) || 5));
+        if (badText(name + ' ' + place + ' ' + text, BADX)) return json({ error: BAD_MSG }, 400);
+        let photo = '';
+        const mime = String(body.mime || ''), data = String(body.data || '');
+        if (data) {
+          if (!MIMES[mime] || !/^[A-Za-z0-9+/=]+$/.test(data) || data.length < 100 || data.length > 1700000)
+            return json({ error: 'That picture is too big or not a photo. Try a smaller one.' }, 400);
+          const id = Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, '0')).join('');
+          const SZ = 48000, parts = [];
+          for (let i = 0; i < data.length; i += SZ) parts.push(data.slice(i, i + SZ));
+          const st = [env.DB.prepare('INSERT INTO media (id, mime, n, created_at) VALUES (?, ?, ?, ?)').bind(id, mime, parts.length, Date.now())];
+          parts.forEach((p, i) => st.push(env.DB.prepare('INSERT INTO media_chunks (id, i, d) VALUES (?, ?, ?)').bind(id, i, p)));
+          await env.DB.batch(st);
+          photo = '/api/media/' + id;
+        } else {
+          const prev = await env.DB.prepare('SELECT photo FROM proofsub WHERE token = ?').bind(t).first();
+          if (prev && prev.photo) photo = prev.photo;
+        }
+        if (!photo && !text) return json({ error: 'Please add a photo or write a few words.' }, 400);
+        await env.DB.prepare('INSERT INTO proofsub (token, work_id, work_title, photo, name, place, stars, text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(token) DO UPDATE SET photo = excluded.photo, name = excluded.name, place = excluded.place, stars = excluded.stars, text = excluded.text, created_at = excluded.created_at')
+          .bind(t, row.work_id, row.work_title || '', photo, name, place, stars, text, Date.now()).run();
+        try {
+          const to = String(ADM || env.ADMIN_EMAIL || '').trim();
+          if (to && mailReady(env)) {
+            const m = 'A buyer added a photo and feedback for "' + (row.work_title || 'an artwork') + '".\nOpen Edit my site -> that artwork -> Buyers of this artwork to review and add it.';
+            await sendMails(env, [{ to, subject: '⭐ New buyer feedback: ' + (row.work_title || ''), text: m, html: '<p>' + escH(m).replace(/\n/g, '<br>') + '</p>' }]);
+          }
+        } catch (e) {}
+        return json({ ok: true });
+      }
       if (url.pathname === '/api/review') {
         const ip = req.headers.get('cf-connecting-ip') || 'x';
         if (await tooMany(env, 'rev:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
@@ -1816,6 +1913,29 @@ const app = {
         await env.DB.batch([env.DB.prepare('DELETE FROM reqimgs WHERE req_id = ?').bind(Number(body.id) || 0), env.DB.prepare('DELETE FROM requests WHERE id = ?').bind(Number(body.id) || 0)]);
         return json({ ok: true });
       }
+      if (url.pathname === '/api/admin/proof/approve') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const t = str(body.token, 64).trim();
+        const sub = t ? await env.DB.prepare('SELECT * FROM proofsub WHERE token = ?').bind(t).first() : null;
+        if (!sub) return json({ error: 'That feedback was already handled.' }, 404);
+        const row = await env.DB.prepare("SELECT v FROM content WHERE k = 'site'").first();
+        const site = row && row.v ? JSON.parse(row.v) : null;
+        const w = site && Array.isArray(site.works) ? site.works.find((x) => x && x.id === sub.work_id) : null;
+        if (!site || !w) return json({ error: 'That artwork no longer exists.' }, 404);
+        const entry = cleanRow({ photo: sub.photo, name: sub.name, place: sub.place, stars: sub.stars, text: sub.text }, SCH.proof);
+        w.proof = (Array.isArray(w.proof) ? w.proof : []).concat([entry]).slice(0, 60);
+        await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('site', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at")
+          .bind(JSON.stringify(site), Date.now()).run();
+        await env.DB.prepare('DELETE FROM proofsub WHERE token = ?').bind(t).run();
+        return json({ ok: true, proof: w.proof });
+      }
+      if (url.pathname === '/api/admin/proof/reject') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        await env.DB.prepare('DELETE FROM proofsub WHERE token = ?').bind(str(body.token, 64).trim()).run();
+        return json({ ok: true });
+      }
       if (url.pathname === '/api/admin/upload') {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
@@ -1839,6 +1959,7 @@ const app = {
           .bind(JSON.stringify(clean), Date.now()).run();
         // remove uploaded pictures that are no longer used (keep anything newer than 1 hour)
         const keep = mediaIds(clean);
+        try { const pend = await env.DB.prepare('SELECT photo FROM proofsub').all(); for (const r of pend.results || []) { const m = String(r.photo || '').match(/\/api\/media\/([a-f0-9]{8,32})/); if (m) keep.add(m[1]); } } catch (e) {}
         const all = await env.DB.prepare('SELECT id FROM media WHERE created_at < ?').bind(Date.now() - 3600 * 1000).all();
         const gone = (all.results || []).map((r) => r.id).filter((x) => !keep.has(x));
         for (const g of gone.slice(0, 40)) {

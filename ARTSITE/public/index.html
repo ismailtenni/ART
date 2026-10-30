@@ -975,7 +975,7 @@ function init(){
   data.imgs=JSON.parse(JSON.stringify((O&&O.imgs)||{}));data.rooms=JSON.parse(JSON.stringify((O&&O.rooms)||[]));if(w.C){w.C.layout=(w.C.layout&&typeof w.C.layout==='object')?w.C.layout:{};w.C.layout.order=w.C.layout.order||[];w.C.layout.hidden=w.C.layout.hidden||[];data.layout=w.C.layout}else data.layout={order:[],hidden:[]};
   data.posts=JSON.parse(JSON.stringify((O&&O.posts)||[]));
   ['spotlight','ba','about','settings','challenge','draw','asst'].forEach(function(k){data[k]=JSON.parse(JSON.stringify((O&&O[k])||{}))});
-  data.orders=[];var ordersLoaded=false,reqList=null,pdfSt=null,pdfFiles={},pdfOrders=[],aiSt=null;
+  data.orders=[];var ordersLoaded=false,reqList=null,pdfSt=null,pdfFiles={},pdfOrders=[],aiSt=null,proofPending=null;
   var tab='works',editing=null,cur=null,busy=0,msg='';
   var btn=h('button',{id:'ed-btn',type:'button',style:'position:fixed;left:18px;bottom:82px;z-index:950;'+BTN2+';box-shadow:0 8px 26px rgba(70,50,200,.55)',text:'✎ Edit my site'});
   var box=h('div',{id:'ed',role:'dialog','aria-modal':'true',style:'display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:2500;overflow-y:auto;background:#04050f;color:#fff;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:18px clamp(14px,3vw,40px) 90px;box-sizing:border-box'});
@@ -1212,7 +1212,34 @@ function init(){
     f.appendChild(picList(o.shots,'Detail pictures (zoom in on parts of the artwork)',1800,true));
     f.appendChild(picList(o.process,'Process pictures (how you drew it)',1600,true));
     f.appendChild(sub('Buyers of this artwork'));
-    f.appendChild(note1('When someone buys this artwork (a print, a copy or a PDF), you can show them off here: a photo of it on their wall, their rating and what they said. It appears on this artwork\'s own page, under the Buy button — real proof that people buy and love it. Add as many as you want; if you add a lot, they are shown a handful at a time with page numbers (1, 2, 3 ...) so the page does not get too long.'));
+    f.appendChild(note1('When someone buys this artwork (a print, a copy or a PDF), you can show them off here: a photo of it on their wall, their rating and what they said. It appears on this artwork\'s own page, under the Buy button — real proof that people buy and love it. Add as many as you want; if you add a lot, they are shown a handful at a time with page numbers (1, 2, 3 ...) so the page does not get too long. Buyers of a PDF also get a link after they pay to send their own photo and feedback — those show up below, waiting for your OK.'));
+    if(proofPending===null){
+      proofPending=[];
+      get('/api/admin/proof/pending').then(function(r){proofPending=r.pending||[];refreshForm()}).catch(function(){proofPending=[]});
+    }
+    var mine=proofPending.filter(function(p){return p.work_id===o.id});
+    if(mine.length){
+      f.appendChild(h('label',{style:LAB,text:'New from buyers — waiting for your OK'}));
+      mine.forEach(function(p){
+        var card=h('div',{style:'display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid rgba(190,170,255,.3);border-radius:12px;margin-bottom:10px;flex-wrap:wrap'});
+        if(p.photo)card.appendChild(h('img',{src:p.photo,style:'width:64px;height:64px;object-fit:cover;border-radius:10px;flex:none'}));
+        var info=h('div',{style:'flex:1;min-width:160px'},[
+          h('div',{style:'font-weight:600',text:(p.name||'Someone')+(p.place?' · '+p.place:'')}),
+          h('div',{style:'color:#ffce7a;font-size:14px',text:'★'.repeat(Math.max(0,Math.min(5,p.stars||0)))}),
+          p.text?h('div',{style:'color:#c4ccdd;font-size:14px;margin-top:4px',text:p.text}):null
+        ]);
+        var acts=h('div',{style:'display:flex;gap:8px;flex:none'},[
+          h('button',{type:'button',style:BTNG,text:'Add it',on:{click:function(){
+            post('/api/admin/proof/approve',{token:p.token}).then(function(r){o.proof=r.proof||o.proof;proofPending=proofPending.filter(function(x){return x.token!==p.token});say('Added to this artwork.');refreshForm()}).catch(function(e){say('Problem: '+e.message)})
+          }}}),
+          h('button',{type:'button',style:BTNR,text:'Dismiss',on:{click:function(){
+            post('/api/admin/proof/reject',{token:p.token}).then(function(){proofPending=proofPending.filter(function(x){return x.token!==p.token});refreshForm()}).catch(function(e){say('Problem: '+e.message)})
+          }}})
+        ]);
+        card.appendChild(info);card.appendChild(acts);
+        f.appendChild(card);
+      });
+    }
     o.proof=o.proof||[];
     f.appendChild(listEd(o.proof,[{k:'photo',l:'Photo (the artwork on their wall, or a photo they sent)',t:'img',max:1400},{k:'name',l:'First name (optional)',p:'Sara'},{k:'place',l:'City or country (optional)',p:'Paris'},{k:'stars',l:'Rating (1 to 5, optional)',p:'5'},{k:'text',l:'What they said (optional)',p:'It looks amazing in my living room.',t:'area'}],'+ Add a buyer',function(){return {photo:'',name:'',place:'',stars:'5',text:''}}));
     var bar=h('div',{style:'display:flex;gap:12px;margin-top:30px;flex-wrap:wrap'},[
