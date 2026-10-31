@@ -49,8 +49,11 @@ function jpegOk(d, max) {
 function isAdmin(env, me) { const a = ADM || env.ADMIN_EMAIL; return !!(me && a && String(a).trim().toLowerCase() === me.email); }
 
 let ADM = null;
+let EVT = 'auto'; // site event running for everyone (halloween, christmas ...)
+const EVENTS = ['halloween', 'christmas', 'newyear', 'ramadan', 'eid', 'valentine', 'summer', 'easter', 'mothersday', 'blackfriday', 'morocco', 'winter', 'spring', 'autumn'];
+let GID = ''; // Google client ID (Sign in with Google)
 let ATK = false; // attack mode (set from the admin panel)
-const PAUSED = /^\/api\/(signup|comment|reply|msg\/send|subscribe|waitlist|commission|ask|forgot|review|proof\/submit)$/;
+const PAUSED = /^\/api\/(site-review|signup|comment|reply|msg\/send|subscribe|waitlist|commission|ask|forgot|review|proof\/submit)$/;
 const BOT_OK = /googlebot|bingbot|duckduckbot|applebot|yandex|baiduspider|facebookexternalhit|twitterbot|whatsapp|telegrambot|linkedinbot|slackbot|discordbot|pinterest|embedly|skypeuripreview/i;
 
 // ---------- chat safety: no links, sexual content, slurs or insults ----------
@@ -232,6 +235,7 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS visitors (day TEXT NOT NULL, h TEXT NOT NULL, PRIMARY KEY (day, h))',
   'CREATE TABLE IF NOT EXISTS review_links (token TEXT PRIMARY KEY, name TEXT NOT NULL, created_at INTEGER NOT NULL, used INTEGER NOT NULL DEFAULT 0)',
   'CREATE TABLE IF NOT EXISTS client_reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, stars INTEGER NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL, approved INTEGER NOT NULL DEFAULT 0)',
+  'CREATE TABLE IF NOT EXISTS site_reviews (user_id INTEGER PRIMARY KEY, stars INTEGER NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, reply TEXT, reply_at INTEGER)',
   'CREATE TABLE IF NOT EXISTS waitlist (product TEXT NOT NULL, email TEXT NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (product, email))',
   'CREATE TABLE IF NOT EXISTS media_chunks (id TEXT NOT NULL, i INTEGER NOT NULL, d TEXT NOT NULL, PRIMARY KEY (id, i))',
   'CREATE TABLE IF NOT EXISTS proofsub (token TEXT PRIMARY KEY, work_id TEXT NOT NULL, work_title TEXT, photo TEXT, name TEXT, place TEXT, stars INTEGER, text TEXT, created_at INTEGER NOT NULL)',
@@ -748,7 +752,7 @@ const app = {
       const p0 = url.pathname, ip0 = req.headers.get('cf-connecting-ip') || 'x';
       if (req.method === 'POST' && Number(req.headers.get('content-length') || 0) > 14000000) return json({ error: 'That request is too big.' }, 413);
       const noRL = p0.startsWith('/api/media/') || p0.startsWith('/api/avatar/') || p0.startsWith('/api/msgimg/') || p0.startsWith('/api/reqimg/');
-      const strict = /^\/api\/(login|login2fa|signup|forgot|reset|gate\/verify|ask|pdf\/start|commission|subscribe|waitlist|comment|reply|msg\/send|proof\/submit|review|account\/.+)$/.test(p0);
+      const strict = /^\/api\/(login|login2fa|signup|forgot|reset|gate\/verify|ask|pdf\/start|commission|subscribe|waitlist|comment|reply|msg\/send|proof\/submit|review|site-review|google|account\/.+)$/.test(p0);
       try {
         if (strict && env.RL_AUTH && !(await env.RL_AUTH.limit({ key: ip0 + ':' + p0.split('/')[2] })).success) return json({ error: 'Too many tries. Please wait a minute.' }, 429);
         if (!noRL && env.RL_API && !(await env.RL_API.limit({ key: ip0 })).success) return json({ error: 'Too many requests. Please slow down and try again in a minute.' }, 429);
@@ -757,13 +761,13 @@ const app = {
     if (!env.DB) return json({ error: 'The database is not connected yet.' }, 503);
     try {
       await ensureSchema(env);
-      try { const ar = await env.DB.prepare("SELECT v FROM content WHERE k = 'adminEmail'").first(); ADM = ar && ar.v ? String(ar.v) : null; const mr = await env.DB.prepare("SELECT v FROM content WHERE k = 'mail'").first(); MC = mr && mr.v ? JSON.parse(mr.v) : {}; const bx = await env.DB.prepare("SELECT v FROM content WHERE k = 'badWords'").first(); BADX = bx && bx.v ? String(bx.v) : ''; const tr2 = await env.DB.prepare("SELECT v FROM content WHERE k = 'ts'").first(); TSC = tr2 && tr2.v ? JSON.parse(tr2.v) : {}; const ak2 = await env.DB.prepare("SELECT v FROM content WHERE k = 'attack'").first(); ATK = !!(ak2 && ak2.v === '1'); } catch (e) {}
+      try { const ar = await env.DB.prepare("SELECT v FROM content WHERE k = 'adminEmail'").first(); ADM = ar && ar.v ? String(ar.v) : null; const mr = await env.DB.prepare("SELECT v FROM content WHERE k = 'mail'").first(); MC = mr && mr.v ? JSON.parse(mr.v) : {}; const bx = await env.DB.prepare("SELECT v FROM content WHERE k = 'badWords'").first(); BADX = bx && bx.v ? String(bx.v) : ''; const tr2 = await env.DB.prepare("SELECT v FROM content WHERE k = 'ts'").first(); TSC = tr2 && tr2.v ? JSON.parse(tr2.v) : {}; const ak2 = await env.DB.prepare("SELECT v FROM content WHERE k = 'attack'").first(); ATK = !!(ak2 && ak2.v === '1'); const gg = await env.DB.prepare("SELECT v FROM content WHERE k = 'google'").first(); GID = gg && gg.v ? String(gg.v) : ''; const ee = await env.DB.prepare("SELECT v FROM content WHERE k = 'event'").first(); EVT = ee && (EVENTS.includes(String(ee.v)) || ee.v === 'off') ? String(ee.v) : 'auto'; } catch (e) {}
       if (url.pathname === '/api/me' && req.method === 'GET') {
         const u = await currentUser(env, req);
         const t2 = u ? await env.DB.prepare('SELECT enabled FROM user_2fa WHERE user_id = ?').bind(u.id).first() : null;
         const av = u ? await env.DB.prepare('SELECT at FROM avatars WHERE user_id = ?').bind(u.id).first() : null;
         const un = u ? await env.DB.prepare('SELECT COUNT(*) AS n FROM messages WHERE user_id = ? AND from_owner = 1 AND read = 0').bind(u.id).first() : null;
-        return json({ user: u ? { name: u.name, email: u.email, id: u.id } : null, avatar: av ? av.at : 0, unread: un ? un.n : 0, admin: isAdmin(env, u), twofa: !!(t2 && t2.enabled), canReset: mailReady(env), ts: tsReady(env) ? tscfg(env).site : '' });
+        return json({ user: u ? { name: u.name, email: u.email, id: u.id } : null, avatar: av ? av.at : 0, unread: un ? un.n : 0, admin: isAdmin(env, u), twofa: !!(t2 && t2.enabled), canReset: mailReady(env), ts: tsReady(env) ? tscfg(env).site : '', gid: GID, ev: EVT });
       }
       if (url.pathname === '/api/counts' && req.method === 'GET') {
         const l = await env.DB.prepare('SELECT work_id AS id, COUNT(*) AS n FROM likes GROUP BY work_id').all();
@@ -772,6 +776,18 @@ const app = {
         (l.results || []).forEach((r) => { out[r.id] = { likes: r.n, comments: 0 }; });
         (c.results || []).forEach((r) => { (out[r.id] = out[r.id] || { likes: 0, comments: 0 }).comments = r.n; });
         return json(out);
+      }
+      if (url.pathname === '/api/site-reviews' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        const rows = (await env.DB.prepare('SELECT r.user_id AS uid, r.stars, r.text, r.created_at, r.updated_at, r.reply, r.reply_at, u.name, (SELECT at FROM avatars a WHERE a.user_id = r.user_id) AS av FROM site_reviews r JOIN users u ON u.id = r.user_id ORDER BY r.created_at DESC LIMIT 100').all()).results || [];
+        const g = (await env.DB.prepare('SELECT COUNT(*) AS n, AVG(stars) AS a, SUM(stars = 1) AS s1, SUM(stars = 2) AS s2, SUM(stars = 3) AS s3, SUM(stars = 4) AS s4, SUM(stars = 5) AS s5 FROM site_reviews').first()) || {};
+        const mav = me ? await env.DB.prepare('SELECT at FROM avatars WHERE user_id = ?').bind(me.id).first() : null;
+        const mine = me ? rows.find((r) => r.uid === me.id) || (await env.DB.prepare('SELECT user_id AS uid, stars, text FROM site_reviews WHERE user_id = ?').bind(me.id).first()) : null;
+        return json({
+          n: g.n || 0, avg: g.n ? Math.round(g.a * 10) / 10 : 0, dist: [g.s1 || 0, g.s2 || 0, g.s3 || 0, g.s4 || 0, g.s5 || 0],
+          items: rows.map((r) => ({ id: r.uid, uid: r.uid, name: r.name, stars: r.stars, text: r.text, at: r.created_at, edited: r.updated_at > r.created_at + 60000, av: r.av || 0, reply: r.reply || '', replyAt: r.reply_at || 0, mine: !!(me && me.id === r.uid) })),
+          me: me ? { id: me.id, name: me.name, av: mav ? mav.at : 0, admin: isAdmin(env, me), review: mine ? { stars: mine.stars, text: mine.text } : null } : null,
+        });
       }
       if (url.pathname === '/api/reviews' && req.method === 'GET') {
         const r = await env.DB.prepare('SELECT name, stars, text FROM client_reviews WHERE approved = 1 ORDER BY created_at DESC LIMIT 60').all();
@@ -830,6 +846,16 @@ const app = {
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
         const st = await siteSettings(env);
         return json({ attack: ATK, gate: /^(y|yes|1|true|on)/i.test(String(st.gateAll || '').trim()), ready: tsReady(env), envOff: !!env.GATE_OFF });
+      }
+      if (url.pathname === '/api/admin/event' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        return json({ event: EVT });
+      }
+      if (url.pathname === '/api/admin/google' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        return json({ on: !!GID, id: GID });
       }
       if (url.pathname === '/api/admin/ts' && req.method === 'GET') {
         const me = await currentUser(env, req);
@@ -1133,6 +1159,32 @@ const app = {
         return json({ user: { name: u.name, email: u.email } }, 200, { 'set-cookie': cookie });
       }
 
+      if (url.pathname === '/api/google') {
+        if (!GID) return json({ error: 'Sign in with Google is not turned on.' }, 400);
+        const cred = String(body.credential || '');
+        const fail = () => json({ error: 'Google sign-in failed. Please try again.' }, 401);
+        if (cred.length < 100 || cred.length > 4000) return fail();
+        let g = null;
+        try { const gr = await fetch('https://oauth2.googleapis.com/tokeninfo?id_token=' + encodeURIComponent(cred)); if (gr.ok) g = await gr.json(); } catch (e) {}
+        if (!g || g.aud !== GID || String(g.email_verified) !== 'true' || !/^(https:\/\/)?accounts\.google\.com$/.test(String(g.iss || '')) || Number(g.exp) * 1000 < Date.now()) return fail();
+        const email = String(g.email || '').trim().toLowerCase().slice(0, 120);
+        if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail();
+        let u = await env.DB.prepare('SELECT id, name, email FROM users WHERE email = ?').bind(email).first();
+        if (!u) {
+          if (ATK) return json({ error: 'The site is in protection mode for a little while. Please try again later.' }, 503);
+          let name = String(g.name || '').trim().slice(0, 60) || email.split('@')[0].slice(0, 60);
+          if (badText(name, BADX)) name = email.split('@')[0].slice(0, 60);
+          const salt = crypto.getRandomValues(new Uint8Array(16));
+          const hash = await hashPassword(b64(crypto.getRandomValues(new Uint8Array(32))), salt);
+          const r = await env.DB.prepare('INSERT INTO users (name, email, salt, hash, created_at) VALUES (?, ?, ?, ?, ?)').bind(name, email, b64(salt), hash, Date.now()).run();
+          u = { id: r.meta.last_row_id, name, email };
+        }
+        if (await env.DB.prepare('SELECT 1 AS x FROM bans WHERE user_id = ?').bind(u.id).first()) return json({ error: 'This account has been blocked.' }, 403);
+        const t2 = await env.DB.prepare('SELECT enabled FROM user_2fa WHERE user_id = ?').bind(u.id).first();
+        if (t2 && t2.enabled) return json({ need2fa: true, ticket: await mkTicket(env, u.id) });
+        return json({ user: { name: u.name, email: u.email } }, 200, { 'set-cookie': await startSession(env, u.id) });
+      }
+
       if (url.pathname === '/api/login2fa') {
         const uid = await checkTicket(env, body.ticket);
         if (!uid) return json({ error: 'That step expired. Please log in again.' }, 401);
@@ -1250,6 +1302,27 @@ const app = {
         return json({ error: 'Not found' }, 404);
       }
 
+      if (url.pathname === '/api/admin/event') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const ev = String(body.event || '');
+        if (ev === 'auto') { await env.DB.prepare("DELETE FROM content WHERE k = 'event'").run(); EVT = 'auto'; return json({ ok: true, event: 'auto' }); }
+        if (ev !== 'off' && ev && !EVENTS.includes(ev)) return json({ error: 'Unknown event.' }, 400);
+        if (!ev) { return await (async () => { await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('event', 'off', ?) ON CONFLICT(k) DO UPDATE SET v = 'off', updated_at = excluded.updated_at").bind(Date.now()).run(); EVT = 'off'; return json({ ok: true, event: 'off' }); })(); }
+        await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('event', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at").bind(ev, Date.now()).run();
+        EVT = ev;
+        return json({ ok: true, event: ev });
+      }
+      if (url.pathname === '/api/admin/google') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const id = String(body.id || '').trim().slice(0, 200);
+        if (!id) { await env.DB.prepare("DELETE FROM content WHERE k = 'google'").run(); GID = ''; return json({ ok: true, on: false }); }
+        if (!/^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$/i.test(id)) return json({ error: 'That does not look like a Google client ID. It ends with .apps.googleusercontent.com' }, 400);
+        await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('google', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at").bind(id, Date.now()).run();
+        GID = id;
+        return json({ ok: true, on: true });
+      }
       if (url.pathname === '/api/admin/attack') {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
@@ -1492,6 +1565,35 @@ const app = {
         const r = await env.DB.prepare('INSERT INTO comments (work_id, user_id, text, created_at) VALUES (?, ?, ?, ?)').bind(work, me.id, text, now).run();
         const mav = await env.DB.prepare('SELECT at FROM avatars WHERE user_id = ?').bind(me.id).first();
         return json({ comment: { id: r.meta.last_row_id, name: me.name, text, at: now, mine: true, uid: me.id, av: mav ? mav.at : 0, replies: [] } });
+      }
+      if (url.pathname === '/api/site-review') {
+        const me = await currentUser(env, req);
+        if (!me) return json({ error: 'Please log in to leave a review.' }, 401);
+        const stars = Math.round(Number(body.stars));
+        const text = String(body.text || '').replace(/\s+/g, ' ').trim().slice(0, 600);
+        if (!(stars >= 1 && stars <= 5)) return json({ error: 'Please choose 1 to 5 stars.' }, 400);
+        if (text.length < 5) return json({ error: 'Please write a short comment (at least 5 letters).' }, 400);
+        if (badText(text, BADX)) return json({ error: BAD_MSG }, 400);
+        if (await tooMany(env, 'sreview:' + me.id)) return json({ error: 'Slow down a little, then try again.' }, 429);
+        await note(env, 'sreview:' + me.id);
+        const now = Date.now();
+        await env.DB.prepare('INSERT INTO site_reviews (user_id, stars, text, created_at, updated_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET stars = excluded.stars, text = excluded.text, updated_at = excluded.updated_at').bind(me.id, stars, text, now, now).run();
+        return json({ ok: true });
+      }
+      if (url.pathname === '/api/site-review/delete') {
+        const me = await currentUser(env, req);
+        if (!me) return json({ error: 'Please log in.' }, 401);
+        const uid = isAdmin(env, me) && body.id ? Number(body.id) || 0 : me.id;
+        await env.DB.prepare('DELETE FROM site_reviews WHERE user_id = ?').bind(uid).run();
+        return json({ ok: true });
+      }
+      if (url.pathname === '/api/site-review/reply') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const txt = String(body.text || '').trim().slice(0, 400);
+        if (txt && badText(txt, BADX)) return json({ error: BAD_MSG }, 400);
+        await env.DB.prepare('UPDATE site_reviews SET reply = ?, reply_at = ? WHERE user_id = ?').bind(txt || null, txt ? Date.now() : null, Number(body.id) || 0).run();
+        return json({ ok: true });
       }
       if (url.pathname === '/api/comment/delete') {
         const me = await currentUser(env, req);
@@ -1850,7 +1952,7 @@ const app = {
         if (!u) return json({ error: 'Member not found.' }, 404);
         if (isAdmin(env, { email: String(u.email).toLowerCase() })) return json({ error: 'You cannot do that to the owner account.' }, 400);
         if (url.pathname.endsWith('/delete')) {
-          await env.DB.batch([env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM likes WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM comments WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM user_2fa WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM reset_tokens WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM bans WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM avatars WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM messages WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM msgimgs WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM creplies WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM creplies WHERE comment_id IN (SELECT id FROM comments WHERE user_id = ?)').bind(id), env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id)]);
+          await env.DB.batch([env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM likes WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM comments WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM user_2fa WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM reset_tokens WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM bans WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM avatars WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM messages WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM msgimgs WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM site_reviews WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM creplies WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM creplies WHERE comment_id IN (SELECT id FROM comments WHERE user_id = ?)').bind(id), env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id)]);
           return json({ ok: true });
         }
         if (body.ban === false) await env.DB.prepare('DELETE FROM bans WHERE user_id = ?').bind(id).run();
@@ -1899,6 +2001,8 @@ const app = {
           ev.push({ type: 'wait', who: T(r.email, 80), text: 'Waiting list: ' + T(r.product, 60), at: r.created_at });
         for (const r of await q('SELECT name, stars, text, created_at FROM client_reviews ORDER BY created_at DESC LIMIT 10'))
           ev.push({ type: 'review', who: T(r.name, 60), text: T(r.stars + ' stars · ' + r.text, 140), at: r.created_at, tab: 'rev' });
+        for (const r of await q('SELECT u.name, r.stars, r.text, r.created_at FROM site_reviews r JOIN users u ON u.id = r.user_id ORDER BY r.created_at DESC LIMIT 10'))
+          ev.push({ type: 'review', who: T(r.name, 60), text: T('Site review: ' + r.stars + ' stars · ' + r.text, 140), at: r.created_at });
         for (const r of await q('SELECT name, work_title, stars, text, photo, created_at FROM proofsub ORDER BY created_at DESC LIMIT 20'))
           ev.push({ type: 'proof', who: T(r.name, 60) || 'A buyer', text: T('On "' + (r.work_title || 'an artwork') + '": ' + (r.stars ? r.stars + ' stars' : '') + (r.text ? ' · ' + r.text : (r.photo ? ' · sent a photo' : '')), 140), at: r.created_at, tab: 'works' });
         ev.sort((a, b) => b.at - a.at);
