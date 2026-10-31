@@ -1817,6 +1817,11 @@ const app = {
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
         const sr = await env.DB.prepare("SELECT v FROM content WHERE k = 'notifSeen'").first();
         const seen = Number(sr && sr.v) || 0;
+        const cr0 = await env.DB.prepare("SELECT v FROM content WHERE k = 'notifClear'").first();
+        const clr = Number(cr0 && cr0.v) || 0;
+        const gr0 = await env.DB.prepare("SELECT v FROM content WHERE k = 'notifGone'").first();
+        let goneL = []; try { goneL = JSON.parse((gr0 && gr0.v) || '[]'); } catch (e) {}
+        const goneSet = new Set(goneL);
         const adm = String(ADM || env.ADMIN_EMAIL || '').trim().toLowerCase();
         const q = async (sql, ...a) => { try { return (await env.DB.prepare(sql).bind(...a).all()).results || []; } catch (e) { return []; } };
         const T = (x, n) => String(x == null ? '' : x).slice(0, n);
@@ -1832,7 +1837,7 @@ const app = {
         for (const r of await q('SELECT m.text, m.created_at, u.name FROM messages m JOIN users u ON u.id = m.user_id WHERE m.from_owner = 0 ORDER BY m.created_at DESC LIMIT 20'))
           ev.push({ type: 'message', who: T(r.name, 60), text: T(r.text || '\ud83d\udcf7 Photo', 140), at: r.created_at, tab: 'msg' });
         for (const r of await q("SELECT name, email, work_title, size, amount, currency, status, created_at, paid_at FROM pdforders WHERE status IN ('paid', 'awaiting') ORDER BY COALESCE(paid_at, created_at) DESC LIMIT 20"))
-          ev.push({ type: 'order', who: T(r.name || r.email, 60), text: T((r.status === 'paid' ? '\ud83d\udcb0 PDF sold: ' : '\u23f3 PDF waiting for payment: ') + (r.work_title || '') + ' / ' + r.size + ' \u00b7 ' + r.amount + (r.currency ? ' ' + r.currency : ''), 140), at: r.paid_at || r.created_at, tab: 'pdf' });
+          ev.push({ type: r.status === 'paid' ? 'sale' : 'pending', who: T(r.name || r.email, 60), text: T((r.status === 'paid' ? '\ud83d\udcb0 PDF sold: ' : '\u23f3 PDF waiting for payment: ') + (r.work_title || '') + ' / ' + r.size + ' \u00b7 ' + r.amount + (r.currency ? ' ' + r.currency : ''), 140), at: r.paid_at || r.created_at, tab: 'pdf' });
         for (const r of await q('SELECT name, created_at FROM users ORDER BY created_at DESC LIMIT 15'))
           ev.push({ type: 'member', who: T(r.name, 60), text: 'New member', at: r.created_at });
         for (const r of await q('SELECT email, created_at FROM subscribers ORDER BY created_at DESC LIMIT 15'))
@@ -1844,8 +1849,26 @@ const app = {
         for (const r of await q('SELECT name, work_title, stars, text, photo, created_at FROM proofsub ORDER BY created_at DESC LIMIT 20'))
           ev.push({ type: 'proof', who: T(r.name, 60) || 'A buyer', text: T('On "' + (r.work_title || 'an artwork') + '": ' + (r.stars ? r.stars + ' stars' : '') + (r.text ? ' · ' + r.text : (r.photo ? ' · sent a photo' : '')), 140), at: r.created_at, tab: 'works' });
         ev.sort((a, b) => b.at - a.at);
-        const items = ev.slice(0, 60);
+        ev.forEach((x) => { x.key = x.type + '|' + x.at + '|' + String(x.who || '').slice(0, 30); });
+        const items = ev.filter((x) => x.at > clr && !goneSet.has(x.key)).slice(0, 60);
         return json({ seen, unread: items.filter((x) => x.at > seen).length, items });
+      }
+      if (url.pathname === '/api/admin/notifs/delete') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        if (body.all === true) {
+          await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('notifClear', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at").bind(String(Date.now()), Date.now()).run();
+          await env.DB.prepare("DELETE FROM content WHERE k = 'notifGone'").run();
+          return json({ ok: true });
+        }
+        const key = str(body.key, 120);
+        if (!key) return json({ error: 'Nothing to delete.' }, 400);
+        const gr = await env.DB.prepare("SELECT v FROM content WHERE k = 'notifGone'").first();
+        let list = []; try { list = JSON.parse((gr && gr.v) || '[]'); } catch (e) {}
+        if (!list.includes(key)) list.push(key);
+        list = list.slice(-400);
+        await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('notifGone', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at").bind(JSON.stringify(list), Date.now()).run();
+        return json({ ok: true });
       }
       if (url.pathname === '/api/admin/notifs/seen') {
         const me = await currentUser(env, req);
