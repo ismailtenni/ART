@@ -1287,11 +1287,11 @@ function init(){
     box.appendChild(h('div',{id:'ed-msg',style:'margin-top:12px;min-height:20px;color:#a8d6ff;font-size:14px',text:msg}));
     if(cur){box.appendChild(workForm(cur.o,cur.n));return}
     var tabs=h('div',{style:'display:flex;gap:10px;margin:18px 0;flex-wrap:wrap'});
-    [['works','Artwork'],['photos','Photos'],['films','Videos'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['buyers','Real walls'],['gift','Free gift'],['draw','Draw me'],['msg','Messages'],['mem','Members'],['cur','Mouse cursor'],['sec','Security checklist'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['pdf','PDF sales'],['ask','AI assistant'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
+    [['works','Artwork'],['photos','Photos'],['films','Videos'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['buyers','Real walls'],['gift','Free gift'],['draw','Draw me'],['msg','Messages'],['mem','Members'],['cur','Mouse cursor'],['sec','Security checklist'],['health','Health check'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['pdf','PDF sales'],['ask','AI assistant'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
       tabs.appendChild(h('button',{type:'button',style:(tab===t[0]?BTN2:BTN),text:t[1],on:{click:function(){tab=t[0];render()}}}));
     });
     box.appendChild(tabs);
-    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='buyers')renderBuyersTab();else if(tab==='gift')renderGiftTab();else if(tab==='draw')renderDrawTab();else if(tab==='mem')renderMemTab();else if(tab==='msg')renderMsgTab();else if(tab==='cur')renderCurTab();else if(tab==='sec')renderSecTab();else if(tab==='pdf')renderPdfTab();else if(tab==='ask')renderAskTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
+    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='buyers')renderBuyersTab();else if(tab==='gift')renderGiftTab();else if(tab==='draw')renderDrawTab();else if(tab==='mem')renderMemTab();else if(tab==='msg')renderMsgTab();else if(tab==='cur')renderCurTab();else if(tab==='sec')renderSecTab();else if(tab==='health')renderHealthTab();else if(tab==='pdf')renderPdfTab();else if(tab==='ask')renderAskTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
   }
   function renderWorks(){
     box.appendChild(h('button',{type:'button',style:BTN2,text:'+ Add new artwork',on:{click:function(){editing='new';cur={n:true,o:{id:'',title:'',meta:'',series:'',status:'',ratio:'3 / 4',desc:'',cover:'',shots:[],process:[]}};render()}}}));
@@ -2104,6 +2104,26 @@ function init(){
     box.appendChild(out);
   }
   var stats=null;
+  var healthData=null;
+  function renderHealthTab(){
+    box.appendChild(note1('This checks your site for problems. Green means fine, orange means please look, red means something is broken. Only you can see this.'));
+    var btn=h('button',{type:'button',style:BTNG,text:'Check again',on:{click:function(){healthData=null;render()}}});
+    if(!healthData){
+      box.appendChild(h('p',{style:'color:#9fb0c8',text:'Checking your site ...'}));
+      get('/api/admin/health').then(function(r){healthData=r;render()}).catch(function(e){say('Problem: '+e.message)});return}
+    var cs=healthData.checks||[],bad=cs.filter(function(c){return c.status==='bad'}).length,warn=cs.filter(function(c){return c.status==='warn'}).length;
+    var col={ok:'#5be3a0',warn:'#ffb454',bad:'#ff6b6b'},ico={ok:'\u2713',warn:'!',bad:'\u2715'};
+    box.appendChild(h('div',{style:'font-size:20px;margin:6px 0 14px;color:'+(bad?col.bad:warn?col.warn:col.ok),text:bad?bad+' problem'+(bad>1?'s':'')+' found':warn?'Mostly fine, '+warn+' thing'+(warn>1?'s':'')+' to look at':'Everything looks good'}));
+    var list=h('div',{style:'display:grid;gap:10px;max-width:780px'});
+    cs.forEach(function(c){
+      list.appendChild(h('div',{style:'display:flex;gap:12px;align-items:flex-start;padding:14px;border:1px solid '+col[c.status]+';border-radius:14px;background:rgba(20,26,66,.4)'},[
+        h('div',{style:'flex:none;width:28px;height:28px;border-radius:50%;background:'+col[c.status]+';color:#07102a;font-weight:700;display:flex;align-items:center;justify-content:center',text:ico[c.status]}),
+        h('div',{},[h('div',{style:'font-size:16px',text:c.title}),h('div',{style:'font-size:14px;color:#c4d0e6;line-height:1.5;margin-top:3px',text:c.detail})])]));
+    });
+    box.appendChild(list);
+    box.appendChild(h('p',{style:'color:#9fb0c8;font-size:13px',text:'Checked: '+new Date(healthData.checked).toLocaleString()}));
+    box.appendChild(btn);
+  }
   function renderStatsTab(){
     box.appendChild(note1('Private numbers. Only you can see this. Your own visits are not counted.'));
     if(!stats){box.appendChild(h('p',{style:'color:#9fb0c8',text:'Loading ...'}));
