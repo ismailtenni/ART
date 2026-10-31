@@ -1589,8 +1589,62 @@ function init(){
     box.appendChild(note1('Press Save and publish at the top. Then try the sign-up box on your site with an email to see what members get.'));
   }
   var secAuto=null;
+
+
+  function humanKeyBox(){
+    var wrap=h('div',{style:'margin:0 0 22px;max-width:780px;border-radius:16px;border:1px solid rgba(190,170,255,.4);background:rgba(255,255,255,.04);overflow:hidden'});
+    if(!tsSt){wrap.appendChild(h('p',{style:'padding:16px;color:#9fb0c8',text:'Loading ...'}));get('/api/admin/ts').then(function(r){tsSt=r;render()}).catch(function(e){say('Problem: '+e.message)});return wrap}
+    var ok=!!tsSt.ready;
+    wrap.appendChild(h('div',{style:'padding:12px 16px;background:rgba(120,90,230,.22);display:flex;justify-content:space-between;align-items:center;gap:10px'},[
+      h('span',{style:'letter-spacing:.14em;font-size:14px',text:'\u{1F511} HUMAN CHECK KEY'}),
+      h('span',{style:'font-size:12px;padding:2px 10px;border-radius:999px;background:'+(ok?'rgba(30,140,90,.5)':'rgba(180,60,80,.5)'),text:ok?'CONNECTED':'NOT CONNECTED'})]));
+    var body=h('div',{style:'padding:16px'});
+    body.appendChild(h('p',{style:'margin:0 0 12px;color:#c4d0e6;line-height:1.6;font-size:14px',text:ok?'The human check is working. You can replace the secret key below if you ever make a new one.':'The human check is not connected yet. In Cloudflare open Turnstile, press Add widget (name ART, hostname '+location.hostname+', type Managed), then paste the two keys here.'}));
+    var siteIn=null;
+    if(!ok){siteIn=h('input',{type:'text',placeholder:'Paste the Turnstile SITE key (starts with 0x)',autocomplete:'off',style:INP+';margin-bottom:10px'});body.appendChild(siteIn)}
+    var secIn=h('input',{type:'password',placeholder:'Paste the Turnstile SECRET key (starts with 0x)',autocomplete:'off',style:INP+';flex:1 1 220px'});
+    var er=h('div',{style:'min-height:18px;margin-top:8px;font-size:13px;color:#ffb0b8'});
+    var sv=h('button',{type:'button',style:BTN2,text:'Save'});
+    sv.addEventListener('click',function(){
+      var sec=secIn.value.trim().replace(/[^0-9A-Za-z_-]/g,''),site=ok?(tsSt.site||''):siteIn.value.trim();
+      if(!sec){er.textContent='Paste the secret key first.';return}
+      if(!site){er.textContent='Paste the site key too.';return}
+      sv.disabled=true;sv.textContent='Checking ...';er.textContent='';
+      post('/api/admin/ts',{site:site,secret:sec}).then(function(){say('Human check key saved.');tsSt=null;atkSt=null;render()}).catch(function(e){sv.disabled=false;sv.textContent='Save';er.textContent=e.message})});
+    body.appendChild(h('div',{style:'display:flex;gap:10px;flex-wrap:wrap;align-items:center'},[secIn,sv]));
+    body.appendChild(er);
+    body.appendChild(h('div',{style:'margin-top:4px;color:#8795b2;font-size:12.5px;line-height:1.6',text:'The secret key stays hidden after saving. Never share it with anyone.'}));
+    wrap.appendChild(body);
+    return wrap;
+  }
+  var atkSt=null;
+  function attackBox(){
+    var wrap=h('div',{style:'margin:0 0 26px;max-width:780px;border-radius:16px;border:1px solid rgba(190,170,255,.4);background:rgba(255,255,255,.04);overflow:hidden'});
+    wrap.appendChild(h('div',{style:'padding:12px 16px;background:rgba(120,90,230,.22);letter-spacing:.14em;font-size:14px',text:'\u{1F6E1} ATTACK MODE AND FRONT-DOOR CHECK'}));
+    if(!atkSt){wrap.appendChild(h('p',{style:'padding:16px;color:#9fb0c8',text:'Loading ...'}));get('/api/admin/attack').then(function(r){atkSt=r;render()}).catch(function(e){say('Problem: '+e.message)});return wrap}
+    function section(title,on,text,btnText,btnStyle,fn){
+      var sec=h('div',{style:'padding:16px;border-top:1px solid rgba(190,170,255,.2)'});
+      sec.appendChild(h('div',{style:'font-size:17px;margin-bottom:6px'},[h('b',{text:title+'  '}),h('span',{style:'font-size:13px;padding:2px 10px;border-radius:999px;background:'+(on?'rgba(30,140,90,.5)':'rgba(255,255,255,.12)'),text:on?'ON':'OFF'})]));
+      sec.appendChild(h('p',{style:'margin:6px 0 12px;color:#c4d0e6;line-height:1.6;font-size:14px',text:text}));
+      sec.appendChild(h('button',{type:'button',style:btnStyle+';width:100%;justify-content:center',text:btnText,on:{click:fn}}));
+      wrap.appendChild(sec);
+    }
+    section('ATTACK MODE',atkSt.attack,
+      atkSt.attack?'ON: your site is in protection mode. Sign-ups, comments, messages, replies, the newsletter, waiting list, Draw me forms and the assistant are paused.'+(atkSt.ready?' Every new visitor also sees a short human check.':' (Connect Turnstile in the Email to fans tab to also add the human check.)')+' Buying and downloading PDFs still work. Turn it OFF when the attack is over.':'OFF: normal. Turn this ON if someone is spamming or attacking your site, and OFF again afterwards. It pauses sign-ups, comments, messages and forms, and adds the human check for every new visitor.',
+      atkSt.attack?'TURN ATTACK MODE OFF':'TURN ATTACK MODE ON',atkSt.attack?BTNG:BTNR,
+      function(){if(!atkSt.attack&&!confirm('Turn on attack mode? Sign-ups, comments, messages and forms will be paused until you turn it off.'))return;
+        post('/api/admin/attack',{on:!atkSt.attack}).then(function(r){atkSt.attack=r.attack;say(r.attack?'Attack mode is ON.':'Attack mode is OFF.');render()}).catch(function(e){say('Problem: '+e.message)})});
+    section('FRONT-DOOR CHECK',atkSt.gate,
+      atkSt.gate?'Every new visitor sees a short \"Checking you are human\" page once, then gets in for 12 hours. Google and link previews (WhatsApp, Instagram, Facebook) are let through. You are never blocked when you are logged in as the owner.':'OFF. When ON, every new visitor sees a short \"Checking you are human\" page once, then gets in for 12 hours. Google and link previews are let through.'+(atkSt.ready?'':' First connect the robot box (Turnstile) in the Email to fans tab.'),
+      atkSt.gate?'TURN FRONT-DOOR CHECK OFF':'TURN FRONT-DOOR CHECK ON',BTN2,
+      function(){post('/api/admin/gate',{on:!atkSt.gate}).then(function(r){atkSt.gate=r.gate;if(data.settings){if(r.gate)data.settings.gateAll='yes';else delete data.settings.gateAll}say(r.gate?'Front-door check is ON.':'Front-door check is OFF.');render()}).catch(function(e){say('Problem: '+e.message)})});
+    wrap.appendChild(h('div',{style:'padding:12px 16px;border-top:1px solid rgba(190,170,255,.2);color:#8795b2;font-size:12.5px;line-height:1.6',text:'Locked out? In Cloudflare add a variable GATE_OFF = 1 (Workers, your Worker, Settings, Variables) and deploy again. The human check will switch off.'}));
+    return wrap;
+  }
   function renderSecTab(){
     var S=data.settings;
+    box.appendChild(humanKeyBox());
+    box.appendChild(attackBox());
     if(!secAuto){box.appendChild(h('p',{style:'color:#9fb0c8',text:'Checking your site ...'}));
       Promise.all([get('/api/me'),get('/api/admin/ts').catch(function(){return {}}),get('/api/admin/mail').catch(function(){return {}})]).then(function(a){secAuto={twofa:!!a[0].twofa,bot:!!a[1].ready,mail:!!a[2].ready};render()});return}
     var chk=String(S.secChk||'').split(',').filter(Boolean);
@@ -1860,7 +1914,7 @@ function init(){
     var pd=pdfOrders.filter(function(o){return o.status!=='awaiting'});
     if(!pd.length)box.appendChild(h('p',{style:'color:#9fb0c8',text:'No PDF sold yet.'}));
     pd.forEach(function(o){var row=h('div',{style:'margin:8px 0;padding:10px 14px;border:1px solid rgba(190,170,255,.25);border-radius:12px;max-width:780px;font-size:14px;line-height:1.6'},[h('b',{text:(o.work_title||'')+' - '+o.size}),h('span',{text:'  ·  '+o.amount+(o.currency?' '+o.currency:'')+'  ·  '+(o.name?o.name+', ':'')+o.email+'  ·  '+new Date(o.paid_at).toLocaleString()+'  ·  downloads: '+o.downloads})]);
-      row.appendChild(h('div',{style:'margin-top:6px'},[h('button',{type:'button',style:BTN,text:'Send the link again',on:{click:function(){post('/api/admin/pdforder',{id:o.id,action:'resend'}).then(function(r){if(r.wa){try{window.open(r.wa,'_blank','noopener')}catch(e){}say('WhatsApp is opening with the link ready to send.')}else say(r.sent?'Link sent again to '+o.email+'.':'Email not available. Send this link yourself: '+r.link)}).catch(function(e){say('Problem: '+e.message)})}}})]));box.appendChild(row)});
+      row.appendChild(h('div',{style:'margin-top:6px;display:flex;gap:8px;flex-wrap:wrap'},[h('button',{type:'button',style:BTN,text:'Send the link again',on:{click:function(){post('/api/admin/pdforder',{id:o.id,action:'resend'}).then(function(r){if(r.wa){try{window.open(r.wa,'_blank','noopener')}catch(e){}say('WhatsApp is opening with the link ready to send.')}else say(r.sent?'Link sent again to '+o.email+'.':'Email not available. Send this link yourself: '+r.link)}).catch(function(e){say('Problem: '+e.message)})}}}),h('button',{type:'button',style:BTNR,text:'Delete',on:{click:function(){if(!confirm('Delete this sale from the list? The buyer\'s download link will stop working.'))return;post('/api/admin/pdforder',{id:o.id,action:'delete'}).then(function(){pdfOrders=pdfOrders.filter(function(z){return z!==o});render()}).catch(function(e){say('Problem: '+e.message)})}}})]));box.appendChild(row)});
   }
   function renderAskTab(){
     var S=data.asst;
@@ -2034,14 +2088,7 @@ function init(){
     row.appendChild(b1);
     if(tsSt.ready){var b2=h('button',{style:BTN2,text:'Turn off'});b2.onclick=function(){fetch('/api/admin/ts',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({off:true})}).then(function(r){return r.json()}).then(function(){say('Turned off.');tsSt=null;render()})};row.appendChild(b2)}
     wrap.appendChild(row);
-    if(tsSt.ready){
-      var S=data.settings;
-      wrap.appendChild(h('div',{style:'margin-top:18px;padding-top:16px;border-top:1px solid rgba(190,170,255,0.25)'},[
-        h('div',{style:'font-size:16px;color:#fff;margin-bottom:4px',text:'Show the "verifying you are human" screen on EVERY visit'}),
-        note1('If you turn this ON, everyone sees a short "Checking you\'re human" screen before your site loads, every single time they open it — even people who already visited. It stops bots cold, but it also blocks Google and other search engines from reading your art pages, so people may find your site less easily in search. Most sites leave this OFF and only use the box above (Log in / Sign up). Turn it ON only if you are getting real bot trouble.'),
-        field1(S,'gateAll','Show it on every visit? (type yes)','no')
-      ]));
-    }
+    if(tsSt.ready)wrap.appendChild(note1('The Attack mode and Front-door check buttons are in the Security checklist tab.'));
     return wrap;
   }
   var mailSt=null;
@@ -2070,6 +2117,9 @@ function init(){
       get('/api/admin/subscribers').then(function(r){subs=r;render()}).catch(function(e){say('Problem: '+e.message)});return}
     var list=(subs.subscribers||[]).map(function(x){return x.email});
     box.appendChild(h('div',{style:'font-size:30px;margin:10px 0',text:list.length+' subscriber'+(list.length===1?'':'s')}));
+    var sl=h('div',{style:'max-width:780px;max-height:220px;overflow:auto;margin:6px 0 14px'});
+    (subs.subscribers||[]).forEach(function(x){sl.appendChild(h('div',{style:'display:flex;justify-content:space-between;gap:10px;align-items:center;padding:6px 10px;border-bottom:1px solid rgba(190,170,255,.15);font-size:14px;word-break:break-all'},[h('span',{text:x.email}),h('button',{type:'button',style:BTNR,text:'Delete',on:{click:function(){if(!confirm('Delete '+x.email+'?'))return;post('/api/admin/subscriber/delete',{email:x.email}).then(function(){subs.subscribers=subs.subscribers.filter(function(z){return z!==x});render()}).catch(function(e){say('Problem: '+e.message)})}}})]))});
+    box.appendChild(sl);
     var m=mailState;
     box.appendChild(h('div',{style:'display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px'},[
       h('button',{type:'button',style:BTN,text:'Fill: my newest artwork',on:{click:function(){var x=data.works[data.works.length-1];if(!x){say('Add an artwork first.');return}m.subject='New artwork: '+(x.title||'');m.body='I just finished a new artwork: '+(x.title||'')+'.\n\nSee it here: '+location.origin+'/#gallery';render()}}}),
@@ -3030,7 +3080,7 @@ function pdfBuy(wk,x){
   }
   function start(method,btn){
     er.textContent='';var m=em.value.trim();if(!(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)||(/^\+?[0-9 ()\-.]{8,22}$/.test(m)&&m.replace(/[^0-9]/g,'').length>=8))){er.textContent=PD('bad');return}
-    var old=btn.textContent;btn.disabled=true;btn.textContent=PD('wait');
+    var old=btn.textContent;btn.disabled=true;btn.textContent=method==='paypal'?PD('wait'):({fr:'Veuillez patienter ...',ar:'يرجى الانتظار ...'}[d.documentElement.getAttribute('lang')]||'Please wait ...');
     fetch('/api/pdf/start',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({work:wk.id,size:x.name,email:m,name:nm.value.trim(),method:method})})
       .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})}).then(function(r){
         if(r.ok&&r.j.manual){showManual(r.j);return}
