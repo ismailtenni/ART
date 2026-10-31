@@ -49,6 +49,9 @@ function jpegOk(d, max) {
 function isAdmin(env, me) { const a = ADM || env.ADMIN_EMAIL; return !!(me && a && String(a).trim().toLowerCase() === me.email); }
 
 let ADM = null;
+let ATK = false; // attack mode (set from the admin panel)
+const PAUSED = /^\/api\/(signup|comment|reply|msg\/send|subscribe|waitlist|commission|ask|forgot|review|proof\/submit)$/;
+const BOT_OK = /googlebot|bingbot|duckduckbot|applebot|yandex|baiduspider|facebookexternalhit|twitterbot|whatsapp|telegrambot|linkedinbot|slackbot|discordbot|pinterest|embedly|skypeuripreview/i;
 
 // ---------- chat safety: no links, sexual content, slurs or insults ----------
 const BAD_LONG = ['fuck', 'shit', 'porn', 'pussy', 'whore', 'slut', 'nigg', 'faggot', 'bitch', 'cunt', 'blowjob', 'handjob', 'asshole', 'dickhead', 'motherfuck', 'retard', 'tranny', 'putain', 'salope', 'enculer', 'connard', 'connasse', 'batard', 'kahba', 'nikmok', 'sharmout', 'شرموط', 'قحبة', 'عاهرة', 'منيوك', 'كس امك', 'كسمك', 'ابن الكلب', 'ابن القحبة'];
@@ -427,7 +430,7 @@ async function gateSig(env, p) {
   const sig = await crypto.subtle.sign('HMAC', await secretKey(env), enc.encode('gate:' + p));
   return [...new Uint8Array(sig)].slice(0, 16).map((x) => x.toString(16).padStart(2, '0')).join('');
 }
-async function mkGateProof(env) { const p = String(Date.now() + 20000); return p + '.' + (await gateSig(env, p)); }
+async function mkGateProof(env, ttl) { const p = String(Date.now() + (ttl || 20000)); return p + '.' + (await gateSig(env, p)); }
 async function checkGateProof(env, t) {
   const m = String(t || '').match(/^(\d+)\.([0-9a-f]+)$/);
   if (!m || Number(m[1]) < Date.now()) return false;
@@ -717,9 +720,13 @@ const app = {
           const sset = srow && srow.v ? (JSON.parse(srow.v).settings || {}) : {};
           const tr = await env.DB.prepare("SELECT v FROM content WHERE k = 'ts'").first();
           TSC = tr && tr.v ? JSON.parse(tr.v) : {};
-          if (/^(y|yes|1|true|on)/i.test(String(sset.gateAll || '').trim()) && tsReady(env)) {
+          const akr = await env.DB.prepare("SELECT v FROM content WHERE k = 'attack'").first();
+          const atkOn = !!(akr && akr.v === '1');
+          if ((atkOn || /^(y|yes|1|true|on)/i.test(String(sset.gateAll || '').trim())) && tsReady(env) && !env.GATE_OFF && !BOT_OK.test(req.headers.get('user-agent') || '')) {
             const gk = url.searchParams.get('gk');
-            const passed = gk ? await checkGateProof(env, gk) : false;
+            const gc = getCookie(req, 'gate');
+            let passed = (gc ? await checkGateProof(env, gc) : false) || (gk ? await checkGateProof(env, gk) : false);
+            if (!passed) { const me0 = await currentUser(env, req); if (isAdmin(env, me0)) passed = true; }
             if (!passed) { const d = url.pathname + url.search.replace(/[?&]gk=[^&]*/, '').replace(/^&/, '?'); return gatePage(env, d || '/'); }
           }
         } catch (e) { /* if the gate check fails, show the site rather than locking everyone out */ }
@@ -736,10 +743,21 @@ const app = {
       }
       return env.ASSETS.fetch(req);
     }
+    // ---- firewall: size cap + rate limits (Cloudflare Rate Limiting bindings RL_API / RL_AUTH; skipped if not configured) ----
+    {
+      const p0 = url.pathname, ip0 = req.headers.get('cf-connecting-ip') || 'x';
+      if (req.method === 'POST' && Number(req.headers.get('content-length') || 0) > 14000000) return json({ error: 'That request is too big.' }, 413);
+      const noRL = p0.startsWith('/api/media/') || p0.startsWith('/api/avatar/') || p0.startsWith('/api/msgimg/') || p0.startsWith('/api/reqimg/');
+      const strict = /^\/api\/(login|login2fa|signup|forgot|reset|gate\/verify|ask|pdf\/start|commission|subscribe|waitlist|comment|reply|msg\/send|proof\/submit|review|account\/.+)$/.test(p0);
+      try {
+        if (strict && env.RL_AUTH && !(await env.RL_AUTH.limit({ key: ip0 + ':' + p0.split('/')[2] })).success) return json({ error: 'Too many tries. Please wait a minute.' }, 429);
+        if (!noRL && env.RL_API && !(await env.RL_API.limit({ key: ip0 })).success) return json({ error: 'Too many requests. Please slow down and try again in a minute.' }, 429);
+      } catch (e) { /* if the limiter is unavailable, let the request through */ }
+    }
     if (!env.DB) return json({ error: 'The database is not connected yet.' }, 503);
     try {
       await ensureSchema(env);
-      try { const ar = await env.DB.prepare("SELECT v FROM content WHERE k = 'adminEmail'").first(); ADM = ar && ar.v ? String(ar.v) : null; const mr = await env.DB.prepare("SELECT v FROM content WHERE k = 'mail'").first(); MC = mr && mr.v ? JSON.parse(mr.v) : {}; const bx = await env.DB.prepare("SELECT v FROM content WHERE k = 'badWords'").first(); BADX = bx && bx.v ? String(bx.v) : ''; const tr2 = await env.DB.prepare("SELECT v FROM content WHERE k = 'ts'").first(); TSC = tr2 && tr2.v ? JSON.parse(tr2.v) : {}; } catch (e) {}
+      try { const ar = await env.DB.prepare("SELECT v FROM content WHERE k = 'adminEmail'").first(); ADM = ar && ar.v ? String(ar.v) : null; const mr = await env.DB.prepare("SELECT v FROM content WHERE k = 'mail'").first(); MC = mr && mr.v ? JSON.parse(mr.v) : {}; const bx = await env.DB.prepare("SELECT v FROM content WHERE k = 'badWords'").first(); BADX = bx && bx.v ? String(bx.v) : ''; const tr2 = await env.DB.prepare("SELECT v FROM content WHERE k = 'ts'").first(); TSC = tr2 && tr2.v ? JSON.parse(tr2.v) : {}; const ak2 = await env.DB.prepare("SELECT v FROM content WHERE k = 'attack'").first(); ATK = !!(ak2 && ak2.v === '1'); } catch (e) {}
       if (url.pathname === '/api/me' && req.method === 'GET') {
         const u = await currentUser(env, req);
         const t2 = u ? await env.DB.prepare('SELECT enabled FROM user_2fa WHERE user_id = ?').bind(u.id).first() : null;
@@ -806,6 +824,12 @@ const app = {
         if (ok) await env.DB.prepare('DELETE FROM subscribers WHERE email = ?').bind(em).run();
         const msg = ok ? 'You are unsubscribed. / Vous \u00eates d\u00e9sinscrit(e). / \u062a\u0645 \u0625\u0644\u063a\u0627\u0621 \u0627\u0634\u062a\u0631\u0627\u0643\u0643.' : 'This link is not valid.';
         return new Response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ISMAILTENNI ART</title><body style="background:#070b1c;color:#fff;font-family:system-ui,sans-serif;display:flex;min-height:90vh;align-items:center;justify-content:center;text-align:center;padding:20px"><div><h1 style="font-weight:400;letter-spacing:.12em">ISMAILTENNI ART</h1><p>' + escH(msg) + '</p><p><a style="color:#a8d6ff" href="/">Back to the site</a></p></div>', { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+      }
+      if (url.pathname === '/api/admin/attack' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const st = await siteSettings(env);
+        return json({ attack: ATK, gate: /^(y|yes|1|true|on)/i.test(String(st.gateAll || '').trim()), ready: tsReady(env), envOff: !!env.GATE_OFF });
       }
       if (url.pathname === '/api/admin/ts' && req.method === 'GET') {
         const me = await currentUser(env, req);
@@ -1057,6 +1081,7 @@ const app = {
       const origin = req.headers.get('origin');
       if (origin && new URL(origin).host !== url.host) return json({ error: 'Not allowed' }, 403);
       const body = await req.json().catch(() => ({}));
+      if (ATK && PAUSED.test(url.pathname)) return json({ error: 'The site is in protection mode for a little while. Please try again later.' }, 503);
 
       if (['/api/signup', '/api/login', '/api/forgot', '/api/reset'].includes(url.pathname)) {
         const tbad = await tsCheck(env, req, body.ts);
@@ -1069,7 +1094,7 @@ const app = {
         await note(env, 'gate:' + ip);
         const err = await tsCheck(env, req, body.ts);
         if (err) return json({ error: err }, 400);
-        return json({ ok: true, gk: await mkGateProof(env) });
+        return json({ ok: true, gk: await mkGateProof(env) }, 200, { 'set-cookie': 'gate=' + (await mkGateProof(env, 12 * 3600 * 1000)) + '; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=43200' });
       }
 
       if (url.pathname === '/api/signup') {
@@ -1225,12 +1250,39 @@ const app = {
         return json({ error: 'Not found' }, 404);
       }
 
+      if (url.pathname === '/api/admin/attack') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        if (body.on === true) await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('attack', '1', ?) ON CONFLICT(k) DO UPDATE SET v = '1', updated_at = excluded.updated_at").bind(Date.now()).run();
+        else await env.DB.prepare("DELETE FROM content WHERE k = 'attack'").run();
+        ATK = body.on === true;
+        return json({ ok: true, attack: ATK, ready: tsReady(env) });
+      }
+      if (url.pathname === '/api/admin/gate') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const on = body.on === true;
+        if (on && !tsReady(env)) return json({ error: 'Connect the robot box (Turnstile) first. Open the Email to fans tab.' }, 400);
+        const row = await env.DB.prepare("SELECT v FROM content WHERE k = 'site'").first();
+        if (!row || !row.v) return json({ error: 'Press Save and publish once first, then try again.' }, 400);
+        const site = JSON.parse(row.v); site.settings = site.settings || {};
+        if (on) site.settings.gateAll = 'yes'; else delete site.settings.gateAll;
+        await env.DB.prepare("UPDATE content SET v = ?, updated_at = ? WHERE k = 'site'").bind(JSON.stringify(site), Date.now()).run();
+        return json({ ok: true, gate: on });
+      }
       if (url.pathname === '/api/admin/ts') {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
         if (body.off === true) { TSC = {}; await env.DB.prepare("DELETE FROM content WHERE k = 'ts'").run(); return json({ ok: true, ready: tsReady(env) }); }
         const site = String(body.site || '').trim().slice(0, 100), secret = String(body.secret || '').trim().slice(0, 200);
         if (!/^[0-9A-Za-z_-]{8,100}$/.test(site) || !(secret || TSC.secret)) return json({ error: 'Paste both the Site key and the Secret key.' }, 400);
+        if (secret) {
+          try {
+            const vr = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: new URLSearchParams({ secret, response: 'check' }) });
+            const vj = await vr.json();
+            if (vj && Array.isArray(vj['error-codes']) && vj['error-codes'].includes('invalid-input-secret')) return json({ error: 'Cloudflare did not accept that secret key. Copy it again from the Turnstile page.' }, 400);
+          } catch (e) { /* if Cloudflare cannot be reached, accept the key */ }
+        }
         const next = { site, secret: secret || TSC.secret };
         await env.DB.prepare("INSERT OR REPLACE INTO content (k, v, updated_at) VALUES ('ts', ?, ?)").bind(JSON.stringify(next), Date.now()).run();
         TSC = next;
@@ -1295,6 +1347,7 @@ const app = {
         const id = str(body.id, 40).replace(/[^A-Za-z0-9_-]/g, ''), act = String(body.action || '');
         const row = await env.DB.prepare('SELECT * FROM pdforders WHERE id = ?').bind(id).first();
         if (!row) return json({ error: 'Order not found.' }, 404);
+        if (act === 'delete') { await env.DB.prepare('DELETE FROM pdforders WHERE id = ?').bind(id).run(); return json({ ok: true }); }
         if (act === 'reject') { if (row.status !== 'awaiting') return json({ error: 'Only waiting orders can be removed.' }, 400); await env.DB.prepare('DELETE FROM pdforders WHERE id = ?').bind(id).run(); return json({ ok: true }); }
         let tok = row.token;
         if (act === 'approve') {
@@ -1852,6 +1905,12 @@ const app = {
         ev.forEach((x) => { x.key = x.type + '|' + x.at + '|' + String(x.who || '').slice(0, 30); });
         const items = ev.filter((x) => x.at > clr && !goneSet.has(x.key)).slice(0, 60);
         return json({ seen, unread: items.filter((x) => x.at > seen).length, items });
+      }
+      if (url.pathname === '/api/admin/subscriber/delete') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        await env.DB.prepare('DELETE FROM subscribers WHERE email = ?').bind(str(body.email, 120).trim().toLowerCase()).run();
+        return json({ ok: true });
       }
       if (url.pathname === '/api/admin/notifs/delete') {
         const me = await currentUser(env, req);
