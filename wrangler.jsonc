@@ -5,7 +5,7 @@
   "assets": {
     "directory": "./ARTSITE/public",
     "binding": "ASSETS",
-    "run_worker_first": ["/", "/index.html", "/robots.txt", "/sitemap.xml", "/review", "/api/*"],
+    "run_worker_first": ["/", "/index.html", "/robots.txt", "/sitemap.xml", "/api/*"],
     "not_found_handling": "404-page"
   },
   "d1_databases": [
@@ -17,6 +17,11 @@
   // BIG PDF FILES (up to 100 MB): create an R2 bucket named art-pdf-files in Cloudflare,
   // then remove the // at the start of the next line and deploy again.
   // "r2_buckets": [{ "binding": "PDFS", "bucket_name": "art-pdf-files" }],
+  // FIREWALL: rate limits (needs Wrangler 4.36 or newer). RL_API = normal visitors, RL_AUTH = login, sign-up, forms, payments.
+  "ratelimits": [
+    { "name": "RL_API", "namespace_id": "1001", "simple": { "limit": 150, "period": 60 } },
+    { "name": "RL_AUTH", "namespace_id": "1002", "simple": { "limit": 10, "period": 60 } }
+  ],
   "vars": {
     "ADMIN_EMAIL": "ismailtenni6@gmail.com"
   }
