@@ -4089,8 +4089,8 @@ var d=document,w=window;
 fetch('/api/me',{credentials:'same-origin'}).then(function(r){return r.json()}).then(function(j){if(j&&j.admin)go()}).catch(function(){});
 function el(t,a,k){var e=d.createElement(t);for(var x in (a||{})){if(x==='text')e.textContent=a[x];else if(x==='style')e.style.cssText=a[x];else e.setAttribute(x,a[x])}(k||[]).forEach(function(c){e.appendChild(c)});return e}
 function go(){
-  var IC={message:'✉',order:'🛍',request:'✉',comment:'💬',like:'❤',member:'👤',sub:'📧',wait:'⏳',review:'⭐',proof:'⭐'};
-  var LB={message:'New message',order:'New order / Draw me request',request:'New request',comment:'New comment',like:'New like',member:'New member',sub:'Newsletter sign-up',wait:'Waiting list',review:'New review',proof:'Buyer feedback'};
+  var IC={sale:'💰',pending:'⏳',message:'✉',order:'🛍',request:'✉',comment:'💬',like:'❤',member:'👤',sub:'📧',wait:'⏳',review:'⭐',proof:'⭐'};
+  var LB={sale:'Artwork sold',pending:'Waiting for payment',message:'New message',order:'New Draw me request',request:'New request',comment:'New comment',like:'New like',member:'New member',sub:'Newsletter sign-up',wait:'Waiting list',review:'New review',proof:'Buyer feedback'};
   var t0=d.title,known=0,first=true;
   var SN={bell:'Bell',chime:'Chime',pop:'Pop',ding:'Ding',soft:'Soft',alert:'Alert'};
   var SP={on:true,snd:'bell',vol:.6,vib:true,show:false};
@@ -4125,7 +4125,9 @@ function go(){
     var top=el('div',{style:'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px'},[el('b',{style:'font-size:16px',text:'Notifications'})]);
     var mk=el('button',{type:'button',style:'background:none;border:1px solid rgba(190,170,255,.4);color:#d6ccff;border-radius:10px;padding:5px 10px;cursor:pointer',text:'Mark all read'});
     mk.addEventListener('click',function(){fetch('/api/admin/notifs/seen',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:'{}'}).then(function(){data.seen=Date.now();data.unread=0;draw()})});
-    top.appendChild(mk);pn.appendChild(top);
+    var da=el('button',{type:'button',style:'background:none;border:1px solid rgba(255,120,140,.5);color:#ffb4c0;border-radius:10px;padding:5px 10px;cursor:pointer',text:'Delete all'});
+    da.addEventListener('click',function(){if(!data.items.length||!confirm('Delete all notifications?'))return;fetch('/api/admin/notifs/delete',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({all:true})}).then(function(r){if(!r.ok)return;data.items=[];data.unread=0;draw()}).catch(function(){})});
+    top.appendChild(el('div',{style:'display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end'},[mk,da]));pn.appendChild(top);
     var sb=el('button',{type:'button',style:'width:100%;text-align:left;margin:0 0 8px;background:rgba(255,255,255,.06);border:1px solid rgba(190,170,255,.35);color:#d6ccff;border-radius:12px;padding:9px 12px;cursor:pointer;font:inherit',text:(SP.show?'\u25be ':'\u25b8 ')+'\ud83d\udd0a Sound and vibration'+(SP.on?'  \u00b7  ON':'  \u00b7  OFF')});
     sb.addEventListener('click',function(){SP.show=!SP.show;draw()});pn.appendChild(sb);
     if(SP.show){
@@ -4155,6 +4157,9 @@ function go(){
         el('div',{style:'flex:1;min-width:0'},[el('div',{style:'font-weight:600',text:(LB[x.type]||'')+' · '+x.who}),el('div',{style:'color:#c4d0e6;word-break:break-word',text:txt}),el('div',{style:'color:#9fb0c8;font-size:12px',text:ago(x.at)+' ago'+(wk?' · tap to open':'')})])].concat(okc?[el('img',{src:wk.cover,alt:'',loading:'lazy',style:'width:48px;height:60px;object-fit:cover;border-radius:8px;flex:none'})]:[]));
       if(x.tab)row.addEventListener('click',function(){pn.style.display='none';if(w.__openTab)w.__openTab(x.tab)});
       if(wk)row.addEventListener('click',function(){pn.style.display='none';var c=d.querySelector('#g-works .cnt[data-id="'+wk.id.replace(/[^A-Za-z0-9_-]/g,'')+'"]');var f=c&&c.closest('figure');var bt=f&&f.querySelector('button');if(bt){bt.scrollIntoView({block:'center'});bt.click()}});
+      var del=el('button',{type:'button','aria-label':'Delete this notification',title:'Delete',style:'flex:none;align-self:flex-start;width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);color:#ffb4c0;cursor:pointer;font-size:14px;line-height:1;padding:0',text:'\u2715'});
+      del.addEventListener('click',function(e){e.stopPropagation();fetch('/api/admin/notifs/delete',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({key:x.key})}).then(function(r){if(!r.ok)return;data.items=data.items.filter(function(y){return y!==x});data.unread=data.items.filter(function(y){return y.at>data.seen}).length;draw()}).catch(function(){})});
+      row.appendChild(del);
       pn.appendChild(row);
     });
   }
