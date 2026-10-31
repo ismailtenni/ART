@@ -228,6 +228,96 @@ async function note(env, key) {
   await env.DB.prepare('INSERT INTO attempts (key, at) VALUES (?, ?)').bind(key, Date.now()).run();
 }
 
+// ---------- security log: who tried what (time, country, IP). Only the owner can read it (Security log tab). ----------
+const SEC_SEEN = new Map(); // keeps floods out of the log: with once=true the same kind from the same IP is written once a minute
+function isOwnerEmail(env, email) {
+  const a = ADM || env.ADMIN_EMAIL;
+  return !!(a && email && String(a).trim().toLowerCase() === String(email).trim().toLowerCase());
+}
+async function secLog(env, req, kind, detail, once) {
+  try {
+    const ip = (req.headers.get('cf-connecting-ip') || '').slice(0, 64);
+    if (once) {
+      const k = kind + '|' + ip, now = Date.now();
+      if ((SEC_SEEN.get(k) || 0) > now - 60000) return;
+      SEC_SEEN.set(k, now);
+      if (SEC_SEEN.size > 500) SEC_SEEN.clear();
+    }
+    const country = String((req.cf && req.cf.country) || req.headers.get('cf-ipcountry') || '').slice(0, 4);
+    await ensureSchema(env);
+    await env.DB.prepare('INSERT INTO seclog (at, kind, ip, country, detail) VALUES (?, ?, ?, ?, ?)')
+      .bind(Date.now(), kind, ip, country, String(detail || '').slice(0, 200)).run();
+    if (Math.random() < 0.02) await env.DB.prepare('DELETE FROM seclog WHERE at < ? OR id <= (SELECT MAX(id) FROM seclog) - 5000').bind(Date.now() - 60 * 86400000).run();
+  } catch (e) { /* the log must never break the site */ }
+}
+
+// ---------- sign-in lockout + blocked IPs ----------
+// 5 wrong passwords -> that IP and that account are locked 15 min, then 30 min, 1 h, 2 h ... (the IP lock tops out at 24 h, the account lock at 1 h so nobody can keep you locked out of your own account for long).
+// A temporary lock only stops sign-in / sign-up / password reset (so other people on a shared connection can still browse). A block set by hand in the admin panel keeps the address out of the whole site.
+const LOCK_AFTER = 5;
+const AUTHISH = /^\/api\/(login|login2fa|signup|forgot|reset|google)$/;
+function lockMs(strikes, cap) { return Math.min(15 * 60000 * Math.pow(2, Math.max(0, strikes - 1)), cap); }
+function lockText(until) {
+  const m = Math.max(1, Math.ceil((until - Date.now()) / 60000)), hrs = Math.ceil(m / 60);
+  const t = m < 60 ? m + ' minute' + (m === 1 ? '' : 's') : hrs + ' hour' + (hrs === 1 ? '' : 's');
+  return 'Too many wrong passwords. Sign-in is locked for about ' + t + '. Please try again later, or use Forgot password.';
+}
+let IPB = { at: 0, map: new Map() }; // short memory copy of the block list so every request does not hit the database
+async function ipBlockInfo(env, ip) {
+  if (!ip || !env.DB) return null;
+  const now = Date.now();
+  if (now - IPB.at > 15000) {
+    try {
+      await ensureSchema(env);
+      const rows = (await env.DB.prepare('SELECT ip, until, manual FROM ipblocks WHERE manual = 1 OR until > ?').bind(now).all()).results || [];
+      IPB = { at: now, map: new Map(rows.map((r) => [r.ip, r])) };
+    } catch (e) { IPB.at = now; }
+  }
+  const r = IPB.map.get(ip);
+  if (!r) return null;
+  if (r.manual) return { manual: true, until: 0 };
+  return r.until > now ? { manual: false, until: r.until } : null;
+}
+async function guardIp(env, req, url) {
+  try {
+    const b = await ipBlockInfo(env, req.headers.get('cf-connecting-ip') || '');
+    if (!b) return null;
+    if (!b.manual && !AUTHISH.test(url.pathname)) return null;
+    try { const me = await currentUser(env, req); if (isAdmin(env, me)) return null; } catch (e) { /* the owner is never shut out by this check */ }
+    await secLog(env, req, 'ip_blocked', url.pathname, true);
+    if (url.pathname.startsWith('/api/')) return json({ error: b.manual ? 'Access from your connection has been blocked.' : lockText(b.until) }, 403);
+    return new Response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Blocked</title><body style="margin:0;display:grid;place-items:center;min-height:100vh;background:#050914;color:#fff;font-family:system-ui,sans-serif;text-align:center;padding:24px"><div><h1 style="font-weight:400">Access blocked</h1><p style="color:#b7c4dc">Access from your connection has been blocked.</p></div></body>', { status: 403, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+  } catch (e) { return null; }
+}
+async function failCount(env, key) {
+  const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM attempts WHERE key = ? AND at > ?').bind(key, Date.now() - 15 * 60000).first();
+  return r ? r.n : 0;
+}
+async function lockLeft(env, ip, email) { // returns the time (ms) this sign-in is locked until, or 0
+  const now = Date.now();
+  const a = await env.DB.prepare('SELECT until, manual FROM ipblocks WHERE ip = ?').bind(ip).first();
+  const b = await env.DB.prepare('SELECT until FROM acctlocks WHERE email = ?').bind(email).first();
+  let u = 0;
+  if (a && (a.manual || a.until > now)) u = a.manual ? now + 3600000 : a.until;
+  if (b && b.until > now && b.until > u) u = b.until;
+  return u;
+}
+async function applyLockout(env, ip, email) {
+  const now = Date.now(), day = 86400000;
+  const ia = await env.DB.prepare('SELECT strikes, until FROM ipblocks WHERE ip = ?').bind(ip).first();
+  const is = (ia && ia.until > now - day ? ia.strikes : 0) + 1;
+  const iu = now + lockMs(is, day);
+  await env.DB.prepare("INSERT INTO ipblocks (ip, until, strikes, manual, reason, created_at) VALUES (?, ?, ?, 0, 'wrong passwords', ?) ON CONFLICT(ip) DO UPDATE SET until = excluded.until, strikes = excluded.strikes, reason = excluded.reason").bind(ip, iu, is, now).run();
+  const aa = await env.DB.prepare('SELECT strikes, until FROM acctlocks WHERE email = ?').bind(email).first();
+  const as = (aa && aa.until > now - day ? aa.strikes : 0) + 1;
+  const au = now + lockMs(as, 3600000);
+  await env.DB.prepare('INSERT INTO acctlocks (email, until, strikes, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(email) DO UPDATE SET until = excluded.until, strikes = excluded.strikes, updated_at = excluded.updated_at').bind(email, au, as, now).run();
+  await env.DB.prepare('DELETE FROM attempts WHERE key = ?').bind('login:' + email + ':' + ip).run();
+  IPB.at = 0;
+  if (Math.random() < 0.05) { try { await env.DB.batch([env.DB.prepare('DELETE FROM acctlocks WHERE until < ?').bind(now - day), env.DB.prepare('DELETE FROM ipblocks WHERE manual = 0 AND until < ?').bind(now - day)]); } catch (e) {} }
+  return { iu, is, au, as };
+}
+
 
 const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, salt TEXT NOT NULL, hash TEXT NOT NULL, created_at INTEGER NOT NULL)',
@@ -261,6 +351,10 @@ const SCHEMA = [
   'CREATE TABLE IF NOT EXISTS site_reviews (user_id INTEGER PRIMARY KEY, stars INTEGER NOT NULL, text TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL, reply TEXT, reply_at INTEGER)',
   'CREATE TABLE IF NOT EXISTS waitlist (product TEXT NOT NULL, email TEXT NOT NULL, created_at INTEGER NOT NULL, PRIMARY KEY (product, email))',
   'CREATE TABLE IF NOT EXISTS media_chunks (id TEXT NOT NULL, i INTEGER NOT NULL, d TEXT NOT NULL, PRIMARY KEY (id, i))',
+  'CREATE TABLE IF NOT EXISTS ipblocks (ip TEXT PRIMARY KEY, until INTEGER NOT NULL, strikes INTEGER NOT NULL DEFAULT 0, manual INTEGER NOT NULL DEFAULT 0, reason TEXT, created_at INTEGER NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS acctlocks (email TEXT PRIMARY KEY, until INTEGER NOT NULL, strikes INTEGER NOT NULL DEFAULT 0, updated_at INTEGER NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS seclog (id INTEGER PRIMARY KEY AUTOINCREMENT, at INTEGER NOT NULL, kind TEXT NOT NULL, ip TEXT, country TEXT, detail TEXT)',
+  'CREATE INDEX IF NOT EXISTS seclog_at ON seclog (at)',
   'CREATE TABLE IF NOT EXISTS proofsub (token TEXT PRIMARY KEY, work_id TEXT NOT NULL, work_title TEXT, photo TEXT, name TEXT, place TEXT, stars INTEGER, text TEXT, created_at INTEGER NOT NULL)',
 ];
 
@@ -737,6 +831,7 @@ function ensureSchema(env) {
 const app = {
   async fetch(req, env) {
     const url = new URL(req.url);
+    { const blk = await guardIp(env, req, url); if (blk) return blk; }
     if (!url.pathname.startsWith('/api/')) {
       if (url.pathname === '/robots.txt') return new Response('User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: ' + url.origin + '/sitemap.xml\n', { headers: { 'content-type': 'text/plain; charset=utf-8' } });
       if (url.pathname === '/sitemap.xml') return new Response('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' + url.origin + '/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url><url><loc>' + url.origin + '/play</loc><changefreq>monthly</changefreq><priority>0.3</priority></url></urlset>\n', { headers: { 'content-type': 'application/xml; charset=utf-8' } });
@@ -777,8 +872,8 @@ const app = {
       const noRL = p0.startsWith('/api/media/') || p0.startsWith('/api/avatar/') || p0.startsWith('/api/msgimg/') || p0.startsWith('/api/reqimg/');
       const strict = /^\/api\/(login|login2fa|signup|forgot|reset|gate\/verify|ask|pdf\/start|commission|subscribe|waitlist|comment|reply|msg\/send|proof\/submit|review|site-review|google|account\/.+)$/.test(p0);
       try {
-        if (strict && env.RL_AUTH && !(await env.RL_AUTH.limit({ key: ip0 + ':' + p0.split('/')[2] })).success) return json({ error: 'Too many tries. Please wait a minute.' }, 429);
-        if (!noRL && env.RL_API && !(await env.RL_API.limit({ key: ip0 })).success) return json({ error: 'Too many requests. Please slow down and try again in a minute.' }, 429);
+        if (strict && env.RL_AUTH && !(await env.RL_AUTH.limit({ key: ip0 + ':' + p0.split('/')[2] })).success) { await secLog(env, req, 'rate_limit', 'Too many tries on ' + p0, true); return json({ error: 'Too many tries. Please wait a minute.' }, 429); }
+        if (!noRL && env.RL_API && !(await env.RL_API.limit({ key: ip0 })).success) { await secLog(env, req, 'rate_limit', 'Too many requests (' + p0 + ')', true); return json({ error: 'Too many requests. Please slow down and try again in a minute.' }, 429); }
       } catch (e) { /* if the limiter is unavailable, let the request through */ }
     }
     if (!env.DB) return json({ error: 'The database is not connected yet.' }, 503);
@@ -912,6 +1007,30 @@ const app = {
           add('mail', 'Email sending', ready ? 'ok' : 'bad', ready ? 'An email service and a sender address are set up. Use the Email tab to send a test.' : 'Email is not set up (needs a Brevo key and a sender address), so notices and fan emails will not go out.');
         } catch (e) { add('mail', 'Email sending', 'warn', 'Could not check: ' + String((e && e.message) || e).slice(0, 120)); }
         return json({ checked: new Date().toISOString(), checks });
+      }
+      if (url.pathname === '/api/admin/ipblocks' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const now = Date.now();
+        const ips = (await env.DB.prepare('SELECT ip, until, strikes, manual, reason, created_at FROM ipblocks WHERE manual = 1 OR until > ? ORDER BY manual DESC, created_at DESC LIMIT 200').bind(now).all()).results || [];
+        const accts = (await env.DB.prepare('SELECT email, until, strikes FROM acctlocks WHERE until > ? ORDER BY until DESC LIMIT 100').bind(now).all()).results || [];
+        return json({ ips, accts, me: req.headers.get('cf-connecting-ip') || '' });
+      }
+      if (url.pathname === '/api/admin/seclog' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const now = Date.now();
+        const kind = String(url.searchParams.get('kind') || '').replace(/[^a-z_]/g, '').slice(0, 24);
+        const cols = 'SELECT at, kind, ip, country, detail FROM seclog';
+        const rows = (kind ? await env.DB.prepare(cols + ' WHERE kind = ? ORDER BY id DESC LIMIT 300').bind(kind).all() : await env.DB.prepare(cols + ' ORDER BY id DESC LIMIT 300').all()).results || [];
+        const counts = (await env.DB.prepare('SELECT kind, COUNT(*) AS n FROM seclog WHERE at > ? GROUP BY kind').bind(now - 86400000).all()).results || [];
+        const BADK = "('login_fail','owner_guess','tfa_fail','login_locked','banned_login','lockout')";
+        const hour = (await env.DB.prepare('SELECT COUNT(*) AS n, COUNT(DISTINCT ip) AS ips FROM seclog WHERE at > ? AND kind IN ' + BADK).bind(now - 3600000).first()) || {};
+        const ten = (await env.DB.prepare('SELECT COUNT(*) AS n FROM seclog WHERE at > ? AND kind IN ' + BADK).bind(now - 600000).first()) || {};
+        const own = (await env.DB.prepare("SELECT COUNT(*) AS n FROM seclog WHERE at > ? AND kind = 'owner_guess'").bind(now - 3600000).first()) || {};
+        const top = (await env.DB.prepare("SELECT ip, MAX(country) AS country, COUNT(*) AS n FROM seclog WHERE at > ? AND kind IN ('login_fail','owner_guess','tfa_fail','login_locked','banned_login','lockout','ip_blocked','rate_limit','cross_site','bot_check') GROUP BY ip ORDER BY n DESC LIMIT 5").bind(now - 86400000).all()).results || [];
+        const level = (own.n >= 3 || ten.n >= 15) ? 'danger' : (own.n >= 1 || hour.n >= 5) ? 'warn' : 'ok';
+        return json({ events: rows, counts, top, level, hour: { fails: hour.n || 0, ips: hour.ips || 0, owner: own.n || 0 } });
       }
       if (url.pathname === '/api/admin/attack' && req.method === 'GET') {
         const me = await currentUser(env, req);
@@ -1156,7 +1275,7 @@ const app = {
         return serveMedia(env, req, mm[1]);
       }
       if (url.pathname === '/api/admin/pdfsrc/raw' && req.method === 'PUT') {
-        if (crossSite(req, url)) return json({ error: 'Not allowed' }, 403);
+        if (crossSite(req, url)) { await secLog(env, req, 'cross_site', url.pathname + ' from ' + (req.headers.get('origin') || 'unknown site'), true); return json({ error: 'Not allowed' }, 403); }
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
         if (!env.PDFS) return json({ error: 'Big files need the R2 storage. See the steps on the PDF sales tab.' }, 400);
@@ -1175,13 +1294,13 @@ const app = {
         return json({ ok: true, w: info.w, h: info.h, bytes: len });
       }
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
-      if (crossSite(req, url)) return json({ error: 'Not allowed' }, 403);
+      if (crossSite(req, url)) { await secLog(env, req, 'cross_site', url.pathname + ' from ' + (req.headers.get('origin') || 'unknown site'), true); return json({ error: 'Not allowed' }, 403); }
       const body = await req.json().catch(() => ({}));
       if (ATK && PAUSED.test(url.pathname)) return json({ error: 'The site is in protection mode for a little while. Please try again later.' }, 503);
 
       if (['/api/signup', '/api/login', '/api/forgot', '/api/reset'].includes(url.pathname)) {
         const tbad = await tsCheck(env, req, body.ts);
-        if (tbad) return json({ error: tbad, needTs: true }, 400);
+        if (tbad) { await secLog(env, req, 'bot_check', url.pathname, true); return json({ error: tbad, needTs: true }, 400); }
       }
 
       if (url.pathname === '/api/gate/verify') {
@@ -1189,7 +1308,7 @@ const app = {
         if (await tooMany(env, 'gate:' + ip, 60)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
         await note(env, 'gate:' + ip);
         const err = await tsCheck(env, req, body.ts);
-        if (err) return json({ error: err }, 400);
+        if (err) { await secLog(env, req, 'bot_check', 'site entry check', true); return json({ error: err }, 400); }
         return json({ ok: true, gk: await mkGateProof(env) }); // no cookie: the check is asked again at every visit
       }
 
@@ -1218,17 +1337,32 @@ const app = {
       if (url.pathname === '/api/login') {
         const email = String(body.email || '').trim().toLowerCase().slice(0, 120);
         const password = String(body.password || '');
-        const key = 'login:' + email + ':' + (req.headers.get('cf-connecting-ip') || 'x');
-        if (await tooMany(env, key)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
+        const ipL = req.headers.get('cf-connecting-ip') || 'x';
+        const key = 'login:' + email + ':' + ipL;
+        { const lk = await lockLeft(env, ipL, email); if (lk) { await secLog(env, req, 'login_locked', email + ' (sign-in is locked)', true); return json({ error: lockText(lk), locked: true }, 429); } }
         const keyAll = 'loginAll:' + email; // many wrong tries on one account from many addresses = guessing attack
-        if (await tooMany(env, keyAll, 30)) return json({ error: 'Too many tries. Please wait a few minutes, or use Sign in with Google.' }, 429);
+        if (await tooMany(env, keyAll, 30)) { await secLog(env, req, 'login_locked', email + ' (many addresses)', true); return json({ error: 'Too many tries. Please wait a few minutes, or use Sign in with Google.' }, 429); }
         const u = await env.DB.prepare('SELECT id, name, email, salt, hash FROM users WHERE email = ?').bind(email).first();
         const ok = u && safeEq(await hashPassword(password, unb64(u.salt)), u.hash);
-        if (!ok) { await note(env, key); await note(env, keyAll); return json({ error: 'Wrong email or password.' }, 401); }
-        if (await env.DB.prepare('SELECT 1 AS x FROM bans WHERE user_id = ?').bind(u.id).first()) return json({ error: 'This account has been blocked.' }, 403);
+        if (!ok) {
+          await note(env, key); await note(env, keyAll);
+          await secLog(env, req, isOwnerEmail(env, email) ? 'owner_guess' : 'login_fail', email);
+          const n = await failCount(env, key);
+          if (n >= LOCK_AFTER) {
+            const L = await applyLockout(env, ipL, email);
+            const mins = (t) => Math.round((t - Date.now()) / 60000) + ' min';
+            await secLog(env, req, 'lockout', email + ' - ' + n + ' wrong passwords. IP locked ' + mins(L.iu) + ', account locked ' + mins(L.au) + ' (lock #' + L.is + ')');
+            return json({ error: lockText(Math.max(L.iu, L.au)), locked: true }, 429);
+          }
+          const left = LOCK_AFTER - n;
+          return json({ error: 'Wrong email or password.' + (left <= 2 ? ' ' + left + ' more wrong ' + (left === 1 ? 'try' : 'tries') + ' will lock sign-in for a while.' : '') }, 401);
+        }
+        await env.DB.prepare('DELETE FROM attempts WHERE key = ?').bind(key).run(); // a correct password starts the count again
+        if (await env.DB.prepare('SELECT 1 AS x FROM bans WHERE user_id = ?').bind(u.id).first()) { await secLog(env, req, 'banned_login', u.email, true); return json({ error: 'This account has been blocked.' }, 403); }
         const t2 = await env.DB.prepare('SELECT enabled FROM user_2fa WHERE user_id = ?').bind(u.id).first();
         if (t2 && t2.enabled) return json({ need2fa: true, ticket: await mkTicket(env, u.id) });
         const cookie = await startSession(env, u.id);
+        if (isOwnerEmail(env, u.email)) await secLog(env, req, 'admin_login', 'Password login');
         return json({ user: { name: u.name, email: u.email } }, 200, { 'set-cookie': cookie });
       }
 
@@ -1252,19 +1386,26 @@ const app = {
           const r = await env.DB.prepare('INSERT INTO users (name, email, salt, hash, created_at) VALUES (?, ?, ?, ?, ?)').bind(name, email, b64(salt), hash, Date.now()).run();
           u = { id: r.meta.last_row_id, name, email };
         }
-        if (await env.DB.prepare('SELECT 1 AS x FROM bans WHERE user_id = ?').bind(u.id).first()) return json({ error: 'This account has been blocked.' }, 403);
+        if (await env.DB.prepare('SELECT 1 AS x FROM bans WHERE user_id = ?').bind(u.id).first()) { await secLog(env, req, 'banned_login', u.email, true); return json({ error: 'This account has been blocked.' }, 403); }
         const t2 = await env.DB.prepare('SELECT enabled FROM user_2fa WHERE user_id = ?').bind(u.id).first();
         if (t2 && t2.enabled) return json({ need2fa: true, ticket: await mkTicket(env, u.id) });
+        if (isOwnerEmail(env, u.email)) await secLog(env, req, 'admin_login', 'Google sign-in');
         return json({ user: { name: u.name, email: u.email } }, 200, { 'set-cookie': await startSession(env, u.id) });
       }
 
       if (url.pathname === '/api/login2fa') {
         const uid = await checkTicket(env, body.ticket);
         if (!uid) return json({ error: 'That step expired. Please log in again.' }, 401);
-        if (await tooMany(env, 'tfa:' + uid)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
-        if (!(await secondOk(env, uid, body.code))) { await note(env, 'tfa:' + uid); return json({ error: 'That code is not right. Try again.' }, 401); }
+        if (await tooMany(env, 'tfa:' + uid)) { await secLog(env, req, 'login_locked', '2-step code, account #' + uid, true); return json({ error: 'Too many tries. Please wait a few minutes.' }, 429); }
+        if (!(await secondOk(env, uid, body.code))) {
+          await note(env, 'tfa:' + uid);
+          const ue = await env.DB.prepare('SELECT email FROM users WHERE id = ?').bind(uid).first();
+          await secLog(env, req, ue && isOwnerEmail(env, ue.email) ? 'owner_guess' : 'tfa_fail', (ue ? ue.email : 'account #' + uid) + ' (2-step code)');
+          return json({ error: 'That code is not right. Try again.' }, 401);
+        }
         const u = await env.DB.prepare('SELECT name, email FROM users WHERE id = ?').bind(uid).first();
         if (!u) return json({ error: 'Account not found.' }, 404);
+        if (isOwnerEmail(env, u.email)) await secLog(env, req, 'admin_login', 'Password + 2-step code');
         return json({ user: { name: u.name, email: u.email } }, 200, { 'set-cookie': await startSession(env, uid) });
       }
 
@@ -1398,12 +1539,47 @@ const app = {
         GID = id;
         return json({ ok: true, on: true });
       }
+      if (url.pathname === '/api/admin/ipblock') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const ip = String(body.ip || '').trim().toLowerCase().slice(0, 45);
+        const v4 = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/.test(ip);
+        const v6 = /^[0-9a-f:]{2,45}$/.test(ip) && (ip.match(/:/g) || []).length >= 2;
+        if (!v4 && !v6) return json({ error: 'That does not look like an IP address. Example: 203.0.113.7' }, 400);
+        if (body.on === false) {
+          await env.DB.prepare('DELETE FROM ipblocks WHERE ip = ?').bind(ip).run();
+          IPB.at = 0;
+          await secLog(env, req, 'ip_unban', ip);
+          return json({ ok: true });
+        }
+        if (ip === String(req.headers.get('cf-connecting-ip') || '').toLowerCase()) return json({ error: 'That is your own address. Blocking it would lock you out.' }, 400);
+        const nt = str(body.note, 80);
+        await env.DB.prepare('INSERT INTO ipblocks (ip, until, strikes, manual, reason, created_at) VALUES (?, 0, 0, 1, ?, ?) ON CONFLICT(ip) DO UPDATE SET manual = 1, reason = excluded.reason').bind(ip, nt, Date.now()).run();
+        IPB.at = 0;
+        await secLog(env, req, 'ip_ban', ip + (nt ? ' - ' + nt : ''));
+        return json({ ok: true });
+      }
+      if (url.pathname === '/api/admin/acctlock/clear') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const em = str(body.email, 120).trim().toLowerCase();
+        const pre = 'login:' + em + ':';
+        await env.DB.batch([env.DB.prepare('DELETE FROM acctlocks WHERE email = ?').bind(em), env.DB.prepare('DELETE FROM attempts WHERE key = ?').bind('loginAll:' + em), env.DB.prepare('DELETE FROM attempts WHERE substr(key, 1, ?) = ?').bind(pre.length, pre)]);
+        return json({ ok: true });
+      }
+      if (url.pathname === '/api/admin/seclog/clear') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        await env.DB.prepare('DELETE FROM seclog').run();
+        return json({ ok: true });
+      }
       if (url.pathname === '/api/admin/attack') {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
         if (body.on === true) await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('attack', '1', ?) ON CONFLICT(k) DO UPDATE SET v = '1', updated_at = excluded.updated_at").bind(Date.now()).run();
         else await env.DB.prepare("DELETE FROM content WHERE k = 'attack'").run();
         ATK = body.on === true;
+        await secLog(env, req, 'attack_mode', ATK ? 'Protection mode turned ON' : 'Protection mode turned OFF');
         return json({ ok: true, attack: ATK, ready: tsReady(env) });
       }
       if (url.pathname === '/api/admin/gate') {
@@ -2027,9 +2203,11 @@ const app = {
         if (!u) return json({ error: 'Member not found.' }, 404);
         if (isAdmin(env, { email: String(u.email).toLowerCase() })) return json({ error: 'You cannot do that to the owner account.' }, 400);
         if (url.pathname.endsWith('/delete')) {
+          await secLog(env, req, 'member_delete', u.email);
           await env.DB.batch([env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM likes WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM comments WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM user_2fa WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM reset_tokens WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM bans WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM avatars WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM messages WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM msgimgs WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM site_reviews WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM creplies WHERE user_id = ?').bind(id), env.DB.prepare('DELETE FROM creplies WHERE comment_id IN (SELECT id FROM comments WHERE user_id = ?)').bind(id), env.DB.prepare('DELETE FROM users WHERE id = ?').bind(id)]);
           return json({ ok: true });
         }
+        await secLog(env, req, body.ban === false ? 'member_unban' : 'member_ban', u.email);
         if (body.ban === false) await env.DB.prepare('DELETE FROM bans WHERE user_id = ?').bind(id).run();
         else await env.DB.batch([env.DB.prepare('INSERT OR REPLACE INTO bans (user_id, at) VALUES (?, ?)').bind(id, Date.now()), env.DB.prepare('DELETE FROM sessions WHERE user_id = ?').bind(id)]);
         return json({ ok: true });
