@@ -275,8 +275,27 @@ async function ipBlockInfo(env, ip) {
   }
   const r = IPB.map.get(ip);
   if (!r) return null;
-  if (r.manual) return { manual: true, until: 0 };
+  if (r.manual) { if (r.until && r.until <= now) return null; return { manual: true, until: 0 }; }
   return r.until > now ? { manual: false, until: r.until } : null;
+}
+// ---------- honeypot: trap URLs + hidden form field ----------
+// Bots probe paths like /wp-login.php, /.env, /phpmyadmin and fill in every form field. Real visitors touch neither.
+// A hit bans that IP for 7 days (the whole site) and writes a "honeypot" line to the Security log. The owner is never banned.
+// A block you set by hand in Blocked IPs (no end date) is never shortened by a trap hit.
+const TRAP_PATH = /^\/(wp-login\.php|wp-admin|wp-content|wp-includes|wp-json|xmlrpc\.php|\.env|\.git|\.svn|\.aws|\.ssh|phpmyadmin|pma|myadmin|mysql|admin\.php|administrator|config\.php|configuration\.php|backup\.sql|backup\.zip|db\.sql|dump\.sql|cgi-bin|boaform|actuator|server-status|vendor\/phpunit|setup\.php|install\.php|shell\.php|eval-stdin\.php)(\/|\.|$)/i;
+const TRAP_DAYS = 7;
+async function trapBan(env, req, detail) {
+  try {
+    const ip = (req.headers.get('cf-connecting-ip') || '').slice(0, 64);
+    if (!ip || !env.DB) return;
+    try { const me = await currentUser(env, req); if (isAdmin(env, me)) return; } catch (e) { /* not signed in */ }
+    await ensureSchema(env);
+    const now = Date.now();
+    await env.DB.prepare("INSERT INTO ipblocks (ip, until, strikes, manual, reason, created_at) VALUES (?, ?, 0, 1, ?, ?) ON CONFLICT(ip) DO UPDATE SET manual = 1, until = CASE WHEN ipblocks.manual = 1 AND ipblocks.until = 0 THEN 0 ELSE excluded.until END, reason = CASE WHEN ipblocks.manual = 1 AND ipblocks.until = 0 THEN ipblocks.reason ELSE excluded.reason END")
+      .bind(ip, now + TRAP_DAYS * 86400000, 'Trap triggered: ' + String(detail || '').slice(0, 100), now).run();
+    IPB.at = 0;
+    await secLog(env, req, 'honeypot', detail, true);
+  } catch (e) { /* the trap must never break the site */ }
 }
 async function guardIp(env, req, url) {
   try {
@@ -298,7 +317,7 @@ async function lockLeft(env, ip, email) { // returns the time (ms) this sign-in 
   const a = await env.DB.prepare('SELECT until, manual FROM ipblocks WHERE ip = ?').bind(ip).first();
   const b = await env.DB.prepare('SELECT until FROM acctlocks WHERE email = ?').bind(email).first();
   let u = 0;
-  if (a && (a.manual || a.until > now)) u = a.manual ? now + 3600000 : a.until;
+  if (a && (a.manual ? !(a.until && a.until <= now) : a.until > now)) u = a.manual ? now + 3600000 : a.until;
   if (b && b.until > now && b.until > u) u = b.until;
   return u;
 }
@@ -832,6 +851,10 @@ const app = {
   async fetch(req, env) {
     const url = new URL(req.url);
     { const blk = await guardIp(env, req, url); if (blk) return blk; }
+    if (TRAP_PATH.test(url.pathname) && env.DB) {
+      await trapBan(env, req, 'path ' + url.pathname.slice(0, 80));
+      return new Response('Not found', { status: 404, headers: { 'content-type': 'text/plain', 'cache-control': 'no-store' } });
+    }
     if (!url.pathname.startsWith('/api/')) {
       if (url.pathname === '/robots.txt') return new Response('User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: ' + url.origin + '/sitemap.xml\n', { headers: { 'content-type': 'text/plain; charset=utf-8' } });
       if (url.pathname === '/sitemap.xml') return new Response('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>' + url.origin + '/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url><url><loc>' + url.origin + '/play</loc><changefreq>monthly</changefreq><priority>0.3</priority></url></urlset>\n', { headers: { 'content-type': 'application/xml; charset=utf-8' } });
@@ -1012,7 +1035,7 @@ const app = {
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
         const now = Date.now();
-        const ips = (await env.DB.prepare('SELECT ip, until, strikes, manual, reason, created_at FROM ipblocks WHERE manual = 1 OR until > ? ORDER BY manual DESC, created_at DESC LIMIT 200').bind(now).all()).results || [];
+        const ips = (await env.DB.prepare('SELECT ip, until, strikes, manual, reason, created_at FROM ipblocks WHERE (manual = 1 AND (until = 0 OR until > ?)) OR (manual = 0 AND until > ?) ORDER BY manual DESC, created_at DESC LIMIT 200').bind(now, now).all()).results || [];
         const accts = (await env.DB.prepare('SELECT email, until, strikes FROM acctlocks WHERE until > ? ORDER BY until DESC LIMIT 100').bind(now).all()).results || [];
         return json({ ips, accts, me: req.headers.get('cf-connecting-ip') || '' });
       }
@@ -1028,7 +1051,7 @@ const app = {
         const hour = (await env.DB.prepare('SELECT COUNT(*) AS n, COUNT(DISTINCT ip) AS ips FROM seclog WHERE at > ? AND kind IN ' + BADK).bind(now - 3600000).first()) || {};
         const ten = (await env.DB.prepare('SELECT COUNT(*) AS n FROM seclog WHERE at > ? AND kind IN ' + BADK).bind(now - 600000).first()) || {};
         const own = (await env.DB.prepare("SELECT COUNT(*) AS n FROM seclog WHERE at > ? AND kind = 'owner_guess'").bind(now - 3600000).first()) || {};
-        const top = (await env.DB.prepare("SELECT ip, MAX(country) AS country, COUNT(*) AS n FROM seclog WHERE at > ? AND kind IN ('login_fail','owner_guess','tfa_fail','login_locked','banned_login','lockout','ip_blocked','rate_limit','cross_site','bot_check') GROUP BY ip ORDER BY n DESC LIMIT 5").bind(now - 86400000).all()).results || [];
+        const top = (await env.DB.prepare("SELECT ip, MAX(country) AS country, COUNT(*) AS n FROM seclog WHERE at > ? AND kind IN ('login_fail','owner_guess','tfa_fail','login_locked','banned_login','lockout','ip_blocked','rate_limit','cross_site','bot_check','honeypot') GROUP BY ip ORDER BY n DESC LIMIT 5").bind(now - 86400000).all()).results || [];
         const level = (own.n >= 3 || ten.n >= 15) ? 'danger' : (own.n >= 1 || hour.n >= 5) ? 'warn' : 'ok';
         return json({ events: rows, counts, top, level, hour: { fails: hour.n || 0, ips: hour.ips || 0, owner: own.n || 0 } });
       }
@@ -1296,6 +1319,7 @@ const app = {
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
       if (crossSite(req, url)) { await secLog(env, req, 'cross_site', url.pathname + ' from ' + (req.headers.get('origin') || 'unknown site'), true); return json({ error: 'Not allowed' }, 403); }
       const body = await req.json().catch(() => ({}));
+      if (body && typeof body.hp_check === 'string' && body.hp_check.trim()) { await trapBan(env, req, 'hidden field filled on ' + url.pathname); return json({ ok: true }); }
       if (ATK && PAUSED.test(url.pathname)) return json({ error: 'The site is in protection mode for a little while. Please try again later.' }, 503);
 
       if (['/api/signup', '/api/login', '/api/forgot', '/api/reset'].includes(url.pathname)) {
@@ -1554,7 +1578,7 @@ const app = {
         }
         if (ip === String(req.headers.get('cf-connecting-ip') || '').toLowerCase()) return json({ error: 'That is your own address. Blocking it would lock you out.' }, 400);
         const nt = str(body.note, 80);
-        await env.DB.prepare('INSERT INTO ipblocks (ip, until, strikes, manual, reason, created_at) VALUES (?, 0, 0, 1, ?, ?) ON CONFLICT(ip) DO UPDATE SET manual = 1, reason = excluded.reason').bind(ip, nt, Date.now()).run();
+        await env.DB.prepare('INSERT INTO ipblocks (ip, until, strikes, manual, reason, created_at) VALUES (?, 0, 0, 1, ?, ?) ON CONFLICT(ip) DO UPDATE SET manual = 1, until = 0, reason = excluded.reason').bind(ip, nt, Date.now()).run();
         IPB.at = 0;
         await secLog(env, req, 'ip_ban', ip + (nt ? ' - ' + nt : ''));
         return json({ ok: true });
