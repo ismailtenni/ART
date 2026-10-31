@@ -847,6 +847,7 @@ const app = {
         const all = async (q) => ((await env.DB.prepare(q).all()).results || []);
         const one = async (k) => { const r = await env.DB.prepare('SELECT v FROM content WHERE k = ?').bind(k).first(); try { return r && r.v ? JSON.parse(r.v) : null; } catch (e) { return null; } };
         const site = await one('site');
+        try { await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('lastBackup', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at").bind(String(Date.now()), Date.now()).run(); } catch (e) {}
         return json({
           kind: 'ismailtenni-art-backup', version: 1, created: new Date().toISOString(), site, orders: await one('orders') || [],
           subscribers: await all('SELECT email, created_at FROM subscribers'),
@@ -863,6 +864,54 @@ const app = {
         if (ok) await env.DB.prepare('DELETE FROM subscribers WHERE email = ?').bind(em).run();
         const msg = ok ? 'You are unsubscribed. / Vous \u00eates d\u00e9sinscrit(e). / \u062a\u0645 \u0625\u0644\u063a\u0627\u0621 \u0627\u0634\u062a\u0631\u0627\u0643\u0643.' : 'This link is not valid.';
         return new Response('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ISMAILTENNI ART</title><body style="background:#070b1c;color:#fff;font-family:system-ui,sans-serif;display:flex;min-height:90vh;align-items:center;justify-content:center;text-align:center;padding:20px"><div><h1 style="font-weight:400;letter-spacing:.12em">ISMAILTENNI ART</h1><p>' + escH(msg) + '</p><p><a style="color:#a8d6ff" href="/">Back to the site</a></p></div>', { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+      }
+      if (url.pathname === '/api/admin/health' && req.method === 'GET') {
+        const me = await currentUser(env, req);
+        if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
+        const checks = [];
+        const add = (id, title, status, detail) => checks.push({ id, title, status, detail });
+        try {
+          const t0 = Date.now();
+          await env.DB.prepare('SELECT 1 AS x').first();
+          const stamp = String(Date.now());
+          await env.DB.prepare("INSERT INTO content (k, v, updated_at) VALUES ('healthProbe', ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, updated_at = excluded.updated_at").bind(stamp, Date.now()).run();
+          const back = await env.DB.prepare("SELECT v FROM content WHERE k = 'healthProbe'").first();
+          if (back && back.v === stamp) add('db', 'Database read and write', 'ok', 'Reading and saving both work (' + (Date.now() - t0) + ' ms).');
+          else add('db', 'Database read and write', 'bad', 'I saved something but could not read it back. Your database may have a problem.');
+        } catch (e) { add('db', 'Database read and write', 'bad', 'The database did not answer: ' + String((e && e.message) || e).slice(0, 140)); }
+        try {
+          const probs = [], goods = [];
+          if (tsReady(env)) goods.push('robot check (Turnstile) is on'); else probs.push('robot check (Turnstile) is not set up');
+          if (env.RL_AUTH && env.RL_API) goods.push('rate limits are on'); else probs.push('rate limits are missing (RL_API / RL_AUTH in wrangler.jsonc)');
+          let has2fa = false;
+          try { const u = await env.DB.prepare('SELECT id FROM users WHERE lower(email) = ?').bind(String(me.email || '').toLowerCase()).first(); const t = u ? await env.DB.prepare('SELECT enabled FROM user_2fa WHERE user_id = ?').bind(u.id).first() : null; has2fa = !!(t && t.enabled); } catch (e) {}
+          if (has2fa) goods.push('your 2-step code is on'); else probs.push('2-step sign-in is not turned on for your owner account');
+          if (ATK) goods.push('attack mode is ON right now');
+          add('sec', 'Sign-in security tools', probs.length ? (probs.length > 1 ? 'bad' : 'warn') : 'ok', probs.length ? 'To fix: ' + probs.join('; ') + '.' + (goods.length ? ' Working: ' + goods.join(', ') + '.' : '') : 'All good: ' + goods.join(', ') + '.');
+        } catch (e) { add('sec', 'Sign-in security tools', 'warn', 'Could not check: ' + String((e && e.message) || e).slice(0, 120)); }
+        try {
+          const ae = String(ADM || env.ADMIN_EMAIL || '').trim().toLowerCase();
+          if (!ae) add('owner', 'Owner account exists', 'bad', 'No owner email is set. Add ADMIN_EMAIL in wrangler.jsonc.');
+          else {
+            const u = await env.DB.prepare('SELECT id FROM users WHERE lower(email) = ?').bind(ae).first();
+            add('owner', 'Owner account exists', u ? 'ok' : 'bad', u ? 'Owner account ' + ae + ' exists and you are signed in with it.' : 'No account was found for ' + ae + '. Sign up with that email.');
+          }
+        } catch (e) { add('owner', 'Owner account exists', 'bad', 'Could not check: ' + String((e && e.message) || e).slice(0, 120)); }
+        try {
+          const r = await env.DB.prepare("SELECT v FROM content WHERE k = 'lastBackup'").first();
+          const t = r ? Number(r.v) : 0;
+          if (!t) add('backup', 'Recent backup', 'warn', 'No backup has been downloaded yet. Open the Backup tab and download one.');
+          else {
+            const days = Math.floor((Date.now() - t) / 86400000);
+            const when = new Date(t).toISOString().slice(0, 10);
+            add('backup', 'Recent backup', days <= 7 ? 'ok' : days <= 30 ? 'warn' : 'bad', 'Last backup: ' + when + (days === 0 ? ' (today).' : ' (' + days + ' day' + (days === 1 ? '' : 's') + ' ago).') + (days > 7 ? ' Please download a new one in the Backup tab.' : ''));
+          }
+        } catch (e) { add('backup', 'Recent backup', 'warn', 'Could not check: ' + String((e && e.message) || e).slice(0, 120)); }
+        try {
+          const ready = mailReady(env);
+          add('mail', 'Email sending', ready ? 'ok' : 'bad', ready ? 'An email service and a sender address are set up. Use the Email tab to send a test.' : 'Email is not set up (needs a Brevo key and a sender address), so notices and fan emails will not go out.');
+        } catch (e) { add('mail', 'Email sending', 'warn', 'Could not check: ' + String((e && e.message) || e).slice(0, 120)); }
+        return json({ checked: new Date().toISOString(), checks });
       }
       if (url.pathname === '/api/admin/attack' && req.method === 'GET') {
         const me = await currentUser(env, req);
