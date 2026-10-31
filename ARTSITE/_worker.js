@@ -336,7 +336,7 @@ function cleanContent(b) {
     if (!WORK.test(id)) id = 'w' + Date.now().toString(36) + i;
     return { id, series: str(w.series, 40), title: str(w.title, 100), meta: str(w.meta, 100), desc: str(w.desc, 2000),
       ratio: RATIOS.includes(w.ratio) ? w.ratio : '3 / 4', status: str(w.status, 40), cover: w.cover,
-      price: str(w.price, 40).trim(), sale: str(w.sale, 6).trim(), pdf: w.pdf === 'yes' ? 'yes' : '', pay: (() => { const u = str(w.pay, 300).trim(); return /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : ''; })(),
+      price: str(w.price, 40).trim(), sale: str(w.sale, 6).trim(), edTotal: (() => { const n = parseInt(str(w.edTotal, 6), 10); return n > 0 && n < 100000 ? String(n) : ''; })(), edLeft: (() => { const t = str(w.edLeft, 6).trim(); const n = parseInt(t, 10); return t !== '' && n >= 0 && n < 100000 ? String(n) : ''; })(), drop: (() => { const t = str(w.drop, 30).trim(); return /^\d{4}-\d\d-\d\dT\d\d:\d\d(:\d\d(\.\d+)?)?Z$/.test(t) ? t : ''; })(), pdf: w.pdf === 'yes' ? 'yes' : '', pay: (() => { const u = str(w.pay, 300).trim(); return /^https:\/\/[^\s"'<>]+$/i.test(u) ? u : ''; })(),
       shots: cleanShots(w.shots, 30), process: cleanShots(w.process, 30), proof: cleanList(w.proof, SCH.proof, 60, ['photo', 'text']) };
   }).filter(Boolean);
   const photos = (Array.isArray(b.photos) ? b.photos : []).slice(0, 200).filter(okUrl);
