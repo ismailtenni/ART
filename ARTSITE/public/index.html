@@ -471,6 +471,15 @@ var STL={fr:{'Available':'Disponible','Sold':'Vendu','Commission':'Sur commande'
  ar:{'Available':'متوفر','Sold':'مباع','Commission':'بالطلب','Not for sale':'غير معروض للبيع','Original · not for sale':'أصلية · غير معروضة للبيع','Original · for sale':'أصلية · للبيع','Print · copy, not original':'نسخة مطبوعة · ليست الأصلية','Limited print · copy':'نسخة مطبوعة محدودة','PDF · high quality':'PDF · جودة عالية'}};
 function STT(v){var l=document.documentElement.getAttribute('lang')||'en';return (STL[l]&&STL[l][v])||v}
 function CHIP(w){return w.status?'<span style="position:absolute;top:12px;left:12px;padding:5px 12px;border-radius:999px;background:rgba(10,14,40,0.82);border:1px solid rgba(190,170,255,0.6);color:#fff;font-size:11px;letter-spacing:0.14em;text-transform:uppercase">'+String(STT(w.status)).replace(/[&<>"]/g,'')+'</span>':''}
+var EDT={en:{left:'Only {l} of {t} left',all:'Limited edition of {t}',sold:'SOLD OUT',soon:'Drops in',now:'Available now. Refresh the page.',note:'Be the first to know when this drops. Leave your email.',soldnote:'This edition is sold out. Leave your email and I will tell you about the next one.',key:'Drop: '},fr:{left:'Plus que {l} sur {t}',all:'Édition limitée à {t}',sold:'ÉPUISÉ',soon:'Disponible dans',now:'Disponible maintenant. Actualisez la page.',note:'Soyez le premier prévenu à la sortie. Laissez votre email.',soldnote:'Cette édition est épuisée. Laissez votre email et je vous préviendrai de la prochaine.',key:'Sortie : '},ar:{left:'تبقّى {l} من {t} فقط',all:'إصدار محدود من {t}',sold:'نفدت الكمية',soon:'تُطرح بعد',now:'متاح الآن. حدّث الصفحة.',note:'كن أول من يعلم عند الإطلاق. اترك بريدك.',soldnote:'نفد هذا الإصدار. اترك بريدك وسأخبرك بالإصدار القادم.',key:'إطلاق: '}};
+function EDX(){return EDT[document.documentElement.getAttribute('lang')]||EDT.en}
+function EDST(w){var tot=parseInt(w&&w.edTotal,10)||0,hl=String((w&&w.edLeft)||'')!=='',left=hl?parseInt(w.edLeft,10):tot,dr=w&&w.drop?Date.parse(w.drop):0;if(dr&&dr>Date.now())return {s:'soon',tot:tot,left:left,dr:dr};if(tot>0&&left<=0)return {s:'sold',tot:tot,left:0};if(tot>0)return {s:'live',tot:tot,left:Math.min(left,tot)};return null}
+function EDCD(ms){var t=Math.max(0,Math.floor(ms/1000)),dd=Math.floor(t/86400),hh=Math.floor(t%86400/3600),mm=Math.floor(t%3600/60),ss=t%60,p=function(n){return (n<10?'0':'')+n};return (dd?dd+'d ':'')+p(hh)+':'+p(mm)+':'+p(ss)}
+function EDLINE(w){var e=EDST(w);if(!e)return '';var X=EDX(),c,t;
+  if(e.s==='sold'){c='#ff8a8a';t=X.sold}else if(e.s==='soon'){c='#ffd98a';return '<div style="margin-top:6px"><span class="ed-cd" data-dr="'+e.dr+'" style="display:inline-block;padding:3px 10px;border-radius:999px;border:1px solid '+c+';color:'+c+';font-size:12px;letter-spacing:.06em">'+X.soon+' '+EDCD(e.dr-Date.now())+'</span></div>'}
+  else{c=e.left<=3?'#ff9f6b':'#5be3a0';t=X.left.replace('{l}',e.left).replace('{t}',e.tot)}
+  return '<div style="margin-top:6px"><span style="display:inline-block;padding:3px 10px;border-radius:999px;border:1px solid '+c+';color:'+c+';font-size:12px;letter-spacing:.06em">'+t+'</span></div>'}
+if(!window.__edTick){window.__edTick=setInterval(function(){document.querySelectorAll('.ed-cd').forEach(function(n){var dr=+n.getAttribute('data-dr'),X=EDX();if(dr>Date.now())n.textContent=X.soon+' '+EDCD(dr-Date.now());else n.textContent=X.now})},1000)}
 function RATEAVG(w){var p=(w.proof||[]).filter(function(x){return x&&x.stars});if(!p.length)return null;var avg=p.reduce(function(s,x){return s+(parseInt(x.stars,10)||0)},0)/p.length;return {avg:avg,n:p.length}}
 function RATE(w){var r=RATEAVG(w);if(!r)return'';return '<span style="position:absolute;top:12px;right:12px;padding:5px 10px;border-radius:999px;background:rgba(10,14,40,0.82);border:1px solid rgba(255,217,138,0.6);color:#ffd98a;font-size:11px;letter-spacing:0.06em;white-space:nowrap">★ '+r.avg.toFixed(1)+' ('+r.n+')</span>'}
 function FBLINE(w){var p=(w.proof||[]).filter(function(x){return x&&x.text});if(!p.length)return'';var x=p[p.length-1],t=String(x.text);if(t.length>70)t=t.slice(0,67)+'…';var q=function(v){return String(v==null?'':v).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};return '<div style="margin-top:5px;font-size:12.5px;line-height:1.4;color:#c4d0e6;font-style:italic">“'+q(t)+'”'+(x.name?' <span style="color:#8795b2;font-style:normal">— '+q(x.name)+'</span>':'')+'</div>'}
@@ -530,7 +539,7 @@ function close_(){document.getElementById('vw').style.display='none';document.bo
 var gw=document.getElementById('g-works');
 if(!C.works.length)gw.innerHTML='<div style="'+PH+';padding:40px"><span data-t="soon_art">Artwork is coming soon.</span></div>';
 C.works.forEach(function(w,k){var f=document.createElement('figure');f.className='bob';f.style.margin='0';
-f.innerHTML='<button class="art-card" aria-label="Open artwork details" style="display:block;position:relative;width:100%;padding:0;border:1px solid rgba(190,170,255,0.35);border-radius:16px;overflow:hidden;cursor:pointer;background:#07091a;font-family:inherit;box-shadow:0 0 40px rgba(110,90,255,0.25)"><img loading="lazy" decoding="async" src="'+E(w.cover)+'" alt="'+E(w.title)+'" style="display:block;width:100%;aspect-ratio:'+E(w.ratio||'3 / 4')+';object-fit:cover"><span style="position:absolute;left:0;right:0;bottom:0;padding:40px 12px 12px;background:linear-gradient(to top,rgba(4,5,18,0.85),rgba(4,5,18,0));color:#fff;font-size:12px;letter-spacing:0.18em;text-align:left">VIEW DETAILS &#8594;</span>'+CHIP(w)+RATE(w)+'</button><figcaption style="margin-top:12px;font-size:15px;color:#e8eefc">'+E(w.title)+'<br><span style="color:#9fb0c8;font-size:13px">'+E(w.meta)+'</span>'+RATELINE(w)+FBLINE(w)+'<div class="cnt" data-id="'+E(w.id)+'" style="margin-top:6px;font-size:12px;letter-spacing:0.08em;color:#c4a0ff;min-height:16px"></div></figcaption>';
+f.innerHTML='<button class="art-card" aria-label="Open artwork details" style="display:block;position:relative;width:100%;padding:0;border:1px solid rgba(190,170,255,0.35);border-radius:16px;overflow:hidden;cursor:pointer;background:#07091a;font-family:inherit;box-shadow:0 0 40px rgba(110,90,255,0.25)"><img loading="lazy" decoding="async" src="'+E(w.cover)+'" alt="'+E(w.title)+'" style="display:block;width:100%;aspect-ratio:'+E(w.ratio||'3 / 4')+';object-fit:cover"><span style="position:absolute;left:0;right:0;bottom:0;padding:40px 12px 12px;background:linear-gradient(to top,rgba(4,5,18,0.85),rgba(4,5,18,0));color:#fff;font-size:12px;letter-spacing:0.18em;text-align:left">VIEW DETAILS &#8594;</span>'+CHIP(w)+RATE(w)+'</button><figcaption style="margin-top:12px;font-size:15px;color:#e8eefc">'+E(w.title)+'<br><span style="color:#9fb0c8;font-size:13px">'+E(w.meta)+'</span>'+RATELINE(w)+FBLINE(w)+EDLINE(w)+'<div class="cnt" data-id="'+E(w.id)+'" style="margin-top:6px;font-size:12px;letter-spacing:0.08em;color:#c4a0ff;min-height:16px"></div></figcaption>';
 f.querySelector('button').onclick=function(){var d=(w.shots&&w.shots.length?w.shots:[{src:w.cover,label:'Full artwork'}]),p=(w.process||[]).map(function(s,j){return typeof s==='string'?{src:s,label:'Process '+(j+1)}:s});
 var side='<div style="font-size:12px;letter-spacing:0.3em;text-transform:uppercase;color:#c4a0ff">Artwork</div><h3 style="margin:12px 0 0;font-weight:400;font-size:clamp(26px,3vw,38px);line-height:1.15;color:#fff">'+E(w.title)+'</h3><div style="margin-top:8px;font-size:14px;color:#9fb0c8">'+E(w.meta)+'</div>'+(w.desc?'<p style="margin:18px 0 0;font-size:15px;line-height:1.7;font-weight:300;color:#c4d0e6;white-space:pre-line">'+E(w.desc)+'</p>':'')+(d.length>1?thumbs(d,0,'Details'):'')+thumbs(p,d.length,'The process');
 side+='<div id="buy-slot"></div><div id="mk"></div><div id="wl-slot"></div>';open_(d.concat(p),0,side,w.id);if(window.__vwHook)window.__vwHook(w,p.length?p.concat([{src:w.cover,label:'Finished'}]):[]);};gw.appendChild(f);});
@@ -1221,6 +1230,18 @@ function init(){
     field('Payment link for this artwork (optional)','pay','https://paypal.me/...');
     var st=h('select',{style:INP});['','Available','Sold','Commission','Not for sale','Original · not for sale','Original · for sale','Print · copy, not original','Limited print · copy','PDF · high quality'].forEach(function(v){var op=h('option',{value:v,text:v||'No label'});if(o.status===v)op.selected=true;st.appendChild(op)});
     st.addEventListener('change',function(){o.status=st.value});f.appendChild(h('label',{style:LAB,text:'Label on the picture'}));f.appendChild(st);
+    f.appendChild(sub('Limited edition (optional)'));
+    f.appendChild(note1('Fill these to show "Only 3 of 10 left", a SOLD OUT badge, and a countdown to a launch date. Leave empty for a normal artwork. When you sell one, lower "Copies left" and press Save. At 0 it shows SOLD OUT and visitors can leave their email for the next one.'));
+    field('Edition size (how many copies exist)','edTotal','10');
+    field('Copies left (change it when you sell one)','edLeft','7');
+    f.appendChild(h('label',{style:LAB,text:'Launch date and time (optional, your local time). Before this moment the buy button is hidden and a countdown + "notify me" shows.'}));
+    var dr=h('input',{type:'datetime-local',style:INP});
+    function pad2(n){return (n<10?'0':'')+n}
+    if(o.drop){var dd=new Date(o.drop);if(!isNaN(dd))dr.value=dd.getFullYear()+'-'+pad2(dd.getMonth()+1)+'-'+pad2(dd.getDate())+'T'+pad2(dd.getHours())+':'+pad2(dd.getMinutes())}
+    dr.addEventListener('input',function(){var t=dr.value?new Date(dr.value):null;o.drop=t&&!isNaN(t)?t.toISOString():''});
+    f.appendChild(dr);
+    f.appendChild(h('button',{type:'button',style:BTN,text:'Clear launch date',on:{click:function(){o.drop='';dr.value=''}}}));
+
     var ra=h('select',{style:INP});[['3 / 4','Tall (3:4)'],['4 / 5','Tall (4:5)'],['2 / 3','Very tall (2:3)'],['1 / 1','Square'],['4 / 3','Wide (4:3)'],['16 / 9','Very wide (16:9)']].forEach(function(p){var op=h('option',{value:p[0],text:p[1]});if((o.ratio||'3 / 4')===p[0])op.selected=true;ra.appendChild(op)});
     ra.addEventListener('change',function(){o.ratio=ra.value});f.appendChild(h('label',{style:LAB,text:'Shape of the card'}));f.appendChild(ra);
     field('Story / description','desc','Tell people about this artwork',true);
@@ -3050,13 +3071,21 @@ function renderCard(){
 function buyBlock(by,wk){
   var def=safeHttps(C.settings&&C.settings.payDefault),lab=(C.settings&&C.settings.payLabel)||'';
   var st=String(wk.status||''),box=el('div',{style:'margin-top:22px'});
-  var NSALE=(st==='Sold'||st==='Not for sale'||st==='Original · not for sale');
+  var EDS=EDST(wk),EDHOLD=!!(EDS&&(EDS.s==='soon'||EDS.s==='sold'));
+  var NSALE=(st==='Sold'||st==='Not for sale'||st==='Original · not for sale'||EDHOLD);
   var DIG=(st==='PDF · high quality'&&wk.pdf==='yes'&&(C.pdfs||[]).some(function(x){return x&&x.name&&x.price}));
   var NOTE={'Original · not for sale':{en:'This is the ORIGINAL artwork. It is not for sale. You can buy a print (a copy) of it below.',fr:'Ceci est l’œuvre ORIGINALE. Elle n’est pas à vendre. Vous pouvez en acheter un tirage (une copie) ci-dessous.',ar:'هذه هي اللوحة الأصلية وهي غير معروضة للبيع. يمكنك شراء نسخة مطبوعة منها بالأسفل.'},
    'Original · for sale':{en:'This is the ORIGINAL artwork, one of a kind. Prints (copies) are also available below.',fr:'Ceci est l’œuvre ORIGINALE, un exemplaire unique. Des tirages (copies) sont aussi disponibles ci-dessous.',ar:'هذه هي اللوحة الأصلية وهي نسخة واحدة فقط. تتوفر أيضاً نسخ مطبوعة بالأسفل.'},
    'Print · copy, not original':{en:'This is a PRINT (a copy), not the original artwork. The original stays with me.',fr:'Ceci est un TIRAGE (une copie), pas l’œuvre originale. L’original reste chez moi.',ar:'هذه نسخة مطبوعة وليست اللوحة الأصلية. اللوحة الأصلية تبقى عندي.'},
    'PDF · high quality':{en:'You get a HIGH QUALITY PDF of this artwork, ready to print yourself. No paper copy is shipped. I send the PDF to your email.',fr:'Vous recevez un PDF HAUTE QUALITÉ de cette œuvre, prêt à imprimer chez vous. Aucun exemplaire papier n’est envoyé. Je vous envoie le PDF par email.',ar:'ستحصل على ملف PDF عالي الجودة لهذه اللوحة جاهز للطباعة بنفسك. لا يتم شحن نسخة ورقية. أرسل الملف إلى بريدك.'},
    'Limited print · copy':{en:'This is a LIMITED PRINT (a copy), not the original artwork.',fr:'Ceci est un TIRAGE LIMITÉ (une copie), pas l’œuvre originale.',ar:'هذه نسخة مطبوعة محدودة وليست اللوحة الأصلية.'}}[st];
+  if(EDS){var EX=EDX(),ec=EDS.s==='sold'?'#ff8a8a':EDS.s==='soon'?'#ffd98a':(EDS.left<=3?'#ff9f6b':'#5be3a0');
+    var ep=el('div',{style:'margin-bottom:14px;padding:12px 14px;border-radius:12px;border:1px solid '+ec+';background:rgba(255,255,255,.04);color:'+ec+';font-size:16px;line-height:1.5'});
+    if(EDS.s==='soon'){ep.appendChild(el('div',{'class':'ed-cd','data-dr':String(EDS.dr),style:'font-size:22px',text:EX.soon+' '+EDCD(EDS.dr-Date.now())}));if(EDS.tot)ep.appendChild(el('div',{style:'font-size:14px;margin-top:4px;color:#c4d0e6',text:EX.all.replace('{t}',EDS.tot)}))}
+    else if(EDS.s==='sold')ep.appendChild(el('div',{style:'font-size:22px;letter-spacing:.08em',text:EX.sold+' · '+EX.all.replace('{t}',EDS.tot)}));
+    else ep.appendChild(el('div',{style:'font-size:20px',text:EX.left.replace('{l}',EDS.left).replace('{t}',EDS.tot)}));
+    box.appendChild(ep);
+    if(EDHOLD&&st!=='Sold'){box.appendChild(el('div',{'class':'d',style:'font-size:14px;line-height:1.6;color:#c4d0e6;margin-bottom:6px',text:EDS.s==='soon'?EX.note:EX.soldnote}));box.appendChild(waitForm(EX.key+(wk.title||'')))}}
   if(NOTE)box.appendChild(el('div',{style:'margin-bottom:14px;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,217,138,.6);background:rgba(255,217,138,.1);color:#ffe9b8;font-size:15px;line-height:1.5',text:NOTE[document.documentElement.getAttribute('lang')||'en']||NOTE.en}));
   if(wk.price&&!DIG)box.appendChild(el('div',{style:'font-size:26px;margin-bottom:10px;color:#ffd98a',text:wk.price}));
   else if(!NSALE&&!DIG)box.appendChild(el('div',{style:'font-size:16px;margin-bottom:10px;color:#b7c4dc','data-z':'wl_ask',text:T('wl_ask')||'Price: ask me on WhatsApp'}));
@@ -3069,7 +3098,7 @@ function buyBlock(by,wk){
   var pdfs=(C.pdfs||[]).filter(function(x){return x&&x.name&&x.price});
   var sellsPdf=(wk.pdf==='yes'&&pdfs.length>0);
   var pr=(C.prints||[]).filter(function(x){return x&&x.name});
-  if(pr.length&&!sellsPdf){
+  if(pr.length&&!sellsPdf&&!EDHOLD){
     box.appendChild(el('div',{style:'margin-top:26px;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:#5cbcff','data-z':'by_prints',text:T('by_prints')}));
     box.appendChild(el('div',{style:'margin-top:6px;font-size:13px;color:#9fb0c8','data-z':'by_tap',text:T('by_tap')}));
     pr.forEach(function(x,pi){
@@ -3081,7 +3110,7 @@ function buyBlock(by,wk){
       box.appendChild(r);
     });
   }
-  if(sellsPdf){
+  if(sellsPdf&&!EDHOLD){
     box.appendChild(el('div',{style:'margin-top:30px;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:#5cbcff',text:PD('h')}));
     box.appendChild(el('div',{style:'margin-top:6px;font-size:13px;color:#9fb0c8;line-height:1.5',text:PD('p')}));
     pdfs.forEach(function(x){
@@ -3736,11 +3765,11 @@ setTimeout(loop,1500);
 try{
 var d=document,w=window,root=d.documentElement,C=w.C||{},S=C.settings||{};
 var D={
-en:{rw_l:'Real walls',rw_t:'My art in your homes',rw_p:'Photos from people who hung my art on their walls.',bought:'bought',someone:'Someone',from:'from',
+en:{rw_l:'Real walls',rw_t:'My art in your homes',rw_p:'Photos from people who hung my art on their walls.',rw_btn:'Request yours',bought:'bought',someone:'Someone',from:'from',
  gift_h:'Join and get a free gift',thanks:'Thank you! You are on the list.',dl:'Download your gift',code:'Your code',codeh:'Send this code to me on WhatsApp when you order.',close:'Close'},
-fr:{rw_l:'Vrais murs',rw_t:'Mon art chez vous',rw_p:'Photos de personnes qui ont accroché mon art chez elles.',bought:'a acheté',someone:'Quelqu’un',from:'de',
+fr:{rw_l:'Vrais murs',rw_t:'Mon art chez vous',rw_p:'Photos de personnes qui ont accroché mon art chez elles.',rw_btn:'Commandez le vôtre',bought:'a acheté',someone:'Quelqu’un',from:'de',
  gift_h:'Inscrivez-vous et recevez un cadeau',thanks:'Merci ! Vous êtes sur la liste.',dl:'Télécharger votre cadeau',code:'Votre code',codeh:'Envoyez-moi ce code sur WhatsApp quand vous commandez.',close:'Fermer'},
-ar:{rw_l:'جدران حقيقية',rw_t:'فني في بيوتكم',rw_p:'صور من أشخاص علّقوا أعمالي على جدرانهم.',bought:'اشترى',someone:'شخص ما',from:'من',
+ar:{rw_l:'جدران حقيقية',rw_t:'فني في بيوتكم',rw_p:'صور من أشخاص علّقوا أعمالي على جدرانهم.',rw_btn:'اطلب رسمتك',bought:'اشترى',someone:'شخص ما',from:'من',
  gift_h:'اشترك واحصل على هدية مجانية',thanks:'شكراً! أنت الآن في القائمة.',dl:'حمّل هديتك',code:'رمزك',codeh:'أرسل لي هذا الرمز على واتساب عند الطلب.',close:'إغلاق'}};
 function T(k){var l=root.getAttribute('lang')||'en';return (D[l]&&D[l][k])||D.en[k]||''}
 function okimg(u){return typeof u==='string'&&/^(\/api\/media\/[a-f0-9]{8,32}|assets\/[A-Za-z0-9._-]+)$/.test(u)}
@@ -3749,21 +3778,30 @@ var yes=function(v){return /^(y|yes|1|true|on|oui|نعم)/i.test(String(v||'').t
 
 /* ---- real walls section ---- */
 var list=(C.buyers||[]).filter(function(b){return b&&okimg(b.photo)});
+var wall=list.slice();
+(C.works||[]).forEach(function(wk){(wk.proof||[]).forEach(function(x){if(x&&okimg(x.photo))wall.push({photo:x.photo,name:x.name,place:x.place,text:x.text,stars:x.stars,art:wk.title})})});
+wall=wall.slice(0,24);
 var sec=d.getElementById('buyers');
 function drawWalls(){
   if(!sec)return;
-  if(!list.length){sec.style.display='none';return}
+  if(!wall.length){sec.style.display='none';return}
   sec.style.display='';
   sec.querySelector('[data-sell=rw_l]').textContent=T('rw_l');sec.querySelector('[data-sell=rw_t]').textContent=T('rw_t');sec.querySelector('[data-sell=rw_p]').textContent=T('rw_p');
   var g=d.getElementById('buyers-grid');g.innerHTML='';
-  list.forEach(function(b){
+  wall.forEach(function(b){
     var im=el('img',{src:b.photo,alt:(b.name||'')+' '+(b.place||''),loading:'lazy',decoding:'async',style:'display:block;width:100%;aspect-ratio:4/5;object-fit:cover;border-radius:12px'});
     var cap=el('div',{style:'margin-top:12px;color:#fff;font-size:16px',text:[b.name,b.place].filter(Boolean).join(' · ')});
     var kids=[im,cap];
+    var sn=Math.max(0,Math.min(5,parseInt(b.stars,10)||0));
+    if(sn)kids.push(el('div',{'aria-label':sn+' / 5',style:'margin-top:8px;color:#ffc94a;letter-spacing:2px;font-size:15px',text:'★★★★★'.slice(0,sn)+'☆☆☆☆☆'.slice(0,5-sn)}));
+    if(b.art)kids.push(el('div',{style:'margin-top:6px;color:#9fb0c8;font-size:13px',text:'🖼 '+b.art}));
     if(b.size)kids.push(el('span',{'class':'mx-badge',style:'margin-top:8px;align-self:flex-start',text:b.size}));
     if(b.text)kids.push(el('div',{style:'margin-top:8px;color:#b7c4dc;font-size:14px;line-height:1.5',text:'“'+b.text+'”'}));
     g.appendChild(el('div',{'class':'mx-card'},kids));
   });
+  var cta=d.getElementById('buyers-cta');
+  if(!cta){cta=el('a',{id:'buyers-cta','class':'mx-btn v',href:'#request',style:'display:inline-block;margin-top:26px;text-decoration:none'});sec.appendChild(cta)}
+  cta.textContent=T('rw_btn');
 }
 drawWalls();
 
