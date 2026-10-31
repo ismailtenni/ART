@@ -40,6 +40,29 @@ async function tooMany(env, key, max) {
   const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM attempts WHERE key = ? AND at > ?').bind(key, since).first();
   return r && r.n >= (max || 8);
 }
+// ---------- extra security helpers ----------
+function safeEq(a, b) { // compare two texts in constant time (no timing leaks)
+  a = String(a || ''); b = String(b || '');
+  let d = a.length ^ b.length;
+  for (let i = 0; i < Math.max(a.length, b.length); i++) d |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  return d === 0;
+}
+const COMMON_PW = ['password', 'password1', 'password123', '12345678', '123456789', '1234567890', 'qwertyui', 'qwerty123', 'iloveyou', 'abc12345', 'azerty123', '11111111', '00000000', 'admin123', 'welcome1', 'letmein1', 'ismailtenni', 'ismailtenniart', 'motdepasse'];
+function weakPw(pw, email) { // returns a message when the password is too easy to guess, else ''
+  const p = String(pw || '').toLowerCase();
+  if (COMMON_PW.includes(p) || /^(.)\1+$/.test(p) || /^(0123456789|1234567890|abcdefgh)/.test(p)) return 'That password is too easy to guess. Please choose a different one.';
+  const e = String(email || '').toLowerCase();
+  if (e && (p === e || p === e.split('@')[0])) return 'The password must not be your email. Please choose a different one.';
+  return '';
+}
+// Browser requests must come from this same site (blocks cross-site form / fetch attacks, also the odd "null" origin)
+function crossSite(req, url) {
+  const o = req.headers.get('origin');
+  if (o) { try { if (new URL(o).host !== url.host) return true; } catch (e) { return true; } }
+  const sf = (req.headers.get('sec-fetch-site') || '').toLowerCase();
+  if (sf === 'cross-site' || sf === 'same-site') return true;
+  return false;
+}
 function jpegOk(d, max) {
   d = String(d || '');
   if (!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(d) || d.length > max) return false;
@@ -1084,8 +1107,7 @@ const app = {
         return serveMedia(env, req, mm[1]);
       }
       if (url.pathname === '/api/admin/pdfsrc/raw' && req.method === 'PUT') {
-        const origin2 = req.headers.get('origin');
-        if (origin2 && new URL(origin2).host !== url.host) return json({ error: 'Not allowed' }, 403);
+        if (crossSite(req, url)) return json({ error: 'Not allowed' }, 403);
         const me = await currentUser(env, req);
         if (!isAdmin(env, me)) return json({ error: 'Owner only.' }, 403);
         if (!env.PDFS) return json({ error: 'Big files need the R2 storage. See the steps on the PDF sales tab.' }, 400);
@@ -1104,8 +1126,7 @@ const app = {
         return json({ ok: true, w: info.w, h: info.h, bytes: len });
       }
       if (req.method !== 'POST') return json({ error: 'Not found' }, 404);
-      const origin = req.headers.get('origin');
-      if (origin && new URL(origin).host !== url.host) return json({ error: 'Not allowed' }, 403);
+      if (crossSite(req, url)) return json({ error: 'Not allowed' }, 403);
       const body = await req.json().catch(() => ({}));
       if (ATK && PAUSED.test(url.pathname)) return json({ error: 'The site is in protection mode for a little while. Please try again later.' }, 503);
 
@@ -1131,6 +1152,7 @@ const app = {
         if (badText(name, BADX)) return json({ error: BAD_MSG }, 400);
         if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json({ error: 'Please enter a valid email.' }, 400);
         if (password.length < 8 || password.length > 200) return json({ error: 'Password must be at least 8 characters.' }, 400);
+        { const wp = weakPw(password, email); if (wp) return json({ error: wp }, 400); }
         const ip = req.headers.get('cf-connecting-ip') || 'x';
         if (await tooMany(env, 'signup:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
         await note(env, 'signup:' + ip);
@@ -1149,9 +1171,11 @@ const app = {
         const password = String(body.password || '');
         const key = 'login:' + email + ':' + (req.headers.get('cf-connecting-ip') || 'x');
         if (await tooMany(env, key)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
+        const keyAll = 'loginAll:' + email; // many wrong tries on one account from many addresses = guessing attack
+        if (await tooMany(env, keyAll, 30)) return json({ error: 'Too many tries. Please wait a few minutes, or use Sign in with Google.' }, 429);
         const u = await env.DB.prepare('SELECT id, name, email, salt, hash FROM users WHERE email = ?').bind(email).first();
-        const ok = u && (await hashPassword(password, unb64(u.salt))) === u.hash;
-        if (!ok) { await note(env, key); return json({ error: 'Wrong email or password.' }, 401); }
+        const ok = u && safeEq(await hashPassword(password, unb64(u.salt)), u.hash);
+        if (!ok) { await note(env, key); await note(env, keyAll); return json({ error: 'Wrong email or password.' }, 401); }
         if (await env.DB.prepare('SELECT 1 AS x FROM bans WHERE user_id = ?').bind(u.id).first()) return json({ error: 'This account has been blocked.' }, 403);
         const t2 = await env.DB.prepare('SELECT enabled FROM user_2fa WHERE user_id = ?').bind(u.id).first();
         if (t2 && t2.enabled) return json({ need2fa: true, ticket: await mkTicket(env, u.id) });
@@ -1223,6 +1247,7 @@ const app = {
         if (await tooMany(env, 'reset:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
         await note(env, 'reset:' + ip);
         if (password.length < 8 || password.length > 200) return json({ error: 'Password must be at least 8 characters.' }, 400);
+        { const wp = weakPw(password, ''); if (wp) return json({ error: wp }, 400); }
         const t = await env.DB.prepare('SELECT user_id FROM reset_tokens WHERE token_hash = ? AND expires_at > ?').bind(await sha256(token), Date.now()).first();
         if (!t) return json({ error: 'This link is old or already used. Ask for a new one.' }, 400);
         if (!(await secondOk(env, t.user_id, body.code))) return json({ error: 'Enter the 6-digit code from your authenticator app (or a recovery code).' }, 401);
@@ -1241,7 +1266,7 @@ const app = {
         if (!me0) return json({ error: 'Please log in first.' }, 401);
         const A = url.pathname.slice(13);
         const row = await env.DB.prepare('SELECT salt, hash FROM users WHERE id = ?').bind(me0.id).first();
-        const pwOk = async (p) => !!row && (await hashPassword(String(p || ''), unb64(row.salt))) === row.hash;
+        const pwOk = async (p) => !!row && safeEq(await hashPassword(String(p || ''), unb64(row.salt)), row.hash);
         const tf = await env.DB.prepare('SELECT secret, enabled FROM user_2fa WHERE user_id = ?').bind(me0.id).first();
         const on2 = !!(tf && tf.enabled);
         const guard = async (b) => {
@@ -1271,6 +1296,7 @@ const app = {
         if (A === 'password') {
           const next = String(body.next || '');
           if (next.length < 8 || next.length > 200) return json({ error: 'The new password must be at least 8 characters.' }, 400);
+          { const wp = weakPw(next, me0.email); if (wp) return json({ error: wp }, 400); }
           const bad = await guard(body); if (bad) return json({ error: bad }, 401);
           const salt = crypto.getRandomValues(new Uint8Array(16));
           const hash = await hashPassword(next, salt);
@@ -2175,13 +2201,18 @@ const SAFE = {
   'strict-transport-security': 'max-age=31536000; includeSubDomains',
   'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
   'cross-origin-opener-policy': 'same-origin-allow-popups',
+  'x-permitted-cross-domain-policies': 'none',
+  'x-dns-prefetch-control': 'off',
 };
+// Content-Security-Policy for web pages: nobody can put the site in a frame, hijack its links/forms, or load plugins.
+const CSP = "frame-ancestors 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; upgrade-insecure-requests";
 export default {
   async fetch(req, env, ctx) {
     const r = await app.fetch(req, env, ctx);
     try {
       const h = new Headers(r.headers);
       for (const k in SAFE) h.set(k, SAFE[k]);
+      if (/text\/html/i.test(h.get('content-type') || '')) h.set('content-security-policy', CSP);
       return new Response(r.body, { status: r.status, statusText: r.statusText, headers: h });
     } catch (e) { return r; }
   },
