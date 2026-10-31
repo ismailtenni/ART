@@ -4276,10 +4276,11 @@ function go(){
       var wk=null;if(x.work&&w.C&&w.C.works)(w.C.works||[]).forEach(function(q){if(q&&q.id===x.work)wk=q});
       var okc=wk&&typeof wk.cover==='string'&&/^(\/api\/media\/[a-f0-9]{8,32}|assets\/[A-Za-z0-9._-]+)$/.test(wk.cover);
       var txt=x.type==='like'?(wk?'“'+(wk.title||'')+'”':'Artwork '+x.text):(wk?'On “'+(wk.title||'')+'”: '+(x.text||''):(x.text||''));
-      var row=el('div',{style:'display:flex;gap:10px;padding:10px;margin:6px 0;border-radius:12px;background:'+(nw?'rgba(120,90,230,.25)':'rgba(255,255,255,.04)')+((x.tab||wk)?';cursor:pointer':'')},[
+      var row=el('div',{style:'display:flex;gap:10px;padding:10px;margin:6px 0;border-radius:12px;background:'+(nw?'rgba(120,90,230,.25)':'rgba(255,255,255,.04)')+((x.tab||wk||x.type==='review')?';cursor:pointer':'')},[
         el('span',{style:'font-size:20px',text:IC[x.type]||'•'}),
-        el('div',{style:'flex:1;min-width:0'},[el('div',{style:'font-weight:600',text:(LB[x.type]||'')+' · '+x.who}),el('div',{style:'color:#c4d0e6;word-break:break-word',text:txt}),el('div',{style:'color:#9fb0c8;font-size:12px',text:ago(x.at)+' ago'+(wk?' · tap to open':'')})])].concat(okc?[el('img',{src:wk.cover,alt:'',loading:'lazy',style:'width:48px;height:60px;object-fit:cover;border-radius:8px;flex:none'})]:[]));
+        el('div',{style:'flex:1;min-width:0'},[el('div',{style:'font-weight:600',text:(LB[x.type]||'')+' · '+x.who}),el('div',{style:'color:#c4d0e6;word-break:break-word',text:txt}),el('div',{style:'color:#9fb0c8;font-size:12px',text:ago(x.at)+' ago'+((wk||(x.type==='review'&&!x.tab))?' · tap to open':'')})])].concat(okc?[el('img',{src:wk.cover,alt:'',loading:'lazy',style:'width:48px;height:60px;object-fit:cover;border-radius:8px;flex:none'})]:[]));
       if(x.tab)row.addEventListener('click',function(){pn.style.display='none';if(w.__openTab)w.__openTab(x.tab)});
+      if(x.type==='review'&&!x.tab)row.addEventListener('click',function(){pn.style.display='none';var rr=d.getElementById('rv-root')||d.getElementById('reviews');if(rr){rr.scrollIntoView({behavior:'smooth',block:'start'});rr.classList.add('rv-flash');setTimeout(function(){rr.classList.remove('rv-flash')},2200)}});
       if(wk)row.addEventListener('click',function(){pn.style.display='none';var c=d.querySelector('#g-works .cnt[data-id="'+wk.id.replace(/[^A-Za-z0-9_-]/g,'')+'"]');var f=c&&c.closest('figure');var bt=f&&f.querySelector('button');if(bt){bt.scrollIntoView({block:'center'});bt.click()}});
       var del=el('button',{type:'button','aria-label':'Delete this notification',title:'Delete',style:'flex:none;align-self:flex-start;width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.06);color:#ffb4c0;cursor:pointer;font-size:14px;line-height:1;padding:0',text:'\u2715'});
       del.addEventListener('click',function(e){e.stopPropagation();fetch('/api/admin/notifs/delete',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify({key:x.key})}).then(function(r){if(!r.ok)return;data.items=data.items.filter(function(y){return y!==x});data.unread=data.items.filter(function(y){return y.at>data.seen}).length;draw()}).catch(function(){})});
@@ -4654,6 +4655,10 @@ var css=document.createElement('style');css.textContent='#reviews{font-family:So
 +'#reviews h2{margin:8px 0 0;font-weight:300;font-size:clamp(30px,5vw,52px);letter-spacing:.02em;color:#fff}'
 +'#reviews .rv-sub{margin:10px 0 0;color:#9fb0c8;font-size:15px}'
 +'#reviews .rv-card{border-radius:20px;border:1px solid rgba(190,170,255,.28);background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.025));box-shadow:0 10px 40px rgba(20,10,60,.35);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}'
++'#reviews .rv-count{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:8px 16px;border-radius:999px;border:1px solid rgba(255,217,138,.45);background:rgba(10,18,40,.6);color:#ffd98a;font-size:14px;letter-spacing:.04em}'
++'#reviews .rv-count b{font-size:16px;color:#fff}'
++'#rv-root.rv-flash{animation:rvFlash 2.2s ease}'
++'@keyframes rvFlash{0%,100%{box-shadow:none}30%{box-shadow:0 0 0 2px rgba(190,170,255,.7),0 0 50px rgba(122,92,255,.45)}}'
 +'#reviews .rv-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:20px;margin-top:28px}'
 +'@media (max-width:760px){#reviews .rv-top{grid-template-columns:1fr}}'
 +'#reviews .rv-sum{padding:26px;display:flex;gap:22px;align-items:center;flex-wrap:wrap}'
@@ -4709,7 +4714,7 @@ function card(r){var m=D.me,adm=m&&m.admin;
  if(adm||r.mine){h+='<div class="rv-act">';if(r.mine)h+='<button type="button" class="rv-link" data-edit="1">Edit</button>';if(adm)h+='<button type="button" class="rv-link" data-rp="'+r.id+'">'+(r.reply?'Edit reply':'Reply')+'</button>';h+='<button type="button" class="rv-link red" data-d="'+r.id+'">Delete</button></div>'}
  return h+'</article>'}
 function render(){if(!D)return;
- var h='<div><div class="rv-kick">Reviews</div><h2>What people say</h2><p class="rv-sub">Real feedback from members of the community.</p></div><div class="rv-top">'+summary()+form()+'</div>';
+ var h='<div><div class="rv-kick">Reviews</div><h2>What people say</h2><p class="rv-sub">Real feedback from members of the community.</p><div class="rv-count">\ud83d\udc65 <b>'+D.n+'</b> member'+(D.n===1?'':'s')+' gave a review</div></div><div class="rv-top">'+summary()+form()+'</div>';
  if(D.items.length){h+='<div class="rv-grid">';D.items.slice(0,shown).forEach(function(r){h+=card(r)});h+='</div>';if(D.items.length>shown)h+='<div class="rv-more"><button type="button" class="rv-ghost" id="rv-more">Show all '+D.items.length+' reviews</button></div>'}
  root.innerHTML=h;wire()}
 function post(u,b){return fetch(u,{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json().then(function(d){if(!r.ok)throw new Error(d.error||'Something went wrong.');return d})})}
