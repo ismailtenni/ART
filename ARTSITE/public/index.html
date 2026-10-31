@@ -399,8 +399,8 @@ html.phone img{image-rendering:auto}
 <a href="#film"><span data-t="nav_film">Film</span></a>
 <a href="#shop"><span data-x="nav_shop">Shop</span></a>
 <a href="#about"><span data-t="nav_about">About</span></a>
-<a href="#reviews"><span>Reviews</span></a>
-<a href="https://wa.me/212651543275" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+<a href="#reviews"><span data-t="nav_reviews">Reviews</span><span id="rv-nav" style="display:none;margin-left:6px;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#ffc94a;color:#1b1330;font-size:11px;font-weight:700;line-height:18px;text-align:center;vertical-align:middle"></span></a>
+<a href="https://wa.me/212651543275" target="_blank" rel="noopener noreferrer"><span data-y="nav_whatsapp">WhatsApp</span></a>
 <span id="lang" style="display:inline-flex;gap:4px;align-items:center"></span>
 <span id="acct" style="display:inline-flex;gap:10px;align-items:center"></span>
 <button id="app-btn" type="button" aria-haspopup="dialog"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg><span>Get the app</span></button>
@@ -643,7 +643,7 @@ document.getElementById('vw-img').onclick=function(){zoom=!zoom;this.style.cssTe
 </div>
 <div id="story" style="margin-top:clamp(56px,8vw,100px)"><div class="mx-lab"><span data-y="ab_label">Meet the artist</span></div><h2 style="margin:16px 0 0;font-weight:400;font-size:clamp(28px,3.4vw,44px);color:#fff"><span data-y="ab_title">My story</span></h2><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-top:32px;max-width:1100px"><div class="mx-card art-card"><div class="t"><span data-y="ab1">Why I draw</span></div><div class="d"><span data-y="ab_soon">My story is coming soon.</span></div></div><div class="mx-card art-card"><div class="t"><span data-y="ab2">How I started</span></div><div class="d"><span data-y="ab_soon">My story is coming soon.</span></div></div><div class="mx-card art-card"><div class="t"><span data-y="ab3">What inspires me</span></div><div class="d"><span data-y="ab_soon">My story is coming soon.</span></div></div><div class="mx-ph bob" style="grid-column:1/-1;aspect-ratio:16/6;min-height:140px;flex-direction:column;gap:12px"><div class="mx-play"><i></i></div><span data-y="ab_vid">Voice or video hello coming soon</span></div></div></div></section>
 
-<section id="reviews" aria-label="Reviews" style="max-width:1100px;margin:0 auto;padding:clamp(70px,9vw,120px) clamp(20px,4vw,48px) 0;box-sizing:border-box;scroll-margin-top:80px"><div id="rv-root"></div></section>
+<section id="reviews" aria-label="Reviews" style="max-width:1440px;margin:0 auto;padding:clamp(72px,10vw,140px) clamp(20px,4vw,48px) 0;box-sizing:border-box;scroll-margin-top:80px"><div id="rv-root" style="max-width:1100px"></div></section>
 
 <footer style="max-width: 1440px; margin: 0 auto; padding: clamp(80px, 11vw, 160px) clamp(20px, 4vw, 48px) 40px; box-sizing: border-box">
 <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding-top: 32px; border-top: 1px solid rgba(255,255,255,0.14); font-size: 14px; color: #9fb0c8">
@@ -780,7 +780,7 @@ fetch('/api/me').then(function(r){return r.ok?r.json():null}).then(function(d){w
 </script>
 <script>
 (function(){
-var DICT={en:{},fr:{"nav_gallery": "Galerie", "nav_photo": "Photographie", "nav_film": "Film", "nav_about": "À propos", "follow": "Suivre sur Instagram", "explore": "Explorer la galerie", "g_label": "01 — Galerie", "g_title": "Œuvres choisies", "g_intro": "Touchez une œuvre pour la voir en grand, zoomer sur les détails et suivre le processus.", "p_label": "02 — Photographie", "p_title": "À travers l’objectif", "f_label": "03 — Film", "f_title": "Processus et mouvement", "a_label": "04 — À propos", "a_title": "L’artiste", "wa_btn": "Écrire sur WhatsApp", "c_label": "Commandes", "c_title": "Commandez votre œuvre", "c_intro": "Vous voulez votre propre œuvre ? Racontez-moi votre idée, je réponds sur WhatsApp.", "c1": "Portrait", "c1d": "Un portrait dessiné à la main, d’après votre photo.", "c2": "Scène fantastique", "c2d": "Un monde imaginaire, créé autour de votre histoire.", "c3": "Idée personnelle", "c3d": "Vous avez une autre idée ? Parlons-en.", "ask": "Demander le prix", "n_title": "Soyez le premier informé", "n_intro": "Recevez mes nouvelles œuvres par e-mail.", "n_btn": "Je m’abonne", "n_ph": "Votre e-mail", "soon_art": "Œuvres bientôt disponibles.", "soon_ph": "Photos bientôt disponibles", "soon_film": "Film bientôt disponible", "pr_label": "Tarifs", "pr_title": "Prix et comment commander", "pr_intro": "Chaque œuvre est unique. Écrivez-moi sur WhatsApp et je vous réponds avec le prix.", "pr1": "Petit format", "pr2": "Moyen format", "pr3": "Grand format", "pr_ask": "Prix sur demande", "h_title": "Comment commander", "h1": "Racontez-moi votre idée sur WhatsApp.", "h2": "Je vous réponds avec les formats et le prix.", "h3": "Nous choisissons ensemble les détails.", "h4": "Vous recevez votre œuvre.", "b_label": "Avant / Après", "b_title": "Du croquis à l’œuvre finie", "b_soon": "Ajoutez votre croquis et la photo finale pour montrer l’avant et l’après.", "k_label": "Coulisses", "k_title": "Derrière l’art", "k_soon": "Votre photo", "r_label": "Avis", "r_title": "Ce que disent mes clients", "r_soon": "Les avis arrivent bientôt."},ar:{"nav_gallery": "المعرض", "nav_photo": "التصوير", "nav_film": "فيلم", "nav_about": "نبذة", "follow": "تابعني على إنستغرام", "explore": "استكشف المعرض", "g_label": "01 — المعرض", "g_title": "أعمال مختارة", "g_intro": "المس أي عمل لرؤيته كبيراً وتكبير التفاصيل ومتابعة مراحل الرسم.", "p_label": "02 — التصوير", "p_title": "من خلف العدسة", "f_label": "03 — فيلم", "f_title": "المراحل والحركة", "a_label": "04 — نبذة", "a_title": "الفنان", "wa_btn": "راسلني على واتساب", "c_label": "الطلبات", "c_title": "اطلب لوحتك", "c_intro": "هل تريد لوحة خاصة بك؟ أخبرني بفكرتك وسأرد عليك في واتساب.", "c1": "بورتريه", "c1d": "بورتريه مرسوم باليد انطلاقاً من صورتك.", "c2": "مشهد خيالي", "c2d": "عالم خيالي مصمم حول قصتك.", "c3": "فكرة خاصة", "c3d": "لديك فكرة أخرى؟ دعنا نتحدث.", "ask": "اسأل عن السعر", "n_title": "كن أول من يعلم", "n_intro": "احصل على أعمالي الجديدة في بريدك.", "n_btn": "اشترك", "n_ph": "بريدك الإلكتروني", "soon_art": "الأعمال قريباً.", "soon_ph": "الصور قريباً", "soon_film": "الفيلم قريباً", "pr_label": "الأسعار", "pr_title": "الأسعار وطريقة الطلب", "pr_intro": "كل عمل فريد. راسلني على واتساب وسأرد عليك بالسعر.", "pr1": "حجم صغير", "pr2": "حجم متوسط", "pr3": "حجم كبير", "pr_ask": "السعر عند الطلب", "h_title": "كيف تطلب", "h1": "أخبرني بفكرتك على واتساب.", "h2": "أرد عليك بالأحجام والسعر.", "h3": "نتفق معاً على التفاصيل.", "h4": "تستلم لوحتك.", "b_label": "قبل / بعد", "b_title": "من الرسم الأولي إلى العمل النهائي", "b_soon": "أضف رسمك الأولي وصورة العمل النهائي لعرض قبل وبعد.", "k_label": "كواليس", "k_title": "خلف الفن", "k_soon": "صورتك", "r_label": "آراء", "r_title": "ماذا يقول عملائي", "r_soon": "الآراء قريباً."}};
+var DICT={en:{},fr:{"nav_gallery": "Galerie", "nav_photo": "Photographie", "nav_film": "Film", "nav_about": "À propos", "nav_reviews": "Avis", "follow": "Suivre sur Instagram", "explore": "Explorer la galerie", "g_label": "01 — Galerie", "g_title": "Œuvres choisies", "g_intro": "Touchez une œuvre pour la voir en grand, zoomer sur les détails et suivre le processus.", "p_label": "02 — Photographie", "p_title": "À travers l’objectif", "f_label": "03 — Film", "f_title": "Processus et mouvement", "a_label": "04 — À propos", "a_title": "L’artiste", "wa_btn": "Écrire sur WhatsApp", "c_label": "Commandes", "c_title": "Commandez votre œuvre", "c_intro": "Vous voulez votre propre œuvre ? Racontez-moi votre idée, je réponds sur WhatsApp.", "c1": "Portrait", "c1d": "Un portrait dessiné à la main, d’après votre photo.", "c2": "Scène fantastique", "c2d": "Un monde imaginaire, créé autour de votre histoire.", "c3": "Idée personnelle", "c3d": "Vous avez une autre idée ? Parlons-en.", "ask": "Demander le prix", "n_title": "Soyez le premier informé", "n_intro": "Recevez mes nouvelles œuvres par e-mail.", "n_btn": "Je m’abonne", "n_ph": "Votre e-mail", "soon_art": "Œuvres bientôt disponibles.", "soon_ph": "Photos bientôt disponibles", "soon_film": "Film bientôt disponible", "pr_label": "Tarifs", "pr_title": "Prix et comment commander", "pr_intro": "Chaque œuvre est unique. Écrivez-moi sur WhatsApp et je vous réponds avec le prix.", "pr1": "Petit format", "pr2": "Moyen format", "pr3": "Grand format", "pr_ask": "Prix sur demande", "h_title": "Comment commander", "h1": "Racontez-moi votre idée sur WhatsApp.", "h2": "Je vous réponds avec les formats et le prix.", "h3": "Nous choisissons ensemble les détails.", "h4": "Vous recevez votre œuvre.", "b_label": "Avant / Après", "b_title": "Du croquis à l’œuvre finie", "b_soon": "Ajoutez votre croquis et la photo finale pour montrer l’avant et l’après.", "k_label": "Coulisses", "k_title": "Derrière l’art", "k_soon": "Votre photo", "r_label": "Avis", "r_title": "Ce que disent mes clients", "r_soon": "Les avis arrivent bientôt."},ar:{"nav_gallery": "المعرض", "nav_photo": "التصوير", "nav_film": "فيلم", "nav_about": "نبذة", "nav_reviews": "آراء", "follow": "تابعني على إنستغرام", "explore": "استكشف المعرض", "g_label": "01 — المعرض", "g_title": "أعمال مختارة", "g_intro": "المس أي عمل لرؤيته كبيراً وتكبير التفاصيل ومتابعة مراحل الرسم.", "p_label": "02 — التصوير", "p_title": "من خلف العدسة", "f_label": "03 — فيلم", "f_title": "المراحل والحركة", "a_label": "04 — نبذة", "a_title": "الفنان", "wa_btn": "راسلني على واتساب", "c_label": "الطلبات", "c_title": "اطلب لوحتك", "c_intro": "هل تريد لوحة خاصة بك؟ أخبرني بفكرتك وسأرد عليك في واتساب.", "c1": "بورتريه", "c1d": "بورتريه مرسوم باليد انطلاقاً من صورتك.", "c2": "مشهد خيالي", "c2d": "عالم خيالي مصمم حول قصتك.", "c3": "فكرة خاصة", "c3d": "لديك فكرة أخرى؟ دعنا نتحدث.", "ask": "اسأل عن السعر", "n_title": "كن أول من يعلم", "n_intro": "احصل على أعمالي الجديدة في بريدك.", "n_btn": "اشترك", "n_ph": "بريدك الإلكتروني", "soon_art": "الأعمال قريباً.", "soon_ph": "الصور قريباً", "soon_film": "الفيلم قريباً", "pr_label": "الأسعار", "pr_title": "الأسعار وطريقة الطلب", "pr_intro": "كل عمل فريد. راسلني على واتساب وسأرد عليك بالسعر.", "pr1": "حجم صغير", "pr2": "حجم متوسط", "pr3": "حجم كبير", "pr_ask": "السعر عند الطلب", "h_title": "كيف تطلب", "h1": "أخبرني بفكرتك على واتساب.", "h2": "أرد عليك بالأحجام والسعر.", "h3": "نتفق معاً على التفاصيل.", "h4": "تستلم لوحتك.", "b_label": "قبل / بعد", "b_title": "من الرسم الأولي إلى العمل النهائي", "b_soon": "أضف رسمك الأولي وصورة العمل النهائي لعرض قبل وبعد.", "k_label": "كواليس", "k_title": "خلف الفن", "k_soon": "صورتك", "r_label": "آراء", "r_title": "ماذا يقول عملائي", "r_soon": "الآراء قريباً."}};
 var cur='en';
 function apply(l){cur=l;var d=DICT[l]||{};document.querySelectorAll('[data-t]').forEach(function(el){if(!el.hasAttribute('data-en'))el.setAttribute('data-en',el.textContent);var k=el.getAttribute('data-t');el.textContent=(l!=='en'&&d[k])?d[k]:el.getAttribute('data-en');});
  var ne=document.getElementById('ne');if(ne)ne.placeholder=(l!=='en'&&d.n_ph)?d.n_ph:'Your email';
@@ -4693,35 +4693,40 @@ var css=document.createElement('style');css.textContent='#reviews{font-family:So
 +'@media (prefers-reduced-motion:reduce){#reviews .rv-item{animation:none}}';
 document.head.appendChild(css);
 function load(){return fetch('/api/site-reviews',{credentials:'same-origin'}).then(function(r){return r.ok?r.json():null}).then(function(d){if(d){D=d;if(D.me&&D.me.review&&!pick)pick=D.me.review.stars;render()}}).catch(function(){})}
+function Y(k,en){return '<span data-y="'+k+'" data-yen="'+E(en)+'">'+E(en)+'</span>'}
+function applyT(){var T=(window.C&&window.C.texts)||null;if(!T)return;var l=document.documentElement.getAttribute('lang')||'en';root.querySelectorAll('[data-y^="rv_"]').forEach(function(el){var o=T['y:'+el.getAttribute('data-y')];if(o&&typeof o[l]==='string'&&o[l])el.textContent=o[l]})}
+function lblHtml(p){return p?Y('rv_l'+p,LBL[p]):Y('rv_tap','Tap a star')}
 function summary(){var n=D.n,mx=Math.max.apply(null,D.dist.concat([1])),h='<div class="rv-card rv-sum">';
- if(!n)return h+'<div><div class="rv-big">\u2014</div><div style="margin-top:6px;color:#9fb0c8;font-size:14px">No reviews yet. Be the first!</div></div></div>';
- h+='<div style="text-align:center"><div class="rv-big">'+D.avg.toFixed(1)+'</div><div style="margin:8px 0 4px">'+stars(D.avg,20)+'</div><div style="font-size:13px;color:#9fb0c8">'+n+' review'+(n===1?'':'s')+'</div></div><div class="rv-bars">';
+ if(!n)return h+'<div><div class="rv-big">\u2014</div><div style="margin-top:6px;color:#9fb0c8;font-size:14px">'+Y('rv_none','No reviews yet. Be the first!')+'</div></div></div>';
+ h+='<div style="text-align:center"><div class="rv-big">'+D.avg.toFixed(1)+'</div><div style="margin:8px 0 4px">'+stars(D.avg,20)+'</div><div style="font-size:13px;color:#9fb0c8">'+n+' '+(n===1?Y('rv_rev1','review'):Y('rv_revn','reviews'))+'</div></div><div class="rv-bars">';
  for(var i=5;i>=1;i--)h+='<div class="rv-bar"><b>'+i+'</b><span><i style="width:'+Math.round(D.dist[i-1]/mx*100)+'%"></i></span><em>'+D.dist[i-1]+'</em></div>';
  return h+'</div></div>'}
 function form(){var m=D.me;
- if(!m)return '<div class="rv-card rv-form" style="display:flex;flex-direction:column;justify-content:center;gap:14px"><div style="font-size:19px;color:#fff">Share your experience</div><div style="color:#9fb0c8;font-size:14px;line-height:1.6">Log in to leave a rating and a comment. Your name and profile photo will show next to your review.</div><div style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" class="rv-btn" id="rv-li">Log in to review</button><button type="button" class="rv-ghost" id="rv-su">Sign up</button></div></div>';
+ if(!m)return '<div class="rv-card rv-form" style="display:flex;flex-direction:column;justify-content:center;gap:14px"><div style="font-size:19px;color:#fff">'+Y('rv_share','Share your experience')+'</div><div style="color:#9fb0c8;font-size:14px;line-height:1.6">'+Y('rv_login_txt','Log in to leave a rating and a comment. Your name and profile photo will show next to your review.')+'</div><div style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" class="rv-btn" id="rv-li">'+Y('rv_login','Log in to review')+'</button><button type="button" class="rv-ghost" id="rv-su">'+Y('rv_signup','Sign up')+'</button></div></div>';
  var has=!!m.review;
- var h='<div class="rv-card rv-form"><div class="rv-who">'+ava(m.name,m.id,m.av,46)+'<div><div style="color:#fff">'+E(m.name)+'</div><div style="font-size:12px;color:#7e8bab">'+(has?'Your review. You can edit it.':'Posting publicly')+'</div></div></div>'
+ var h='<div class="rv-card rv-form"><div class="rv-who">'+ava(m.name,m.id,m.av,46)+'<div><div style="color:#fff">'+E(m.name)+'</div><div style="font-size:12px;color:#7e8bab">'+(has?Y('rv_yours','Your review. You can edit it.'):Y('rv_posting','Posting publicly'))+'</div></div></div>'
  +'<div class="rv-pick" role="radiogroup" aria-label="Your rating">';
  for(var i=1;i<=5;i++)h+='<button type="button" role="radio" aria-checked="'+(i===pick)+'" aria-label="'+i+' star'+(i>1?'s':'')+'" data-s="'+i+'" class="'+(i<=pick?'on':'')+'">\u2605</button>';
- h+='</div><div class="rv-lbl" id="rv-lbl">'+(pick?LBL[pick]:'Tap a star')+'</div>'
+ h+='</div><div class="rv-lbl" id="rv-lbl">'+lblHtml(pick)+'</div>'
  +'<textarea id="rv-tx" maxlength="600" placeholder="Tell others what you think about the art and the site ...">'+E(has?m.review.text:'')+'</textarea>'
- +'<div class="rv-row"><span class="rv-cnt" id="rv-ct">0 / 600</span><div style="display:flex;gap:10px;align-items:center">'+(has?'<button type="button" class="rv-link red" id="rv-del">Delete my review</button>':'')+'<button type="button" class="rv-btn" id="rv-go">'+(has?'Update review':'Post review')+'</button></div></div><div class="rv-err" id="rv-er" role="alert"></div></div>';
+ +'<div class="rv-row"><span class="rv-cnt" id="rv-ct">0 / 600</span><div style="display:flex;gap:10px;align-items:center">'+(has?'<button type="button" class="rv-link red" id="rv-del">'+Y('rv_delmine','Delete my review')+'</button>':'')+'<button type="button" class="rv-btn" id="rv-go">'+(has?Y('rv_update','Update review'):Y('rv_post','Post review'))+'</button></div></div><div class="rv-err" id="rv-er" role="alert"></div></div>';
  return h}
 function card(r){var m=D.me,adm=m&&m.admin;
- var h='<article class="rv-card rv-item"><div class="rv-h">'+ava(r.name,r.uid,r.av,44)+'<div style="min-width:0;flex:1"><div class="rv-nm">'+E(r.name)+'</div><div class="rv-dt">'+ago(r.at)+(r.edited?' \u00b7 edited':'')+'</div></div>'+stars(r.stars,16)+'</div><p class="rv-tx">'+E(r.text)+'</p>';
- if(r.reply)h+='<div class="rv-rp"><b>REPLY FROM ISMAIL</b>'+E(r.reply)+'</div>';
- if(adm||r.mine){h+='<div class="rv-act">';if(r.mine)h+='<button type="button" class="rv-link" data-edit="1">Edit</button>';if(adm)h+='<button type="button" class="rv-link" data-rp="'+r.id+'">'+(r.reply?'Edit reply':'Reply')+'</button>';h+='<button type="button" class="rv-link red" data-d="'+r.id+'">Delete</button></div>'}
+ var h='<article class="rv-card rv-item"><div class="rv-h">'+ava(r.name,r.uid,r.av,44)+'<div style="min-width:0;flex:1"><div class="rv-nm">'+E(r.name)+'</div><div class="rv-dt">'+ago(r.at)+(r.edited?' \u00b7 '+Y('rv_edited','edited'):'')+'</div></div>'+stars(r.stars,16)+'</div><p class="rv-tx">'+E(r.text)+'</p>';
+ if(r.reply)h+='<div class="rv-rp"><b>'+Y('rv_replyfrom','REPLY FROM ISMAIL')+'</b>'+E(r.reply)+'</div>';
+ if(adm||r.mine){h+='<div class="rv-act">';if(r.mine)h+='<button type="button" class="rv-link" data-edit="1">'+Y('rv_edit','Edit')+'</button>';if(adm)h+='<button type="button" class="rv-link" data-rp="'+r.id+'">'+(r.reply?Y('rv_editreply','Edit reply'):Y('rv_reply','Reply'))+'</button>';h+='<button type="button" class="rv-link red" data-d="'+r.id+'">'+Y('rv_delete','Delete')+'</button></div>'}
  return h+'</article>'}
 function render(){if(!D)return;
- var h='<div><div class="rv-kick">Reviews</div><h2>What people say</h2><p class="rv-sub">Real feedback from members of the community.</p><div class="rv-count">\ud83d\udc65 <b>'+D.n+'</b> member'+(D.n===1?'':'s')+' gave a review</div></div><div class="rv-top">'+summary()+form()+'</div>';
- if(D.items.length){h+='<div class="rv-grid">';D.items.slice(0,shown).forEach(function(r){h+=card(r)});h+='</div>';if(D.items.length>shown)h+='<div class="rv-more"><button type="button" class="rv-ghost" id="rv-more">Show all '+D.items.length+' reviews</button></div>'}
- root.innerHTML=h;wire()}
+ var h='<div><div class="rv-kick">'+Y('rv_kick','Reviews')+'</div><h2>'+Y('rv_title','What people say')+'</h2><p class="rv-sub">'+Y('rv_sub','Real feedback from members of the community.')+'</p><div class="rv-count">\ud83d\udc65 <b>'+D.n+'</b> '+(D.n===1?Y('rv_count1','member gave a review'):Y('rv_countn','members gave a review'))+'</div></div><div class="rv-top">'+summary()+form()+'</div>';
+ if(D.items.length){h+='<div class="rv-grid">';D.items.slice(0,shown).forEach(function(r){h+=card(r)});h+='</div>';if(D.items.length>shown)h+='<div class="rv-more"><button type="button" class="rv-ghost" id="rv-more">'+Y('rv_showall','Show all')+' '+D.items.length+' '+Y('rv_revn','reviews')+'</button></div>'}
+ root.innerHTML=h;applyT();
+ var nb=document.getElementById('rv-nav');if(nb){nb.textContent=D.n;nb.style.display=D.n?'inline-block':'none';nb.title=D.n+' member'+(D.n===1?'':'s')+' gave a review'}
+ wire()}
 function post(u,b){return fetch(u,{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json().then(function(d){if(!r.ok)throw new Error(d.error||'Something went wrong.');return d})})}
 function wire(){var q=function(id){return document.getElementById(id)};
  if(q('rv-li'))q('rv-li').onclick=function(){var b=document.getElementById('li');if(b)b.click()};
  if(q('rv-su'))q('rv-su').onclick=function(){var b=document.getElementById('su');if(b)b.click()};
- root.querySelectorAll('.rv-pick button').forEach(function(b){b.onclick=function(){pick=+b.getAttribute('data-s');root.querySelectorAll('.rv-pick button').forEach(function(x){var s=+x.getAttribute('data-s');x.className=s<=pick?'on':'';x.setAttribute('aria-checked',String(s===pick))});q('rv-lbl').textContent=LBL[pick]}});
+ root.querySelectorAll('.rv-pick button').forEach(function(b){b.onclick=function(){pick=+b.getAttribute('data-s');root.querySelectorAll('.rv-pick button').forEach(function(x){var s=+x.getAttribute('data-s');x.className=s<=pick?'on':'';x.setAttribute('aria-checked',String(s===pick))});q('rv-lbl').innerHTML=lblHtml(pick);applyT()}});
  var tx=q('rv-tx');if(tx){var ct=q('rv-ct');var up=function(){ct.textContent=tx.value.length+' / 600'};tx.oninput=up;up()}
  if(q('rv-go'))q('rv-go').onclick=function(){var er=q('rv-er');er.className='rv-err';er.textContent='';
   if(!pick){er.textContent='Please tap the stars first.';return}
@@ -4736,4 +4741,65 @@ window.__rvRefresh=function(){pick=0;load()};
 load();
 })();
 </script>
+<script id="country-js">
+(function(){
+try{
+var d=document,root=d.documentElement,lb=d.getElementById('lang');if(!lb||!lb.parentNode)return;
+var CODES='AD AE AF AG AI AL AM AO AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GT GU GW GY HK HN HR HT HU ID IE IL IM IN IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG US UY UZ VA VC VE VG VI VN VU WF WS XK YE YT ZA ZM ZW'.split(' ');
+var TX={title:{en:'Choose your country',fr:'Choisissez votre pays',ar:'اختر بلدك'},search:{en:'Search a country',fr:'Rechercher un pays',ar:'ابحث عن بلد'},none:{en:'No country found.',fr:'Aucun pays trouvé.',ar:'لا توجد دولة.'},close:{en:'Close',fr:'Fermer',ar:'إغلاق'}};
+function L(){var l=root.getAttribute('lang')||'en';return TX.title[l]?l:'en'}
+function t(k){return TX[k][L()]}
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}}
+var dn={},dnEn=null;
+function nameOf(c,lang){try{var l=lang||(root.getAttribute('lang')||'en');if(!dn[l])dn[l]=new Intl.DisplayNames([l],{type:'region'});return dn[l].of(c)||c}catch(e){return c}}
+function emoji(c){return String.fromCodePoint.apply(null,c.split('').map(function(x){return 127397+x.charCodeAt(0)}))}
+function flag(c,w){var h=Math.round(w*.75),i=d.createElement('img'),lc=c.toLowerCase();
+ i.src='https://flagcdn.com/w40/'+lc+'.png';i.srcset='https://flagcdn.com/w80/'+lc+'.png 2x';i.width=w;i.height=h;i.alt='';i.loading='lazy';
+ i.style.cssText='width:'+w+'px;height:'+h+'px;object-fit:cover;border-radius:3px;flex:none;box-shadow:0 0 0 1px rgba(255,255,255,.25)';
+ i.onerror=function(){var s=d.createElement('span');s.textContent=emoji(c);s.style.cssText='font-size:'+Math.round(w*.8)+'px;line-height:1;flex:none';if(i.parentNode)i.parentNode.replaceChild(s,i)};return i}
+var GLOBE='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a8d6ff" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="#12457a" fill-opacity=".75"/><ellipse cx="12" cy="12" rx="4" ry="9.5"/><path d="M2.5 12h19M4.2 7h15.6M4.2 17h15.6"/></svg>';
+var b=d.createElement('button');b.type='button';b.id='ctry-btn';b.setAttribute('aria-haspopup','dialog');b.setAttribute('aria-expanded','false');b.setAttribute('aria-label','Countries');
+b.style.cssText='width:32px;height:32px;padding:0;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(10,18,40,.6);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:none;margin:0 2px';
+lb.parentNode.insertBefore(b,lb.nextSibling);
+var pn=d.createElement('div');pn.id='ctry-pn';pn.setAttribute('role','dialog');pn.setAttribute('aria-modal','false');
+pn.style.cssText='display:none;position:fixed;z-index:3000;width:min(380px,94vw);max-height:min(74vh,580px);flex-direction:column;border-radius:18px;border:1px solid rgba(190,170,255,.5);background:rgba(8,12,34,.97);box-shadow:0 20px 60px #000;color:#fff;font-family:Sora,Inter,system-ui,sans-serif;overflow:hidden;text-transform:none;letter-spacing:normal';
+var hd=d.createElement('div');hd.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 8px';
+var ti=d.createElement('b');ti.style.cssText='font-size:16px;font-weight:600';
+var cx=d.createElement('button');cx.type='button';cx.textContent='\u2715';cx.style.cssText='width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;font-size:14px;padding:0;flex:none';
+hd.appendChild(ti);hd.appendChild(cx);
+var si=d.createElement('input');si.type='search';si.autocomplete='off';si.style.cssText='margin:0 16px 8px;padding:10px 14px;border-radius:12px;border:1px solid rgba(190,170,255,.4);background:rgba(255,255,255,.06);color:#fff;font:inherit;font-size:14px;outline:none';
+var ls0=d.createElement('div');ls0.style.cssText='overflow-y:auto;flex:1;padding:4px 6px 12px;-webkit-overflow-scrolling:touch';
+pn.appendChild(hd);pn.appendChild(si);pn.appendChild(ls0);d.body.appendChild(pn);
+function sel(){return ls('art-country')}
+function paintBtn(){var c=sel();b.innerHTML='';if(c&&CODES.indexOf(c)>-1){b.appendChild(flag(c,22));b.title=nameOf(c)}else{b.innerHTML=GLOBE;b.title=t('title')}}
+function fill(){
+ var q=si.value.trim().toLowerCase(),cur=sel(),rows=CODES.map(function(c){return{c:c,n:nameOf(c),e:nameOf(c,'en')}}).filter(function(r){return !q||r.n.toLowerCase().indexOf(q)>-1||r.e.toLowerCase().indexOf(q)>-1||r.c.toLowerCase()===q});
+ var lg=L();rows.sort(function(a,z){return a.n.localeCompare(z.n,lg)});
+ ls0.innerHTML='';
+ if(!rows.length){var e=d.createElement('div');e.textContent=t('none');e.style.cssText='padding:18px;text-align:center;color:#9fb0c8;font-size:14px';ls0.appendChild(e);return}
+ rows.forEach(function(r){var bt=d.createElement('button');bt.type='button';bt.setAttribute('data-c',r.c);
+  bt.style.cssText='display:flex;align-items:center;gap:12px;width:100%;padding:9px 12px;border:0;border-radius:10px;background:'+(r.c===cur?'rgba(120,90,230,.35)':'none')+';color:#fff;font:inherit;font-size:14px;cursor:pointer;text-align:start';
+  bt.appendChild(flag(r.c,26));var sp=d.createElement('span');sp.textContent=r.n;sp.style.cssText='flex:1;min-width:0';bt.appendChild(sp);
+  if(r.c===cur){var ck=d.createElement('span');ck.textContent='\u2713';ck.style.color='#9ff0c0';bt.appendChild(ck)}
+  bt.onmouseenter=function(){if(r.c!==sel())bt.style.background='rgba(255,255,255,.08)'};bt.onmouseleave=function(){if(r.c!==sel())bt.style.background='none'};
+  bt.onclick=function(){var was=sel()===r.c;ls('art-country',was?null:r.c);if(was)root.removeAttribute('data-country');else root.setAttribute('data-country',r.c);paintBtn();close();try{window.dispatchEvent(new CustomEvent('art-country',{detail:{code:was?'':r.c,name:was?'':r.n}}))}catch(e){}};
+  ls0.appendChild(bt)});
+}
+function texts(){ti.textContent=t('title');si.placeholder=t('search');cx.setAttribute('aria-label',t('close'));b.setAttribute('aria-label',t('title'))}
+function place(){var r=b.getBoundingClientRect(),w=Math.min(380,innerWidth*.94),left=Math.max(8,Math.min(r.left+r.width/2-w/2,innerWidth-w-8)),top=Math.min(r.bottom+10,Math.max(8,innerHeight-220));pn.style.left=left+'px';pn.style.top=top+'px'}
+function open(){texts();si.value='';fill();place();pn.style.display='flex';b.setAttribute('aria-expanded','true');var c=sel(),el=c&&ls0.querySelector('[data-c="'+c+'"]');if(el)ls0.scrollTop=Math.max(0,el.offsetTop-80)}
+function close(){pn.style.display='none';b.setAttribute('aria-expanded','false')}
+b.addEventListener('click',function(e){e.stopPropagation();pn.style.display==='flex'?close():open()});
+cx.addEventListener('click',close);
+si.addEventListener('input',fill);
+d.addEventListener('click',function(e){if(pn.style.display==='flex'&&!pn.contains(e.target)&&!b.contains(e.target))close()});
+d.addEventListener('keydown',function(e){if(e.key==='Escape'&&pn.style.display==='flex'){close();b.focus()}});
+addEventListener('resize',function(){if(pn.style.display==='flex')place()});
+new MutationObserver(function(){texts();paintBtn();if(pn.style.display==='flex')fill()}).observe(root,{attributes:true,attributeFilter:['lang']});
+var s0=sel();if(s0&&CODES.indexOf(s0)>-1)root.setAttribute('data-country',s0);
+texts();paintBtn();
+}catch(err){try{console.warn('country off',err)}catch(_){}}
+})();
+</script>
+
 </body></html>
