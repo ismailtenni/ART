@@ -35,10 +35,10 @@ async function startSession(env, userId) {
     .bind(await sha256(token), userId, Date.now() + maxAge * 1000).run();
   return sessionCookie(token, maxAge);
 }
-async function tooMany(env, key) {
+async function tooMany(env, key, max) {
   const since = Date.now() - 15 * 60 * 1000;
   const r = await env.DB.prepare('SELECT COUNT(*) AS n FROM attempts WHERE key = ? AND at > ?').bind(key, since).first();
-  return r && r.n >= 8;
+  return r && r.n >= (max || 8);
 }
 function jpegOk(d, max) {
   d = String(d || '');
@@ -726,10 +726,10 @@ const app = {
           TSC = tr && tr.v ? JSON.parse(tr.v) : {};
           const akr = await env.DB.prepare("SELECT v FROM content WHERE k = 'attack'").first();
           const atkOn = !!(akr && akr.v === '1');
-          if ((atkOn || /^(y|yes|1|true|on)/i.test(String(sset.gateAll || '').trim())) && tsReady(env) && !env.GATE_OFF && !BOT_OK.test(req.headers.get('user-agent') || '')) {
+          if (tsReady(env) && !env.GATE_OFF && !BOT_OK.test(req.headers.get('user-agent') || '')) {
+            // The human check shows EVERY time the site is opened. Only the short one-time key (gk, valid 20 seconds) is accepted - no long-lived cookie.
             const gk = url.searchParams.get('gk');
-            const gc = getCookie(req, 'gate');
-            let passed = (gc ? await checkGateProof(env, gc) : false) || (gk ? await checkGateProof(env, gk) : false);
+            let passed = gk ? await checkGateProof(env, gk) : false;
             if (!passed) { const me0 = await currentUser(env, req); if (isAdmin(env, me0)) passed = true; }
             if (!passed) { const d = url.pathname + url.search.replace(/[?&]gk=[^&]*/, '').replace(/^&/, '?'); return gatePage(env, d || '/'); }
           }
@@ -1116,11 +1116,11 @@ const app = {
 
       if (url.pathname === '/api/gate/verify') {
         const ip = req.headers.get('cf-connecting-ip') || 'x';
-        if (await tooMany(env, 'gate:' + ip)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
+        if (await tooMany(env, 'gate:' + ip, 60)) return json({ error: 'Too many tries. Please wait a few minutes.' }, 429);
         await note(env, 'gate:' + ip);
         const err = await tsCheck(env, req, body.ts);
         if (err) return json({ error: err }, 400);
-        return json({ ok: true, gk: await mkGateProof(env) }, 200, { 'set-cookie': 'gate=' + (await mkGateProof(env, 12 * 3600 * 1000)) + '; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=43200' });
+        return json({ ok: true, gk: await mkGateProof(env) }); // no cookie: the check is asked again at every visit
       }
 
       if (url.pathname === '/api/signup') {
