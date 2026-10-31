@@ -4596,7 +4596,7 @@ function run(k){
  stop();cur=k;var e=EV[k],G=e.glow;glowC=G;
  if(!document.getElementById('evt-css')){var st=document.createElement('style');st.id='evt-css';st.textContent=CSS;document.head.appendChild(st)}
  var o=document.createElement('div');o.id='evt';o.setAttribute('aria-hidden','true');
- o.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:900;overflow:hidden;background:radial-gradient(ellipse at 12% 0%,rgba('+G+',.16),transparent 55%),radial-gradient(ellipse at 92% 100%,rgba('+G+',.14),transparent 55%)';
+ o.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:-1;overflow:hidden;background:radial-gradient(ellipse at 12% 0%,rgba('+G+',.16),transparent 55%),radial-gradient(ellipse at 92% 100%,rgba('+G+',.14),transparent 55%)';
  var dh='';e.deco.forEach(function(d){dh+=deco(d)});
  o.innerHTML=dh+'<canvas style="position:absolute;left:0;top:0"></canvas>';
  document.body.appendChild(o);
