@@ -2150,7 +2150,7 @@ function init(){
     var list=h('div',{style:'display:grid;gap:8px;max-width:820px;margin-top:8px'});
     D.ips.forEach(function(x){
       var hand=!!x.manual,c=hand?'#ff6b6b':'#ffb454';
-      var what=hand?'Blocked by hand':'Locked until '+new Date(x.until).toLocaleString()+' (lock #'+x.strikes+')';
+      var what=hand?(x.until?'Trap ban until '+new Date(x.until).toLocaleString():'Blocked by hand'):'Locked until '+new Date(x.until).toLocaleString()+' (lock #'+x.strikes+')';
       list.appendChild(h('div',{style:'display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.14);border-left:4px solid '+c+';background:rgba(20,26,66,.4)'},[
         h('div',{style:'flex:1 1 240px;min-width:0'},[
           h('div',{style:'font-size:16px;word-break:break-all',text:x.ip+(x.ip===D.me?'  (this is you)':'')}),
@@ -2190,7 +2190,8 @@ function init(){
     lockout:['Locked out after 5 wrong passwords','#ff6b6b'],
     ip_blocked:['Blocked address tried to get in','#ffb454'],
     ip_ban:['You blocked an IP','#9fb0c8'],
-    ip_unban:['You unblocked an IP','#9fb0c8']
+    ip_unban:['You unblocked an IP','#9fb0c8'],
+    honeypot:['Trap triggered (bot caught and banned)','#ff6b6b']
   };
   function secFlag(c){return /^[A-Z]{2}$/.test(c)?String.fromCodePoint(127397+c.charCodeAt(0),127397+c.charCodeAt(1)):''}
   function renderSecLogTab(){
@@ -5037,6 +5038,40 @@ if(g0){
 }
 texts();paintBtn();
 }catch(err){try{console.warn('country off',err)}catch(_){}}
+})();
+</script>
+
+<script id="honeypot-js">
+(function(){
+try{
+var st=document.createElement('style');
+st.textContent='.hp-wrap{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;border:0!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;opacity:0!important;pointer-events:none!important}';
+document.head.appendChild(st);
+function add(f){
+ if(f.querySelector('input[name="hp_check"]'))return;
+ var d=document.createElement('div');d.className='hp-wrap';d.setAttribute('aria-hidden','true');
+ var i=document.createElement('input');i.type='text';i.name='hp_check';i.tabIndex=-1;i.setAttribute('autocomplete','off');
+ i.setAttribute('data-lpignore','true');i.setAttribute('data-1p-ignore','true');
+ d.appendChild(i);f.appendChild(d);
+}
+function scan(){var fs=document.getElementsByTagName('form');for(var k=0;k<fs.length;k++)add(fs[k]);}
+var q=0;
+function later(){if(q)return;q=1;requestAnimationFrame(function(){q=0;scan();});}
+scan();
+new MutationObserver(later).observe(document.documentElement,{childList:true,subtree:true});
+var of=window.fetch;
+if(of){window.fetch=function(u,o){
+ try{
+  var url=typeof u==='string'?u:(u&&u.url)||'';
+  if(o&&o.method&&String(o.method).toUpperCase()==='POST'&&url.indexOf('/api/')>-1&&typeof o.body==='string'){
+   var v='',els=document.querySelectorAll('input[name="hp_check"]');
+   for(var k=0;k<els.length;k++){if(els[k].value&&els[k].value.trim()){v=els[k].value;break;}}
+   if(v){var b=JSON.parse(o.body);if(b&&typeof b==='object'&&!Array.isArray(b)){b.hp_check=v;o=Object.assign({},o,{body:JSON.stringify(b)});}}
+  }
+ }catch(e){}
+ return of.call(this,u,o);
+};}
+}catch(e){}
 })();
 </script>
 
