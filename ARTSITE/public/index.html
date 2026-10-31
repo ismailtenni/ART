@@ -1308,11 +1308,11 @@ function init(){
     box.appendChild(h('div',{id:'ed-msg',style:'margin-top:12px;min-height:20px;color:#a8d6ff;font-size:14px',text:msg}));
     if(cur){box.appendChild(workForm(cur.o,cur.n));return}
     var tabs=h('div',{style:'display:flex;gap:10px;margin:18px 0;flex-wrap:wrap'});
-    [['works','Artwork'],['photos','Photos'],['films','Videos'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['buyers','Real walls'],['gift','Free gift'],['draw','Draw me'],['msg','Messages'],['mem','Members'],['cur','Mouse cursor'],['sec','Security checklist'],['health','Health check'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['pdf','PDF sales'],['ask','AI assistant'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
+    [['works','Artwork'],['photos','Photos'],['films','Videos'],['gifts','Gift cards'],['spot','Art of the month'],['lay','Page sections'],['page','Page parts'],['rooms','Room photos'],['apps','App downloads'],['buyers','Real walls'],['gift','Free gift'],['draw','Draw me'],['msg','Messages'],['mem','Members'],['cur','Mouse cursor'],['sec','Security checklist'],['seclog','Security log'],['ipb','Blocked IPs'],['health','Health check'],['rev','Client reviews'],['wait','Waiting list'],['price','Price calculator'],['mail','Email to fans'],['blog','Blog'],['chal','Challenge'],['stats','Stats'],['pdf','PDF sales'],['ask','AI assistant'],['orders','Orders'],['reqs','Requests'],['back','Backup'],['texts','Words']].forEach(function(t){
       tabs.appendChild(h('button',{type:'button',style:(tab===t[0]?BTN2:BTN),text:t[1],on:{click:function(){tab=t[0];render()}}}));
     });
     box.appendChild(tabs);
-    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='buyers')renderBuyersTab();else if(tab==='gift')renderGiftTab();else if(tab==='draw')renderDrawTab();else if(tab==='mem')renderMemTab();else if(tab==='msg')renderMsgTab();else if(tab==='cur')renderCurTab();else if(tab==='sec')renderSecTab();else if(tab==='health')renderHealthTab();else if(tab==='pdf')renderPdfTab();else if(tab==='ask')renderAskTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
+    if(tab==='works')renderWorks();else if(tab==='photos')renderPhotos();else if(tab==='texts')renderTexts();else if(tab==='gifts')renderGiftsTab();else if(tab==='spot')renderSpotTab();else if(tab==='page')renderPageTab();else if(tab==='lay')renderLayTab();else if(tab==='rooms')renderRoomsTab();else if(tab==='apps')renderAppsTab();else if(tab==='buyers')renderBuyersTab();else if(tab==='gift')renderGiftTab();else if(tab==='draw')renderDrawTab();else if(tab==='mem')renderMemTab();else if(tab==='msg')renderMsgTab();else if(tab==='cur')renderCurTab();else if(tab==='sec')renderSecTab();else if(tab==='seclog')renderSecLogTab();else if(tab==='ipb')renderIpbTab();else if(tab==='health')renderHealthTab();else if(tab==='pdf')renderPdfTab();else if(tab==='ask')renderAskTab();else if(tab==='orders')renderOrdersTab();else if(tab==='reqs')renderReqsTab();else if(tab==='blog')renderBlogTab();else if(tab==='price')renderPriceTab();else if(tab==='rev')renderRevTab();else if(tab==='wait')renderWaitTab();else if(tab==='back')renderBackTab();else if(tab==='mail')renderMailTab();else if(tab==='chal')renderChalTab();else if(tab==='stats')renderStatsTab();else renderFilms();
   }
   function renderWorks(){
     box.appendChild(h('button',{type:'button',style:BTN2,text:'+ Add new artwork',on:{click:function(){editing='new';cur={n:true,o:{id:'',title:'',meta:'',series:'',status:'',ratio:'3 / 4',desc:'',cover:'',shots:[],process:[]}};render()}}}));
@@ -2126,6 +2126,116 @@ function init(){
   }
   var stats=null;
   var healthData=null;
+  var ipbData=null;
+  function renderIpbTab(){
+    box.appendChild(note1('After 5 wrong passwords the site locks sign-in for that address and that account for 15 minutes, then 30 minutes, 1 hour and longer if it happens again. A lock like this only stops signing in, so other people on the same connection can still look at your art. An address you block by hand is kept out of the whole site until you unblock it.'));
+    if(!ipbData){
+      box.appendChild(h('p',{style:'color:#9fb0c8',text:'Loading ...'}));
+      get('/api/admin/ipblocks').then(function(r){ipbData=r;render()}).catch(function(e){say('Problem: '+e.message)});return}
+    var D=ipbData;
+    function reload(){ipbData=null;render()}
+    function fail(e){say('Problem: '+e.message)}
+    box.appendChild(sub('Block an address'));
+    var ip=h('input',{type:'text',style:INP,placeholder:'IP address, for example 203.0.113.7'});
+    var nt=h('input',{type:'text',style:INP+';margin-top:8px',placeholder:'Note (optional), for example: guessing my password'});
+    var wrap=h('div',{style:'max-width:520px'},[ip,nt]);
+    wrap.appendChild(h('div',{style:'display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center'},[
+      h('button',{type:'button',style:BTNR,text:'Block this address',on:{click:function(){
+        if(!ip.value.trim()){say('Type an IP address first.');return}
+        post('/api/admin/ipblock',{ip:ip.value,on:true,note:nt.value}).then(function(){say('Blocked '+ip.value.trim());reload()}).catch(fail)}}}),
+      h('span',{style:'color:#9fb0c8;font-size:13px',text:'Your own address right now: '+(D.me||'unknown')})]));
+    box.appendChild(wrap);
+    box.appendChild(sub('Blocked and locked addresses'));
+    if(!D.ips.length)box.appendChild(h('p',{style:'color:#9fb0c8',text:'None right now.'}));
+    var list=h('div',{style:'display:grid;gap:8px;max-width:820px;margin-top:8px'});
+    D.ips.forEach(function(x){
+      var hand=!!x.manual,c=hand?'#ff6b6b':'#ffb454';
+      var what=hand?'Blocked by hand':'Locked until '+new Date(x.until).toLocaleString()+' (lock #'+x.strikes+')';
+      list.appendChild(h('div',{style:'display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.14);border-left:4px solid '+c+';background:rgba(20,26,66,.4)'},[
+        h('div',{style:'flex:1 1 240px;min-width:0'},[
+          h('div',{style:'font-size:16px;word-break:break-all',text:x.ip+(x.ip===D.me?'  (this is you)':'')}),
+          h('div',{style:'font-size:13px;color:'+c+';margin-top:3px',text:what}),
+          x.reason?h('div',{style:'font-size:13px;color:#9fb0c8;margin-top:2px;word-break:break-word',text:x.reason}):null]),
+        h('button',{type:'button',style:BTN,text:'Unblock',on:{click:function(){post('/api/admin/ipblock',{ip:x.ip,on:false}).then(function(){say('Unblocked '+x.ip);reload()}).catch(fail)}}})]));
+    });
+    box.appendChild(list);
+    box.appendChild(sub('Locked accounts'));
+    if(!D.accts.length)box.appendChild(h('p',{style:'color:#9fb0c8',text:'None right now.'}));
+    var al=h('div',{style:'display:grid;gap:8px;max-width:820px;margin-top:8px'});
+    D.accts.forEach(function(a){
+      al.appendChild(h('div',{style:'display:flex;gap:12px;flex-wrap:wrap;align-items:center;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.14);border-left:4px solid #ffb454;background:rgba(20,26,66,.4)'},[
+        h('div',{style:'flex:1 1 240px;min-width:0'},[
+          h('div',{style:'font-size:16px;word-break:break-all',text:a.email}),
+          h('div',{style:'font-size:13px;color:#ffb454;margin-top:3px',text:'Sign-in locked until '+new Date(a.until).toLocaleString()+' (lock #'+a.strikes+')'})]),
+        h('button',{type:'button',style:BTN,text:'Unlock',on:{click:function(){post('/api/admin/acctlock/clear',{email:a.email}).then(function(){say('Unlocked '+a.email);reload()}).catch(fail)}}})]));
+    });
+    box.appendChild(al);
+    box.appendChild(h('div',{style:'margin-top:18px'},[h('button',{type:'button',style:BTNG,text:'Refresh',on:{click:reload}})]));
+  }
+  var secLogData=null,secLogKind='';
+  var SECL={
+    owner_guess:['Someone tried YOUR owner login','#ff6b6b'],
+    login_fail:['Wrong password','#ffb454'],
+    tfa_fail:['Wrong 2-step code','#ffb454'],
+    login_locked:['Locked out (too many tries)','#ffb454'],
+    banned_login:['Blocked member tried to log in','#ffb454'],
+    rate_limit:['Slowed down (too many requests)','#ffb454'],
+    cross_site:['Blocked: request from another website','#ffb454'],
+    bot_check:['Robot check failed','#ffb454'],
+    admin_login:['You (owner) logged in','#5be3a0'],
+    member_ban:['You blocked a member','#9fb0c8'],
+    member_unban:['You unblocked a member','#9fb0c8'],
+    member_delete:['You deleted a member','#9fb0c8'],
+    attack_mode:['Protection mode changed','#9fb0c8'],
+    lockout:['Locked out after 5 wrong passwords','#ff6b6b'],
+    ip_blocked:['Blocked address tried to get in','#ffb454'],
+    ip_ban:['You blocked an IP','#9fb0c8'],
+    ip_unban:['You unblocked an IP','#9fb0c8']
+  };
+  function secFlag(c){return /^[A-Z]{2}$/.test(c)?String.fromCodePoint(127397+c.charCodeAt(0),127397+c.charCodeAt(1)):''}
+  function renderSecLogTab(){
+    box.appendChild(note1('Who tried what on your site: wrong passwords, blocked requests, bans and your own owner logins, with the time, country and IP address. Only you can see this. Old entries are removed automatically.'));
+    if(!secLogData||secLogData._k!==secLogKind){
+      box.appendChild(h('p',{style:'color:#9fb0c8',text:'Loading ...'}));
+      var kk=secLogKind;
+      get('/api/admin/seclog'+(kk?'?kind='+encodeURIComponent(kk):'')).then(function(r){r._k=kk;secLogData=r;render()}).catch(function(e){say('Problem: '+e.message)});
+      return}
+    var D=secLogData,col={ok:'#5be3a0',warn:'#ffb454',danger:'#ff6b6b'};
+    var msgT=D.level==='danger'?(D.hour.owner>=3?'Possible attack: someone tried '+D.hour.owner+' times in the last hour to log in as the owner.':'Possible attack: many failed sign-ins in the last few minutes ('+D.hour.fails+' in the last hour from '+D.hour.ips+' address'+(D.hour.ips===1?'':'es')+').')
+      :D.level==='warn'?(D.hour.owner?'Someone tried to log in as the owner '+D.hour.owner+' time'+(D.hour.owner>1?'s':'')+' in the last hour.':D.hour.fails+' failed sign-ins in the last hour from '+D.hour.ips+' address'+(D.hour.ips===1?'':'es')+'.')
+      :'Quiet: nothing unusual in the last hour.';
+    box.appendChild(h('div',{style:'max-width:780px;padding:14px 16px;margin:8px 0 14px;border-radius:14px;border:1px solid '+col[D.level]+';background:rgba(20,26,66,.45);color:'+col[D.level]+';font-size:17px;line-height:1.5',text:msgT}));
+    if(D.level==='danger')box.appendChild(note1('If it keeps going: open the Security checklist tab and turn on protection mode, and make sure 2-step login is on for your owner account.'));
+    var top=h('div',{style:'display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px;max-width:780px'});
+    top.appendChild(h('button',{type:'button',style:(secLogKind===''?BTN2:BTN),text:'All',on:{click:function(){secLogKind='';render()}}}));
+    (D.counts||[]).forEach(function(c){
+      var L=SECL[c.kind]||[c.kind,'#9fb0c8'];
+      top.appendChild(h('button',{type:'button',style:(secLogKind===c.kind?BTN2:BTN),text:L[0]+' ('+c.n+')',on:{click:function(){secLogKind=c.kind;render()}}}));
+    });
+    box.appendChild(h('div',{style:'color:#9fb0c8;font-size:13px;margin-top:12px',text:'Counts are for the last 24 hours. Tap one to filter.'}));
+    box.appendChild(top);
+    if((D.top||[]).length){
+      box.appendChild(sub('Busiest addresses (24 hours)'));
+      var tl=h('div',{style:'display:grid;gap:6px;max-width:780px'});
+      D.top.forEach(function(t){tl.appendChild(h('div',{style:'display:flex;gap:12px;flex-wrap:wrap;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.05);font-size:14px'},[h('b',{style:'min-width:44px',text:t.n+'x'}),h('span',{text:(secFlag(t.country)+' '+(t.country||'??')).trim()}),h('span',{style:'color:#c4d0e6;word-break:break-all',text:t.ip||'unknown'}),h('button',{type:'button',style:BTNR+';padding:4px 12px;font-size:12px;margin-left:auto',text:'Block',on:{click:function(){if(!t.ip)return;if(!confirm('Block '+t.ip+' from the whole site?'))return;post('/api/admin/ipblock',{ip:t.ip,on:true,note:'from Security log'}).then(function(){say('Blocked '+t.ip);secLogData=null;render()}).catch(function(e){say('Problem: '+e.message)})}}})]))});
+      box.appendChild(tl);
+    }
+    box.appendChild(sub(secLogKind?(SECL[secLogKind]||[secLogKind])[0]:'Latest events'));
+    var ev=D.events||[];
+    if(!ev.length)box.appendChild(h('p',{style:'color:#9fb0c8',text:'Nothing here yet. Events will appear as they happen.'}));
+    var list=h('div',{style:'display:grid;gap:8px;max-width:900px'});
+    ev.forEach(function(e){
+      var L=SECL[e.kind]||[e.kind,'#9fb0c8'];
+      list.appendChild(h('div',{style:'padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.14);border-left:4px solid '+L[1]+';background:rgba(20,26,66,.4)'},[
+        h('div',{style:'display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;font-size:15px'},[h('b',{style:'color:'+L[1],text:L[0]}),h('span',{style:'color:#9fb0c8;font-size:13px',text:new Date(e.at).toLocaleString()})]),
+        h('div',{style:'font-size:13px;color:#c4d0e6;margin-top:4px;word-break:break-all',text:(secFlag(e.country)+' '+(e.country||'??')).trim()+'  \u00b7  '+(e.ip||'unknown IP')+(e.detail?'  \u00b7  '+e.detail:'')})]));
+    });
+    box.appendChild(list);
+    var row=h('div',{style:'display:flex;gap:10px;flex-wrap:wrap;margin-top:18px'});
+    row.appendChild(h('button',{type:'button',style:BTNG,text:'Refresh',on:{click:function(){secLogData=null;render()}}}));
+    row.appendChild(h('button',{type:'button',style:BTNR,text:'Clear the log',on:{click:function(){if(!confirm('Delete all security log entries? This cannot be undone.'))return;post('/api/admin/seclog/clear',{}).then(function(){secLogData=null;render()}).catch(function(e){say('Problem: '+e.message)})}}}));
+    box.appendChild(row);
+  }
   function renderHealthTab(){
     box.appendChild(note1('This checks your site for problems. Green means fine, orange means please look, red means something is broken. Only you can see this.'));
     var btn=h('button',{type:'button',style:BTNG,text:'Check again',on:{click:function(){healthData=null;render()}}});
