@@ -401,7 +401,7 @@ html.phone img{image-rendering:auto}
 <a href="#about"><span data-t="nav_about">About</span></a>
 <a href="#reviews"><span data-t="nav_reviews">Reviews</span><span id="rv-nav" style="display:none;margin-left:6px;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;border-radius:9px;background:#ffc94a;color:#1b1330;font-size:11px;font-weight:700;line-height:18px;text-align:center;vertical-align:middle"></span></a>
 <a href="https://wa.me/212651543275" target="_blank" rel="noopener noreferrer"><span data-y="nav_whatsapp">WhatsApp</span></a>
-<span id="lang" style="display:inline-flex;gap:4px;align-items:center"></span>
+<span id="lang" style="display:none;gap:4px;align-items:center"></span>
 <span id="acct" style="display:inline-flex;gap:10px;align-items:center"></span>
 <button id="app-btn" type="button" aria-haspopup="dialog"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-5-5m5 5l5-5M4 20h16"/></svg><span>Get the app</span></button>
 <a href="https://www.instagram.com/ismailtenni_art/" style="display: inline-block; padding: 11px 22px; border: 1px solid rgba(255,255,255,0.45); border-radius: 999px; background: rgba(10,18,40,0.6); color: #ffffff"><span data-t="follow">Follow on Instagram</span></a>
@@ -1054,7 +1054,7 @@ function init(){
     var ta=h('textarea',{style:INP+';min-height:120px;direction:'+(lang==='ar'?'rtl':'ltr')});ta.value=el.textContent.trim();
     var r=el.getBoundingClientRect();
     pop=h('div',{id:'ed-pop',style:'position:fixed;left:50%;top:'+Math.max(70,Math.min(r.bottom+10,innerHeight-330))+'px;translate:-50% 0;width:min(560px,92vw);z-index:3200;padding:16px;border-radius:16px;background:#0b1030;border:1px solid rgba(190,170,255,.6);box-shadow:0 20px 60px #000;color:#fff;font-family:Inter,system-ui,sans-serif'},[
-      h('div',{style:'font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#c4a0ff;margin-bottom:8px',text:'Text in '+(names[lang]||lang)+' (change the language at the top of the site to edit the others)'}),ta,
+      h('div',{style:'font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:#c4a0ff;margin-bottom:8px',text:'Text in '+(names[lang]||lang)+' (pick a country with the earth button at the top to switch language and edit the others)'}),ta,
       h('div',{style:'display:flex;gap:10px;margin-top:12px;flex-wrap:wrap'},[
         h('button',{type:'button',style:BTNG,text:'OK',on:{click:function(){
           var v=ta.value.trim();if(!v){closePop();return}
@@ -4746,6 +4746,10 @@ load();
 try{
 var d=document,root=d.documentElement,lb=d.getElementById('lang');if(!lb||!lb.parentNode)return;
 var CODES='AD AE AF AG AI AL AM AO AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GT GU GW GY HK HN HR HT HU ID IE IL IM IN IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG US UY UZ VA VC VE VG VI VN VU WF WS XK YE YT ZA ZM ZW'.split(' ');
+var AR_=' AE BH DJ DZ EG EH IQ JO KM KW LB LY MA MR OM PS QA SA SD SO SY TD TN YE '.trim().split(' ');
+var FR_='BF BI BJ BL CD CF CG CI CM FR GA GF GN GP HT LU MC MF MG ML MQ NC NE PF PM RE RW SN TG WF YT'.split(' ');
+function langOf(c){return AR_.indexOf(c)>-1?'ar':FR_.indexOf(c)>-1?'fr':'en'}
+function setLang(l){var bt=d.querySelector('#lang button[data-l="'+l+'"]');if(bt)bt.click();else root.setAttribute('lang',l)}
 var TX={title:{en:'Choose your country',fr:'Choisissez votre pays',ar:'اختر بلدك'},search:{en:'Search a country',fr:'Rechercher un pays',ar:'ابحث عن بلد'},none:{en:'No country found.',fr:'Aucun pays trouvé.',ar:'لا توجد دولة.'},close:{en:'Close',fr:'Fermer',ar:'إغلاق'}};
 function L(){var l=root.getAttribute('lang')||'en';return TX.title[l]?l:'en'}
 function t(k){return TX[k][L()]}
@@ -4780,9 +4784,10 @@ function fill(){
  rows.forEach(function(r){var bt=d.createElement('button');bt.type='button';bt.setAttribute('data-c',r.c);
   bt.style.cssText='display:flex;align-items:center;gap:12px;width:100%;padding:9px 12px;border:0;border-radius:10px;background:'+(r.c===cur?'rgba(120,90,230,.35)':'none')+';color:#fff;font:inherit;font-size:14px;cursor:pointer;text-align:start';
   bt.appendChild(flag(r.c,26));var sp=d.createElement('span');sp.textContent=r.n;sp.style.cssText='flex:1;min-width:0';bt.appendChild(sp);
+  var lgb=d.createElement('span');lgb.textContent=langOf(r.c).toUpperCase();lgb.style.cssText='font-size:11px;letter-spacing:.08em;color:#9fb0c8;border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:1px 6px;flex:none';bt.appendChild(lgb);
   if(r.c===cur){var ck=d.createElement('span');ck.textContent='\u2713';ck.style.color='#9ff0c0';bt.appendChild(ck)}
   bt.onmouseenter=function(){if(r.c!==sel())bt.style.background='rgba(255,255,255,.08)'};bt.onmouseleave=function(){if(r.c!==sel())bt.style.background='none'};
-  bt.onclick=function(){var was=sel()===r.c;ls('art-country',was?null:r.c);if(was)root.removeAttribute('data-country');else root.setAttribute('data-country',r.c);paintBtn();close();try{window.dispatchEvent(new CustomEvent('art-country',{detail:{code:was?'':r.c,name:was?'':r.n}}))}catch(e){}};
+  bt.onclick=function(){var was=sel()===r.c;ls('art-country',was?null:r.c);if(was)root.removeAttribute('data-country');else{root.setAttribute('data-country',r.c);setLang(langOf(r.c))}paintBtn();close();try{window.dispatchEvent(new CustomEvent('art-country',{detail:{code:was?'':r.c,name:was?'':r.n}}))}catch(e){}};
   ls0.appendChild(bt)});
 }
 function texts(){ti.textContent=t('title');si.placeholder=t('search');cx.setAttribute('aria-label',t('close'));b.setAttribute('aria-label',t('title'))}
