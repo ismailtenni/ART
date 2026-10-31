@@ -5,7 +5,8 @@
   "assets": {
     "directory": "./ARTSITE/public",
     "binding": "ASSETS",
-    "run_worker_first": ["/", "/index.html", "/robots.txt", "/sitemap.xml", "/review", "/api/*"],
+    "run_worker_first": ["/", "/index.html", "/robots.txt", "/sitemap.xml", "/review", "/api/*",
+      "/wp-login.php", "/wp-admin", "/wp-admin/*", "/wp-content/*", "/wp-includes/*", "/wp-json/*", "/xmlrpc.php", "/.env", "/.env.*", "/.git", "/.git/*", "/.svn/*", "/.aws/*", "/.ssh/*", "/phpmyadmin", "/phpmyadmin/*", "/pma", "/pma/*", "/myadmin/*", "/mysql", "/mysql/*", "/admin.php", "/administrator", "/administrator/*", "/config.php", "/configuration.php", "/backup.sql", "/backup.zip", "/db.sql", "/dump.sql", "/cgi-bin/*", "/boaform/*", "/actuator/*", "/server-status", "/vendor/phpunit/*", "/setup.php", "/install.php", "/shell.php", "/eval-stdin.php"],
     "not_found_handling": "404-page"
   },
   "d1_databases": [
